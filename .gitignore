@@ -1,0 +1,5 @@
+# Qt / C++ ignore files
+build/
+*.user
+.DS_Store
+*.pro.user
