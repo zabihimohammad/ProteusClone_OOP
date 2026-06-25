@@ -5,12 +5,16 @@
 class Element : public QGraphicsItem {
 public:
     Element() {
-        // با روشن کردن این دو فلگ، تمام قطعات مدار شما به صورت خودکار با موس جابجا و انتخاب می‌شوند!
-        setFlags(ItemIsSelectable | ItemIsMovable);
+        // فلگ جدید ItemSendsGeometryChanges به موتور Qt می‌گوید که تغییرات مختصات را قبل از اعمال نهایی به ما گزارش دهد
+        setFlags(ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
     }
 
     virtual ~Element() = default;
 
     // این تابع برای هم‌تیمی شماست که بعداً منطق ریاضی مدار را بنویسد
     virtual void process() = 0;
+
+protected:
+    // تابعی از Qt که مختصات را هنگام کشیدن با موس، رهگیری و اصلاح می‌کند
+    QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 };

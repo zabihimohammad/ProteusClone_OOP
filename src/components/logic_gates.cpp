@@ -91,7 +91,7 @@ void XorGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 
 // --- گیت NAND ---
 NandGate::NandGate() {}
-QRectF NandGate::boundingRect() const { return QRectF(-30, -25, 60, 50); }
+QRectF NandGate::boundingRect() const { return QRectF(-30, -25, 70, 50); }
 void NandGate::process() {}
 void NandGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(Qt::black, 2);
@@ -111,7 +111,7 @@ void NandGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
 // --- فلیپ‌فلاپ (D-FlipFlop) ---
 DFlipFlop::DFlipFlop() {}
-QRectF DFlipFlop::boundingRect() const { return QRectF(-40, -40, 80, 80); }
+QRectF DFlipFlop::boundingRect() const { return QRectF(-40, -40, 90, 80); }
 void DFlipFlop::process() {}
 void DFlipFlop::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(Qt::black, 2);

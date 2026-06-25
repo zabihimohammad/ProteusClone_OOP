@@ -309,6 +309,30 @@ src/components/peripherals.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.s
 .PHONY : src/components/peripherals.cpp.s
 
+src/core/element.obj: src/core/element.cpp.obj
+.PHONY : src/core/element.obj
+
+# target to build an object file
+src/core/element.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/core/element.cpp.obj
+.PHONY : src/core/element.cpp.obj
+
+src/core/element.i: src/core/element.cpp.i
+.PHONY : src/core/element.i
+
+# target to preprocess a source file
+src/core/element.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/core/element.cpp.i
+.PHONY : src/core/element.cpp.i
+
+src/core/element.s: src/core/element.cpp.s
+.PHONY : src/core/element.s
+
+# target to generate assembly for a file
+src/core/element.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/core/element.cpp.s
+.PHONY : src/core/element.cpp.s
+
 src/gui/hex_upload_dialog.obj: src/gui/hex_upload_dialog.cpp.obj
 .PHONY : src/gui/hex_upload_dialog.obj
 
@@ -412,6 +436,9 @@ help:
 	@echo ... src/components/peripherals.obj
 	@echo ... src/components/peripherals.i
 	@echo ... src/components/peripherals.s
+	@echo ... src/core/element.obj
+	@echo ... src/core/element.i
+	@echo ... src/core/element.s
 	@echo ... src/gui/hex_upload_dialog.obj
 	@echo ... src/gui/hex_upload_dialog.i
 	@echo ... src/gui/hex_upload_dialog.s

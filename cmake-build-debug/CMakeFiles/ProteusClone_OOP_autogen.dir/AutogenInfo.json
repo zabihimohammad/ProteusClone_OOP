@@ -367,6 +367,12 @@
 			null
 		],
 		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/element.h",
+			"MU",
+			"PRMOGMWJPH/moc_element.cpp",
+			null
+		],
+		[
 			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.h",
 			"MU",
 			"MXUWEOXILK/moc_hex_upload_dialog.cpp",
@@ -475,6 +481,11 @@
 		],
 		[
 			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.cpp",
+			"MU",
+			null
+		],
+		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/element.cpp",
 			"MU",
 			null
 		],

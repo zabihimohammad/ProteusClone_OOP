@@ -15,6 +15,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/logic_gates.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.obj.d"
   "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/mcu.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.obj.d"
   "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj.d"
+  "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/element.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/core/element.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/core/element.cpp.obj.d"
   "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj.d"
   "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/mainwindow.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj.d"
   "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/main.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/main.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/main.cpp.obj.d"

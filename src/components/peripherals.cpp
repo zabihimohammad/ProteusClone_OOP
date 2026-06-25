@@ -76,7 +76,7 @@ void Keypad::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
 
 // --- مبدل آنالوگ به دیجیتال (ADC) ---
 ADC_Chip::ADC_Chip() {}
-QRectF ADC_Chip::boundingRect() const { return QRectF(-40, -40, 80, 80); }
+QRectF ADC_Chip::boundingRect() const { return QRectF(-65, -40, 105, 80); }
 void ADC_Chip::process() {}
 void ADC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(Qt::black, 2);
@@ -99,7 +99,7 @@ void ADC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
 // --- مبدل دیجیتال به آنالوگ (DAC) ---
 DAC_Chip::DAC_Chip() {}
-QRectF DAC_Chip::boundingRect() const { return QRectF(-40, -40, 80, 80); }
+QRectF DAC_Chip::boundingRect() const { return QRectF(-40, -40, 110, 80); }
 void DAC_Chip::process() {}
 void DAC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(Qt::black, 2);
