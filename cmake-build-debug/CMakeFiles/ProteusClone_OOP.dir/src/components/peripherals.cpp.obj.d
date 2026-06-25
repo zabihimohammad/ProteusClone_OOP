@@ -383,4 +383,9 @@ CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj: \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qendian.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontvariableaxis.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h \
- C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/wire.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QVector \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qvector.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QPointF

@@ -394,8 +394,34 @@ CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_scene.cpp.obj: \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qvarlengtharray.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qalloc.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qpainterpath.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/wire.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/QVector \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qvector.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/QPointF \
- C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/auto_router.h
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/auto_router.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QKeyEvent \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qevent.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qiodevice.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qurl.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qeventpoint.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qvector2d.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qvectornd.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qpointingdevice.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qinputdevice.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qscreen.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QObject \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QRect \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QSize \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QSizeF \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QTransform \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qnativeinterface.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qscreen_platform.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qguiapplication.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreapplication.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreapplication_platform.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qinputmethod.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qlocale.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qguiapplication_platform.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qkeysequence.h

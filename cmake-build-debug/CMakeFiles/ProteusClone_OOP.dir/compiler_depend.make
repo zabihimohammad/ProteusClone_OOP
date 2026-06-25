@@ -847,11 +847,37 @@ CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_scene.cpp.obj: ../src/canvas/
   C:/Qt/6.11.1/mingw_64/include/QtCore/qvarlengtharray.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qalloc.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpainterpath.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
   ../src/core/wire.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/QVector \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qvector.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/QPointF \
-  ../src/core/auto_router.h
+  ../src/core/auto_router.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/QKeyEvent \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qevent.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qiodevice.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qurl.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qeventpoint.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qvector2d.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qvectornd.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qpointingdevice.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qinputdevice.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qscreen.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QObject \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QRect \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QSize \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QSizeF \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/QTransform \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qnativeinterface.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qscreen_platform.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qguiapplication.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreapplication.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreapplication_platform.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qinputmethod.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qlocale.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qguiapplication_platform.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qkeysequence.h
 
 CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_view.cpp.obj: ../src/canvas/circuit_view.cpp \
   ../src/canvas/circuit_view.h \
@@ -1665,7 +1691,8 @@ CMakeFiles/ProteusClone_OOP.dir/src/components/basic_components.cpp.obj: ../src/
   C:/Qt/6.11.1/mingw_64/include/QtGui/qfontvariableaxis.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/QPainterPath \
-  ../src/core/terminal.h
+  ../src/core/terminal.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QList
 
 CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.obj: ../src/components/logic_gates.cpp \
   ../src/components/logic_gates.h \
@@ -2042,6 +2069,7 @@ CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.obj: ../src/compo
   C:/Qt/6.11.1/mingw_64/include/QtGui/qimage.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpixelformat.h \
   ../src/core/terminal.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
   C:/Qt/6.11.1/mingw_64/include/QtGui/QPainter \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpainter.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qtextoption.h \
@@ -2429,6 +2457,7 @@ CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.obj: ../src/components/mc
   C:/Qt/6.11.1/mingw_64/include/QtGui/qimage.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpixelformat.h \
   ../src/core/terminal.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
   C:/Qt/6.11.1/mingw_64/include/QtGui/QPainter \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpainter.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qtextoption.h \
@@ -2859,7 +2888,12 @@ CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj: ../src/compo
   C:/Qt/6.11.1/mingw_64/include/QtCore/qendian.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qfontvariableaxis.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h \
-  ../src/core/terminal.h
+  ../src/core/terminal.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
+  ../src/core/wire.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QVector \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qvector.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QPointF
 
 CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.obj: ../src/core/auto_router.cpp \
   ../src/core/auto_router.h \
@@ -3244,6 +3278,7 @@ CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.obj: ../src/core/auto_r
   C:/Qt/6.11.1/mingw_64/include/QtCore/qvarlengtharray.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qalloc.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpainterpath.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
   ../src/core/wire.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/QMap \
   C:/Qt/6.11.1/mingw_64/include/QtCore/QSet \
@@ -4003,6 +4038,7 @@ CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.obj: ../src/core/terminal.
   C:/Qt/6.11.1/mingw_64/include/QtGui/qrgba64.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qimage.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpixelformat.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
   C:/Qt/6.11.1/mingw_64/include/QtGui/QPainter \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpainter.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qtextoption.h \
@@ -4402,6 +4438,7 @@ CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.obj: ../src/core/wire.cpp \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qvector.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/QPointF \
   ../src/core/terminal.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
   C:/Qt/6.11.1/mingw_64/include/QtGui/QPainter \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpainter.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qtextoption.h \
@@ -4411,7 +4448,10 @@ CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.obj: ../src/core/wire.cpp \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qfont.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qendian.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qfontvariableaxis.h \
-  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h \
+  ../src/core/auto_router.h \
+  C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsScene \
+  C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsscene.h
 
 CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj: ../src/gui/hex_upload_dialog.cpp \
   ../src/gui/hex_upload_dialog.h \
@@ -5299,6 +5339,7 @@ CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj: ../src/gui/mainwindo
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpainterpath.h \
   ../src/components/logic_gates.h \
   ../src/core/terminal.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
   ../src/components/mcu.h \
   ../src/components/peripherals.h
 
@@ -6283,11 +6324,11 @@ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qtabwidget.h:
 
 C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/ext/alloc_traits.h:
 
-C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/alloc_traits.h:
+C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cwchar:
 
 C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/locale:
 
-C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cwchar:
+C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/alloc_traits.h:
 
 C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/allocator.h:
 
@@ -6718,6 +6759,8 @@ C:/Qt/6.11.1/mingw_64/include/QtCore/QVector:
 C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/queue:
 
 ../src/core/auto_router.h:
+
+C:/Qt/6.11.1/mingw_64/include/QtGui/QKeyEvent:
 
 C:/Qt/6.11.1/mingw_64/include/QtWidgets/qscrollbar.h:
 

@@ -382,6 +382,7 @@ CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.obj: \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qvarlengtharray.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qalloc.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qpainterpath.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
  C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\core\wire.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/QMap \
  C:/Qt/6.11.1/mingw_64/include/QtCore/QSet \

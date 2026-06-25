@@ -384,4 +384,5 @@ CMakeFiles/ProteusClone_OOP.dir/src/components/basic_components.cpp.obj: \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontvariableaxis.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/QPainterPath \
- C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList

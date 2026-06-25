@@ -10,6 +10,9 @@ public:
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void process() override;
+protected:
+    // اضافه کردن این تابع برای شنود حرکت قطعه
+    QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 };
 
 // ==========================================

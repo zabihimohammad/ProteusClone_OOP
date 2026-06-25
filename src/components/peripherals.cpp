@@ -1,9 +1,11 @@
 #include "peripherals.h"
 #include <QPainter>
 #include "../core/terminal.h"
-
+#include "../core/wire.h"
 // --- حافظه خارجی (RAM/EEPROM) ---
 MemoryChip::MemoryChip() {
+    // اضافه کردن این خط ضروری است تا کیوت بداند باید حرکت را گزارش دهد
+    setFlag(QGraphicsItem::ItemSendsGeometryChanges);
     for (int i = -40; i <= 40; i += 10) {
         (new Terminal(this))->setPos(-50, i); // خطوط آدرس
         (new Terminal(this))->setPos(50, i);  // خطوط داده
@@ -145,4 +147,22 @@ void DAC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     for(int i = -20; i <= 20; i += 10) {
         painter->drawLine(-40, i, -30, i);
     }
+}
+QVariant MemoryChip::itemChange(GraphicsItemChange change, const QVariant &value) {
+    // اگر کاربر در حال کشیدن قطعه با موس است و مختصات در حال تغییر است
+    if (change == ItemPositionHasChanged) {
+
+        // تمام پایه‌های چسبیده به این قطعه را پیدا کن
+        for (QGraphicsItem *child : childItems()) {
+            Terminal *term = dynamic_cast<Terminal*>(child);
+            if (term) {
+                // به تمام سیم‌های متصل به این پایه بگو مسیرشان را با هوش مصنوعی آپدیت کنند
+                for (Wire *wire : term->getConnectedWires()) {
+                    wire->updateRoute();
+                }
+            }
+        }
+    }
+    // بازگرداندن روال عادی کیوت
+    return QGraphicsItem::itemChange(change, value);
 }

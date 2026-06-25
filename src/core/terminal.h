@@ -1,6 +1,7 @@
 #pragma once
 #include <QGraphicsItem>
-
+#include <QList>
+class Wire;
 // کلاس ترمینال (پایه اتصال) که روی قطعات قرار می‌گیرد
 class Terminal : public QGraphicsItem {
 public:
@@ -9,7 +10,11 @@ public:
 
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
-
+//
+// اضافه کردن این ۳ خط برای مدیریت سیم‌های متصل
+    void addWire(Wire *wire);
+    void removeWire(Wire *wire);
+    QList<Wire*> getConnectedWires() const;
 protected:
     // بازنویسی رویدادهای موس برای تغییر رنگ هنگام نزدیک شدن نشانگر (Hover)
     void hoverEnterEvent(QGraphicsSceneHoverEvent *event) override;
@@ -20,4 +25,5 @@ protected:
 
 private:
     bool isHovered; // متغیری برای تشخیص اینکه آیا موس روی پایه است یا خیر
+    QList<Wire*> connectedWires;
 };

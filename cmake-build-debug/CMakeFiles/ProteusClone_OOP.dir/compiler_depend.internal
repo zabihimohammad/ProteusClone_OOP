@@ -849,11 +849,37 @@ CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_scene.cpp.obj
  C:/Qt/6.11.1/mingw_64/include/QtCore/qvarlengtharray.h
  C:/Qt/6.11.1/mingw_64/include/QtCore/qalloc.h
  C:/Qt/6.11.1/mingw_64/include/QtGui/qpainterpath.h
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/wire.h
  C:/Qt/6.11.1/mingw_64/include/QtCore/QVector
  C:/Qt/6.11.1/mingw_64/include/QtCore/qvector.h
  C:/Qt/6.11.1/mingw_64/include/QtCore/QPointF
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/auto_router.h
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QKeyEvent
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qevent.h
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qiodevice.h
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qurl.h
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qeventpoint.h
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qvector2d.h
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qvectornd.h
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qpointingdevice.h
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qinputdevice.h
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qscreen.h
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QObject
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QRect
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QSize
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QSizeF
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QTransform
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qnativeinterface.h
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qscreen_platform.h
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qguiapplication.h
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreapplication.h
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreapplication_platform.h
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qinputmethod.h
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qlocale.h
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qguiapplication_platform.h
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qkeysequence.h
 
 CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_view.cpp.obj
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_view.cpp
@@ -1670,6 +1696,7 @@ CMakeFiles/ProteusClone_OOP.dir/src/components/basic_components.cpp.obj
  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h
  C:/Qt/6.11.1/mingw_64/include/QtGui/QPainterPath
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList
 
 CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.obj
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/logic_gates.cpp
@@ -2047,6 +2074,7 @@ CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.obj
  C:/Qt/6.11.1/mingw_64/include/QtGui/qimage.h
  C:/Qt/6.11.1/mingw_64/include/QtGui/qpixelformat.h
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList
  C:/Qt/6.11.1/mingw_64/include/QtGui/QPainter
  C:/Qt/6.11.1/mingw_64/include/QtGui/qpainter.h
  C:/Qt/6.11.1/mingw_64/include/QtGui/qtextoption.h
@@ -2435,6 +2463,7 @@ CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.obj
  C:/Qt/6.11.1/mingw_64/include/QtGui/qimage.h
  C:/Qt/6.11.1/mingw_64/include/QtGui/qpixelformat.h
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList
  C:/Qt/6.11.1/mingw_64/include/QtGui/QPainter
  C:/Qt/6.11.1/mingw_64/include/QtGui/qpainter.h
  C:/Qt/6.11.1/mingw_64/include/QtGui/qtextoption.h
@@ -2867,6 +2896,11 @@ CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj
  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontvariableaxis.h
  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/wire.h
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QVector
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qvector.h
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QPointF
 
 CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.obj
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/auto_router.cpp
@@ -3252,6 +3286,7 @@ CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.obj
  C:/Qt/6.11.1/mingw_64/include/QtCore/qvarlengtharray.h
  C:/Qt/6.11.1/mingw_64/include/QtCore/qalloc.h
  C:/Qt/6.11.1/mingw_64/include/QtGui/qpainterpath.h
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/wire.h
  C:/Qt/6.11.1/mingw_64/include/QtCore/QMap
  C:/Qt/6.11.1/mingw_64/include/QtCore/QSet
@@ -4013,6 +4048,7 @@ CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.obj
  C:/Qt/6.11.1/mingw_64/include/QtGui/qrgba64.h
  C:/Qt/6.11.1/mingw_64/include/QtGui/qimage.h
  C:/Qt/6.11.1/mingw_64/include/QtGui/qpixelformat.h
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList
  C:/Qt/6.11.1/mingw_64/include/QtGui/QPainter
  C:/Qt/6.11.1/mingw_64/include/QtGui/qpainter.h
  C:/Qt/6.11.1/mingw_64/include/QtGui/qtextoption.h
@@ -4413,6 +4449,7 @@ CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.obj
  C:/Qt/6.11.1/mingw_64/include/QtCore/qvector.h
  C:/Qt/6.11.1/mingw_64/include/QtCore/QPointF
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList
  C:/Qt/6.11.1/mingw_64/include/QtGui/QPainter
  C:/Qt/6.11.1/mingw_64/include/QtGui/qpainter.h
  C:/Qt/6.11.1/mingw_64/include/QtGui/qtextoption.h
@@ -4423,6 +4460,9 @@ CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.obj
  C:/Qt/6.11.1/mingw_64/include/QtCore/qendian.h
  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontvariableaxis.h
  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/auto_router.h
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsScene
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsscene.h
 
 CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.cpp
@@ -5312,6 +5352,7 @@ CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj
  C:/Qt/6.11.1/mingw_64/include/QtGui/qpainterpath.h
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/logic_gates.h
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/mcu.h
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.h
 

@@ -51,3 +51,16 @@ void Terminal::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     // فعلاً فقط رویداد را ثبت می‌کنیم. منطق رسم سیم را در مراحل بعدی اینجا اضافه خواهیم کرد
     event->accept();
 }
+void Terminal::addWire(Wire *wire) {
+    if (!connectedWires.contains(wire)) {
+        connectedWires.append(wire);
+    }
+}
+
+void Terminal::removeWire(Wire *wire) {
+    connectedWires.removeAll(wire);
+}
+
+QList<Wire*> Terminal::getConnectedWires() const {
+    return connectedWires;
+}

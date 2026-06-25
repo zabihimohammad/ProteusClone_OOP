@@ -16,7 +16,7 @@ protected:
     // توابع رهگیری موس برای سیم‌کشی
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
-
+    void keyPressEvent(QKeyEvent *event) override;
 private:
     int gridSize;            // فاصله بین نقطه‌های شطرنجی
     bool isWiring;           // آیا کاربر در حال سیم‌کشی است؟

@@ -6,6 +6,7 @@
 #include "../core/terminal.h"
 #include "../core/wire.h"
 #include "../core/auto_router.h"
+#include <QKeyEvent>
 CircuitScene::CircuitScene(QObject *parent)
         : QGraphicsScene(parent), isWiring(false), tempWire(nullptr), startTerminal(nullptr) {
 
@@ -89,4 +90,26 @@ void CircuitScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
         tempWire->setEndPoint(event->scenePos());
     }
     QGraphicsScene::mouseMoveEvent(event);
+}
+// ==========================================
+// رویداد فشردن کلیدهای کیبورد (برای حذف قطعات)
+// ==========================================
+void CircuitScene::keyPressEvent(QKeyEvent *event) {
+    // اگر کاربر کلید Delete یا Backspace را فشار داد
+    if (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace) {
+
+        // لیست تمام آیتم‌هایی که انتخاب شده‌اند را بگیر
+        QList<QGraphicsItem*> itemsToRemove = selectedItems();
+
+        for (QGraphicsItem *item : itemsToRemove) {
+            // ۱. ابتدا آیتم را از روی بوم پاک کن
+            removeItem(item);
+
+            // ۲. سپس آن را از حافظه سیستم کاملاً حذف کن (جلوگیری از Memory Leak)
+            delete item;
+        }
+    }
+
+    // اجرای رویدادهای پیش‌فرض کیبورد
+    QGraphicsScene::keyPressEvent(event);
 }

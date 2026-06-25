@@ -16,7 +16,9 @@ public:
 
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
-
+// در بخش public اضافه کنید:
+    void updateRoute();
+    ~Wire() override; // مخرب برای پاک کردن تمیز از حافظه
 private:
     Terminal *startTerminal;
     Terminal *endTerminal;

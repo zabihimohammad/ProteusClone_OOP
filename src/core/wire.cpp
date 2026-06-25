@@ -1,7 +1,7 @@
 #include "wire.h"
 #include "terminal.h"
 #include <QPainter>
-
+#include "auto_router.h" // برای دسترسی به هوش مصنوعی
 Wire::Wire(Terminal *startTerm, QPointF startPos) {
     startTerminal = startTerm;
     endTerminal = nullptr;
@@ -10,6 +10,8 @@ Wire::Wire(Terminal *startTerm, QPointF startPos) {
     points.append(startPos);
     points.append(startPos);
     setZValue(-1);
+    // اضافه کردن این خط: اجازه انتخاب شدن با موس
+    setFlag(QGraphicsItem::ItemIsSelectable);
 }
 
 void Wire::setEndPoint(QPointF endPos) {
@@ -35,6 +37,9 @@ void Wire::setFullRoute(const QVector<QPointF> &route) {
 
 void Wire::confirmConnection(Terminal *endTerm) {
     endTerminal = endTerm;
+    // وقتی سیم وصل شد، خودش را در حافظه پایه‌های مبدا و مقصد ثبت می‌کند
+    if (startTerminal) startTerminal->addWire(this);
+    if (endTerminal) endTerminal->addWire(this);
 }
 
 QRectF Wire::boundingRect() const {
@@ -55,7 +60,7 @@ QRectF Wire::boundingRect() const {
 }
 
 void Wire::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
-    QPen pen(Qt::blue, 2);
+    QPen pen(isSelected() ? Qt::red : Qt::blue, 2);
     painter->setPen(pen);
 
     if (points.size() < 2) return;
@@ -78,4 +83,26 @@ void Wire::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWid
             painter->drawLine(points[i], points[i+1]);
         }
     }
+}
+void Wire::updateRoute() {
+    // اگر سیم هنوز کامل کشیده نشده (در دست کاربر است) نیازی به آپدیت ندارد
+    if (!startTerminal || !endTerminal || !scene()) return;
+
+    // فراخوانی مجدد هوش مصنوعی با مختصات جدید پایه‌ها
+    QVector<QPointF> newRoute = AutoRouter::findPath(
+            scene(),
+            startTerminal->scenePos(),
+            endTerminal->scenePos(),
+            startTerminal,
+            endTerminal,
+            this
+    );
+
+    // رسم مجدد مسیر
+    setFullRoute(newRoute);
+}
+Wire::~Wire() {
+    // وقتی کاربر سیم را با کلید Delete پاک می‌کند، سیم باید نام خودش را از لیست پایه‌ها خط بزند
+    if (startTerminal) startTerminal->removeWire(this);
+    if (endTerminal) endTerminal->removeWire(this);
 }
