@@ -1,0 +1,4 @@
+ToolSet: w64 11.0 (local)@C:\Qt\Tools\mingw1310_64
+Options: 
+
+Options:-DCMAKE_PREFIX_PATH=C:\Qt\6.11.1\mingw_64

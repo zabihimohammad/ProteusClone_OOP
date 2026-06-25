@@ -1,0 +1,24 @@
+
+# Consider dependencies only in project.
+set(CMAKE_DEPENDS_IN_PROJECT_ONLY OFF)
+
+# The set of languages for which implicit dependencies are needed:
+set(CMAKE_DEPENDS_LANGUAGES
+  )
+
+# The set of dependency files which are needed:
+set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/cmake-build-debug/ProteusClone_OOP_autogen/mocs_compilation.cpp" "CMakeFiles/ProteusClone_OOP.dir/ProteusClone_OOP_autogen/mocs_compilation.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/ProteusClone_OOP_autogen/mocs_compilation.cpp.obj.d"
+  "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_scene.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_scene.cpp.obj.d"
+  "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_view.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_view.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_view.cpp.obj.d"
+  "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/basic_components.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/components/basic_components.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/components/basic_components.cpp.obj.d"
+  "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/mainwindow.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj.d"
+  "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/main.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/main.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/main.cpp.obj.d"
+  )
+
+# Targets to which this target links.
+set(CMAKE_TARGET_LINKED_INFO_FILES
+  )
+
+# Fortran module output directory.
+set(CMAKE_Fortran_TARGET_MODULE_DIR "")
