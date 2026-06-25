@@ -36,6 +36,8 @@ set(PROJECT_SOURCES
         # (در بخش PROJECT_SOURCES خطوط مربوط به core را اضافه کنید)
         src/core/element.cpp
         src/core/element.h
+        src/core/terminal.cpp
+        src/core/terminal.h
         )
 
 add_executable(ProteusClone_OOP ${PROJECT_SOURCES})

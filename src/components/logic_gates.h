@@ -1,6 +1,6 @@
 #pragma once
 #include "../core/element.h"
-
+#include "../core/terminal.h"
 class AndGate : public Element {
 public:
     AndGate();

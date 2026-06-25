@@ -3,7 +3,15 @@
 #include "../gui/hex_upload_dialog.h"
 #include <QGraphicsSceneMouseEvent>
 #include <QMessageBox>
-MCUChip::MCUChip() {}
+#include "../core/terminal.h"
+MCUChip::MCUChip() {
+    for (int i = -20; i <= 20; i += 20) {
+        (new Terminal(this))->setPos(-50, i); // پایه‌های سمت چپ
+        (new Terminal(this))->setPos(50, i);  // پایه‌های سمت راست
+        (new Terminal(this))->setPos(i, -50); // پایه‌های بالا
+        (new Terminal(this))->setPos(i, 50);  // پایه‌های پایین
+    }
+}
 QRectF MCUChip::boundingRect() const { return QRectF(-60, -60, 120, 120); }
 void MCUChip::process() {}
 

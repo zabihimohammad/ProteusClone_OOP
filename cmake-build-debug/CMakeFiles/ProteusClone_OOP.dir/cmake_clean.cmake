@@ -18,6 +18,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj.d"
   "CMakeFiles/ProteusClone_OOP.dir/src/core/element.cpp.obj"
   "CMakeFiles/ProteusClone_OOP.dir/src/core/element.cpp.obj.d"
+  "CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.obj"
+  "CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.obj.d"
   "CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj"
   "CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj.d"
   "CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj"

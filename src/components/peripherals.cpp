@@ -1,8 +1,13 @@
 #include "peripherals.h"
 #include <QPainter>
-
+#include "../core/terminal.h"
 // --- حافظه خارجی (RAM/EEPROM) ---
-MemoryChip::MemoryChip() {}
+MemoryChip::MemoryChip() {
+    for (int i = -40; i <= 40; i += 10) {
+        (new Terminal(this))->setPos(-50, i); // خطوط آدرس
+        (new Terminal(this))->setPos(50, i);  // خطوط داده
+    }
+}
 QRectF MemoryChip::boundingRect() const { return QRectF(-50, -60, 100, 120); }
 void MemoryChip::process() {}
 void MemoryChip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -25,7 +30,12 @@ void MemoryChip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
 }
 
 // --- نمایشگر کاراکتری (LCD 16x2) ---
-LCD16x2::LCD16x2() {}
+LCD16x2::LCD16x2() {
+    int startX = -55;
+    for(int i = 0; i < 14; i++) {
+        (new Terminal(this))->setPos(startX + (i * 8), -35);
+    }
+}
 QRectF LCD16x2::boundingRect() const { return QRectF(-70, -35, 140, 70); }
 void LCD16x2::process() {}
 void LCD16x2::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -49,7 +59,11 @@ void LCD16x2::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 }
 
 // --- صفحه کلید ماتریسی (Keypad) ---
-Keypad::Keypad() {}
+Keypad::Keypad() {
+    for(int i = -20; i <= 20; i += 6) {
+        (new Terminal(this))->setPos(i, 45); // پایه‌های پایینی
+    }
+}
 QRectF Keypad::boundingRect() const { return QRectF(-40, -50, 80, 100); }
 void Keypad::process() {}
 void Keypad::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -75,7 +89,12 @@ void Keypad::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
 }
 
 // --- مبدل آنالوگ به دیجیتال (ADC) ---
-ADC_Chip::ADC_Chip() {}
+ADC_Chip::ADC_Chip() {
+    (new Terminal(this))->setPos(-40, 0); // پایه ورودی آنالوگ
+    for(int i = -20; i <= 20; i += 6) {
+        (new Terminal(this))->setPos(40, i); // پایه‌های خروجی دیجیتال
+    }
+}
 QRectF ADC_Chip::boundingRect() const { return QRectF(-65, -40, 105, 80); }
 void ADC_Chip::process() {}
 void ADC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -98,7 +117,12 @@ void ADC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 }
 
 // --- مبدل دیجیتال به آنالوگ (DAC) ---
-DAC_Chip::DAC_Chip() {}
+DAC_Chip::DAC_Chip() {
+    (new Terminal(this))->setPos(40, 0); // پایه خروجی آنالوگ
+    for(int i = -20; i <= 20; i += 6) {
+        (new Terminal(this))->setPos(-40, i); // پایه‌های ورودی دیجیتال
+    }
+}
 QRectF DAC_Chip::boundingRect() const { return QRectF(-40, -40, 110, 80); }
 void DAC_Chip::process() {}
 void DAC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
