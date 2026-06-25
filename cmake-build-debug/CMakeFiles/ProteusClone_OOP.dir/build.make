@@ -158,6 +158,66 @@ CMakeFiles/ProteusClone_OOP.dir/src/components/basic_components.cpp.s: cmake_for
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ProteusClone_OOP.dir/src/components/basic_components.cpp.s"
 	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\components\basic_components.cpp -o CMakeFiles\ProteusClone_OOP.dir\src\components\basic_components.cpp.s
 
+CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/flags.make
+CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/includes_CXX.rsp
+CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.obj: ../src/components/logic_gates.cpp
+CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.obj -MF CMakeFiles\ProteusClone_OOP.dir\src\components\logic_gates.cpp.obj.d -o CMakeFiles\ProteusClone_OOP.dir\src\components\logic_gates.cpp.obj -c C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\components\logic_gates.cpp
+
+CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\components\logic_gates.cpp > CMakeFiles\ProteusClone_OOP.dir\src\components\logic_gates.cpp.i
+
+CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\components\logic_gates.cpp -o CMakeFiles\ProteusClone_OOP.dir\src\components\logic_gates.cpp.s
+
+CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/flags.make
+CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/includes_CXX.rsp
+CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.obj: ../src/components/mcu.cpp
+CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.obj -MF CMakeFiles\ProteusClone_OOP.dir\src\components\mcu.cpp.obj.d -o CMakeFiles\ProteusClone_OOP.dir\src\components\mcu.cpp.obj -c C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\components\mcu.cpp
+
+CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\components\mcu.cpp > CMakeFiles\ProteusClone_OOP.dir\src\components\mcu.cpp.i
+
+CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\components\mcu.cpp -o CMakeFiles\ProteusClone_OOP.dir\src\components\mcu.cpp.s
+
+CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/flags.make
+CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/includes_CXX.rsp
+CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj: ../src/components/peripherals.cpp
+CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj -MF CMakeFiles\ProteusClone_OOP.dir\src\components\peripherals.cpp.obj.d -o CMakeFiles\ProteusClone_OOP.dir\src\components\peripherals.cpp.obj -c C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\components\peripherals.cpp
+
+CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\components\peripherals.cpp > CMakeFiles\ProteusClone_OOP.dir\src\components\peripherals.cpp.i
+
+CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\components\peripherals.cpp -o CMakeFiles\ProteusClone_OOP.dir\src\components\peripherals.cpp.s
+
+CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/flags.make
+CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/includes_CXX.rsp
+CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj: ../src/gui/hex_upload_dialog.cpp
+CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj -MF CMakeFiles\ProteusClone_OOP.dir\src\gui\hex_upload_dialog.cpp.obj.d -o CMakeFiles\ProteusClone_OOP.dir\src\gui\hex_upload_dialog.cpp.obj -c C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\gui\hex_upload_dialog.cpp
+
+CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\gui\hex_upload_dialog.cpp > CMakeFiles\ProteusClone_OOP.dir\src\gui\hex_upload_dialog.cpp.i
+
+CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\gui\hex_upload_dialog.cpp -o CMakeFiles\ProteusClone_OOP.dir\src\gui\hex_upload_dialog.cpp.s
+
 # Object files for target ProteusClone_OOP
 ProteusClone_OOP_OBJECTS = \
 "CMakeFiles/ProteusClone_OOP.dir/ProteusClone_OOP_autogen/mocs_compilation.cpp.obj" \
@@ -165,7 +225,11 @@ ProteusClone_OOP_OBJECTS = \
 "CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj" \
 "CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_scene.cpp.obj" \
 "CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_view.cpp.obj" \
-"CMakeFiles/ProteusClone_OOP.dir/src/components/basic_components.cpp.obj"
+"CMakeFiles/ProteusClone_OOP.dir/src/components/basic_components.cpp.obj" \
+"CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.obj" \
+"CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.obj" \
+"CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj" \
+"CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj"
 
 # External object files for target ProteusClone_OOP
 ProteusClone_OOP_EXTERNAL_OBJECTS =
@@ -176,6 +240,10 @@ ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj
 ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_scene.cpp.obj
 ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_view.cpp.obj
 ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/src/components/basic_components.cpp.obj
+ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.obj
+ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.obj
+ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj
+ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj
 ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/build.make
 ProteusClone_OOP.exe: C:/Qt/6.11.1/mingw_64/lib/libQt6Widgets.a
 ProteusClone_OOP.exe: C:/Qt/6.11.1/mingw_64/lib/libQt6Gui.a
@@ -183,7 +251,7 @@ ProteusClone_OOP.exe: C:/Qt/6.11.1/mingw_64/lib/libQt6Core.a
 ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/linklibs.rsp
 ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/objects1.rsp
 ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Linking CXX executable ProteusClone_OOP.exe"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Linking CXX executable ProteusClone_OOP.exe"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles\ProteusClone_OOP.dir\link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

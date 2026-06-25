@@ -382,4 +382,5 @@ CMakeFiles/ProteusClone_OOP.dir/src/components/basic_components.cpp.obj: \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qfont.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qendian.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontvariableaxis.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QPainterPath

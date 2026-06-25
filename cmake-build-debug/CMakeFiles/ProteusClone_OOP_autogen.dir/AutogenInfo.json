@@ -349,6 +349,30 @@
 			null
 		],
 		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/logic_gates.h",
+			"MU",
+			"4LREYSKJD5/moc_logic_gates.cpp",
+			null
+		],
+		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/mcu.h",
+			"MU",
+			"4LREYSKJD5/moc_mcu.cpp",
+			null
+		],
+		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.h",
+			"MU",
+			"4LREYSKJD5/moc_peripherals.cpp",
+			null
+		],
+		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.h",
+			"MU",
+			"MXUWEOXILK/moc_hex_upload_dialog.cpp",
+			null
+		],
+		[
 			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/mainwindow.h",
 			"MU",
 			"MXUWEOXILK/moc_mainwindow.cpp",
@@ -436,6 +460,26 @@
 		],
 		[
 			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/basic_components.cpp",
+			"MU",
+			null
+		],
+		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/logic_gates.cpp",
+			"MU",
+			null
+		],
+		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/mcu.cpp",
+			"MU",
+			null
+		],
+		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.cpp",
+			"MU",
+			null
+		],
+		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.cpp",
 			"MU",
 			null
 		],

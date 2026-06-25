@@ -143,6 +143,30 @@
 		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/basic_components.h">
 			<Option target="ProteusClone_OOP"/>
 		</Unit>
+		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/logic_gates.cpp">
+			<Option target="ProteusClone_OOP"/>
+		</Unit>
+		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/logic_gates.h">
+			<Option target="ProteusClone_OOP"/>
+		</Unit>
+		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/mcu.cpp">
+			<Option target="ProteusClone_OOP"/>
+		</Unit>
+		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/mcu.h">
+			<Option target="ProteusClone_OOP"/>
+		</Unit>
+		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.cpp">
+			<Option target="ProteusClone_OOP"/>
+		</Unit>
+		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.h">
+			<Option target="ProteusClone_OOP"/>
+		</Unit>
+		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.cpp">
+			<Option target="ProteusClone_OOP"/>
+		</Unit>
+		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.h">
+			<Option target="ProteusClone_OOP"/>
+		</Unit>
 		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/mainwindow.cpp">
 			<Option target="ProteusClone_OOP"/>
 		</Unit>

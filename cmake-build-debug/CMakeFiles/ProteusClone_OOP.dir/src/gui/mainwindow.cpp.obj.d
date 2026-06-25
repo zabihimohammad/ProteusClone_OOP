@@ -386,11 +386,6 @@ CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj: \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qcursor.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qbitmap.h \
  C:/Qt/6.11.1/mingw_64/include/QtWidgets/qtabwidget.h \
- C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/basic_components.h \
- C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/element.h \
- C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsItem \
- C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsitem.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qpainterpath.h \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h \
  C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsScene \
  C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsscene.h \
@@ -434,4 +429,12 @@ CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj: \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qinputmethod.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qlocale.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qguiapplication_platform.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/QMouseEvent
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QMouseEvent \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/basic_components.h \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/element.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsItem \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsitem.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qpainterpath.h \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/logic_gates.h \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/mcu.h \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.h

@@ -21,8 +21,18 @@ set(PROJECT_SOURCES
         src/canvas/circuit_scene.h
         src/canvas/circuit_view.cpp
         src/canvas/circuit_view.h
-        src/components/basic_components.cpp   # <--- این خط را اضافه کنید
-        src/components/basic_components.h     # <--- این خط را اضافه کنید
+        src/components/basic_components.cpp
+        src/components/basic_components.h
+        src/components/logic_gates.cpp
+        src/components/logic_gates.h
+        src/components/mcu.cpp
+        src/components/mcu.h
+        # (در بخش PROJECT_SOURCES)
+        src/components/peripherals.cpp
+        src/components/peripherals.h
+        # (در بخش PROJECT_SOURCES)
+        src/gui/hex_upload_dialog.cpp
+        src/gui/hex_upload_dialog.h
         )
 
 add_executable(ProteusClone_OOP ${PROJECT_SOURCES})

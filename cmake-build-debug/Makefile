@@ -237,6 +237,102 @@ src/components/basic_components.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/components/basic_components.cpp.s
 .PHONY : src/components/basic_components.cpp.s
 
+src/components/logic_gates.obj: src/components/logic_gates.cpp.obj
+.PHONY : src/components/logic_gates.obj
+
+# target to build an object file
+src/components/logic_gates.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.obj
+.PHONY : src/components/logic_gates.cpp.obj
+
+src/components/logic_gates.i: src/components/logic_gates.cpp.i
+.PHONY : src/components/logic_gates.i
+
+# target to preprocess a source file
+src/components/logic_gates.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.i
+.PHONY : src/components/logic_gates.cpp.i
+
+src/components/logic_gates.s: src/components/logic_gates.cpp.s
+.PHONY : src/components/logic_gates.s
+
+# target to generate assembly for a file
+src/components/logic_gates.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.s
+.PHONY : src/components/logic_gates.cpp.s
+
+src/components/mcu.obj: src/components/mcu.cpp.obj
+.PHONY : src/components/mcu.obj
+
+# target to build an object file
+src/components/mcu.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.obj
+.PHONY : src/components/mcu.cpp.obj
+
+src/components/mcu.i: src/components/mcu.cpp.i
+.PHONY : src/components/mcu.i
+
+# target to preprocess a source file
+src/components/mcu.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.i
+.PHONY : src/components/mcu.cpp.i
+
+src/components/mcu.s: src/components/mcu.cpp.s
+.PHONY : src/components/mcu.s
+
+# target to generate assembly for a file
+src/components/mcu.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.s
+.PHONY : src/components/mcu.cpp.s
+
+src/components/peripherals.obj: src/components/peripherals.cpp.obj
+.PHONY : src/components/peripherals.obj
+
+# target to build an object file
+src/components/peripherals.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj
+.PHONY : src/components/peripherals.cpp.obj
+
+src/components/peripherals.i: src/components/peripherals.cpp.i
+.PHONY : src/components/peripherals.i
+
+# target to preprocess a source file
+src/components/peripherals.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.i
+.PHONY : src/components/peripherals.cpp.i
+
+src/components/peripherals.s: src/components/peripherals.cpp.s
+.PHONY : src/components/peripherals.s
+
+# target to generate assembly for a file
+src/components/peripherals.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.s
+.PHONY : src/components/peripherals.cpp.s
+
+src/gui/hex_upload_dialog.obj: src/gui/hex_upload_dialog.cpp.obj
+.PHONY : src/gui/hex_upload_dialog.obj
+
+# target to build an object file
+src/gui/hex_upload_dialog.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj
+.PHONY : src/gui/hex_upload_dialog.cpp.obj
+
+src/gui/hex_upload_dialog.i: src/gui/hex_upload_dialog.cpp.i
+.PHONY : src/gui/hex_upload_dialog.i
+
+# target to preprocess a source file
+src/gui/hex_upload_dialog.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.i
+.PHONY : src/gui/hex_upload_dialog.cpp.i
+
+src/gui/hex_upload_dialog.s: src/gui/hex_upload_dialog.cpp.s
+.PHONY : src/gui/hex_upload_dialog.s
+
+# target to generate assembly for a file
+src/gui/hex_upload_dialog.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.s
+.PHONY : src/gui/hex_upload_dialog.cpp.s
+
 src/gui/mainwindow.obj: src/gui/mainwindow.cpp.obj
 .PHONY : src/gui/mainwindow.obj
 
@@ -307,6 +403,18 @@ help:
 	@echo ... src/components/basic_components.obj
 	@echo ... src/components/basic_components.i
 	@echo ... src/components/basic_components.s
+	@echo ... src/components/logic_gates.obj
+	@echo ... src/components/logic_gates.i
+	@echo ... src/components/logic_gates.s
+	@echo ... src/components/mcu.obj
+	@echo ... src/components/mcu.i
+	@echo ... src/components/mcu.s
+	@echo ... src/components/peripherals.obj
+	@echo ... src/components/peripherals.i
+	@echo ... src/components/peripherals.s
+	@echo ... src/gui/hex_upload_dialog.obj
+	@echo ... src/gui/hex_upload_dialog.i
+	@echo ... src/gui/hex_upload_dialog.s
 	@echo ... src/gui/mainwindow.obj
 	@echo ... src/gui/mainwindow.i
 	@echo ... src/gui/mainwindow.s

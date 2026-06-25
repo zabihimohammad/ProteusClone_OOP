@@ -431,6 +431,21 @@ CMakeFiles/ProteusClone_OOP.dir/ProteusClone_OOP_autogen/mocs_compilation.cpp.ob
  C:/Qt/6.11.1/mingw_64/include/QtCore/qlocale.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qguiapplication_platform.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/QMouseEvent \
+ C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\ProteusClone_OOP_autogen\MXUWEOXILK/moc_hex_upload_dialog.cpp \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QDialog \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qdialog.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QLineEdit \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qlineedit.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qtextcursor.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qtextdocument.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qtextformat.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QPushButton \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qpushbutton.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qabstractbutton.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QLabel \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qlabel.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qpicture.h \
  C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\ProteusClone_OOP_autogen\MXUWEOXILK/moc_mainwindow.cpp \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/mainwindow.h \
  C:/Qt/6.11.1/mingw_64/include/QtWidgets/QMainWindow \

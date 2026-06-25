@@ -12,6 +12,10 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_scene.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_scene.cpp.obj.d"
   "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_view.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_view.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_view.cpp.obj.d"
   "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/basic_components.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/components/basic_components.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/components/basic_components.cpp.obj.d"
+  "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/logic_gates.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/components/logic_gates.cpp.obj.d"
+  "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/mcu.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.obj.d"
+  "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj.d"
+  "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj.d"
   "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/mainwindow.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj.d"
   "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/main.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/main.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/main.cpp.obj.d"
   )
