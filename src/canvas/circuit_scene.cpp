@@ -60,7 +60,7 @@ void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
                     QPointF endP = clickedTerminal->sceneBoundingRect().center();
 
                     // فراخوانی مسیریاب خودکار هوشمند
-                    QVector<QPointF> smartPath = AutoRouter::findPath(this, startP, endP, startTerminal, clickedTerminal);
+                    QVector<QPointF> smartPath = AutoRouter::findPath(this, startP, endP, startTerminal, clickedTerminal, tempWire);
 
                     tempWire->setFullRoute(smartPath); // تزریق مسیر هوشمند به سیم
                     tempWire->confirmConnection(clickedTerminal);

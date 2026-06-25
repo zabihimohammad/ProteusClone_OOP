@@ -4,9 +4,10 @@
 #include <QGraphicsScene>
 
 class Terminal;
+class Wire; // پیش‌تعریف کلاس سیم
 
 class AutoRouter {
 public:
-    // این تابع نقطه شروع و پایان را می‌گیرد و لیستی از نقاط (مسیر ایمن) را برمی‌گرداند
-    static QVector<QPointF> findPath(QGraphicsScene *scene, QPointF startPos, QPointF endPos, Terminal *startTerm, Terminal *endTerm);
+    // اضافه شدن currentWire به انتهای تابع
+    static QVector<QPointF> findPath(QGraphicsScene *scene, QPointF startPos, QPointF endPos, Terminal *startTerm, Terminal *endTerm, Wire *currentWire);
 };
