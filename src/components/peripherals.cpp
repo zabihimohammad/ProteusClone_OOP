@@ -1,6 +1,7 @@
 #include "peripherals.h"
 #include <QPainter>
 #include "../core/terminal.h"
+
 // --- حافظه خارجی (RAM/EEPROM) ---
 MemoryChip::MemoryChip() {
     for (int i = -40; i <= 40; i += 10) {
@@ -60,8 +61,8 @@ void LCD16x2::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 
 // --- صفحه کلید ماتریسی (Keypad) ---
 Keypad::Keypad() {
-    for(int i = -20; i <= 20; i += 6) {
-        (new Terminal(this))->setPos(i, 45); // پایه‌های پایینی
+    for(int i = 0; i < 4; i++) {
+        (new Terminal(this))->setPos(-30 + (i * 20), 45); // 4 پایه با فاصله 20 پیکسل
     }
 }
 QRectF Keypad::boundingRect() const { return QRectF(-40, -50, 80, 100); }
@@ -82,17 +83,17 @@ void Keypad::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
         }
     }
 
-    // 8 پایه خروجی (سطر و ستون) در پایین
-    for(int i = -20; i <= 20; i += 6) {
+    // اصلاح رسم خطوط پایه‌ها تا دقیقا منطبق بر ترمینال‌ها (فاصله 20) باشند
+    for(int i = -30; i <= 30; i += 20) {
         painter->drawLine(i, 30, i, 45);
     }
 }
 
 // --- مبدل آنالوگ به دیجیتال (ADC) ---
 ADC_Chip::ADC_Chip() {
-    (new Terminal(this))->setPos(-40, 0); // پایه ورودی آنالوگ
-    for(int i = -20; i <= 20; i += 6) {
-        (new Terminal(this))->setPos(40, i); // پایه‌های خروجی دیجیتال
+    (new Terminal(this))->setPos(-40, 0);
+    for(int i = -20; i <= 20; i += 10) {
+        (new Terminal(this))->setPos(40, i);
     }
 }
 QRectF ADC_Chip::boundingRect() const { return QRectF(-65, -40, 105, 80); }
@@ -102,25 +103,26 @@ void ADC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     if (isSelected()) pen.setColor(Qt::red);
     painter->setPen(pen);
 
-    painter->setBrush(QColor(70, 130, 180)); // آبی فولادی
+    painter->setBrush(QColor(70, 130, 180));
     painter->drawRect(-30, -30, 60, 60);
     painter->setPen(Qt::white);
     painter->drawText(QRectF(-30, -30, 60, 60), Qt::AlignCenter, "ADC");
 
     painter->setPen(pen);
-    painter->drawLine(-40, 0, -30, 0); // ورودی آنالوگ
+    painter->drawLine(-40, 0, -30, 0);
     painter->drawText(-55, 5, "Vin");
 
-    for(int i = -20; i <= 20; i += 6) {
-        painter->drawLine(30, i, 40, i); // خروجی‌های دیجیتال موازی
+    // اصلاح رسم خطوط خروجی تا دقیقا با ترمینال‌ها تراز شوند (فاصله 10)
+    for(int i = -20; i <= 20; i += 10) {
+        painter->drawLine(30, i, 40, i);
     }
 }
 
 // --- مبدل دیجیتال به آنالوگ (DAC) ---
 DAC_Chip::DAC_Chip() {
-    (new Terminal(this))->setPos(40, 0); // پایه خروجی آنالوگ
-    for(int i = -20; i <= 20; i += 6) {
-        (new Terminal(this))->setPos(-40, i); // پایه‌های ورودی دیجیتال
+    (new Terminal(this))->setPos(40, 0);
+    for(int i = -20; i <= 20; i += 10) {
+        (new Terminal(this))->setPos(-40, i);
     }
 }
 QRectF DAC_Chip::boundingRect() const { return QRectF(-40, -40, 110, 80); }
@@ -130,16 +132,17 @@ void DAC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     if (isSelected()) pen.setColor(Qt::red);
     painter->setPen(pen);
 
-    painter->setBrush(QColor(210, 105, 30)); // نارنجی تیره
+    painter->setBrush(QColor(210, 105, 30));
     painter->drawRect(-30, -30, 60, 60);
     painter->setPen(Qt::white);
     painter->drawText(QRectF(-30, -30, 60, 60), Qt::AlignCenter, "DAC");
 
     painter->setPen(pen);
-    painter->drawLine(30, 0, 40, 0); // خروجی آنالوگ
+    painter->drawLine(30, 0, 40, 0);
     painter->drawText(45, 5, "Vout");
 
-    for(int i = -20; i <= 20; i += 6) {
-        painter->drawLine(-40, i, -30, i); // ورودی‌های دیجیتال موازی
+    // اصلاح رسم خطوط ورودی تا دقیقا با ترمینال‌ها تراز شوند (فاصله 10)
+    for(int i = -20; i <= 20; i += 10) {
+        painter->drawLine(-40, i, -30, i);
     }
 }

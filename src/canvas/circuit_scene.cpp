@@ -5,7 +5,7 @@
 #include <QColor>
 #include "../core/terminal.h"
 #include "../core/wire.h"
-
+#include "../core/auto_router.h"
 CircuitScene::CircuitScene(QObject *parent)
         : QGraphicsScene(parent), isWiring(false), tempWire(nullptr), startTerminal(nullptr) {
 
@@ -54,9 +54,15 @@ void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
                 addItem(tempWire);
                 return;
             } else {
-                // پایان سیم‌کشی
+                // --- پایان سیم‌کشی (وصل شدن به پایه دوم) ---
                 if (clickedTerminal != startTerminal) {
-                    tempWire->setEndPoint(clickedTerminal->sceneBoundingRect().center());
+                    QPointF startP = startTerminal->sceneBoundingRect().center();
+                    QPointF endP = clickedTerminal->sceneBoundingRect().center();
+
+                    // فراخوانی مسیریاب خودکار هوشمند
+                    QVector<QPointF> smartPath = AutoRouter::findPath(this, startP, endP, startTerminal, clickedTerminal);
+
+                    tempWire->setFullRoute(smartPath); // تزریق مسیر هوشمند به سیم
                     tempWire->confirmConnection(clickedTerminal);
 
                     isWiring = false;

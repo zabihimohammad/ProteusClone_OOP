@@ -161,6 +161,12 @@
 		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.h">
 			<Option target="ProteusClone_OOP"/>
 		</Unit>
+		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/auto_router.cpp">
+			<Option target="ProteusClone_OOP"/>
+		</Unit>
+		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/auto_router.h">
+			<Option target="ProteusClone_OOP"/>
+		</Unit>
 		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/element.cpp">
 			<Option target="ProteusClone_OOP"/>
 		</Unit>

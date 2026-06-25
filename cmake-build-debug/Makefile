@@ -309,6 +309,30 @@ src/components/peripherals.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.s
 .PHONY : src/components/peripherals.cpp.s
 
+src/core/auto_router.obj: src/core/auto_router.cpp.obj
+.PHONY : src/core/auto_router.obj
+
+# target to build an object file
+src/core/auto_router.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.obj
+.PHONY : src/core/auto_router.cpp.obj
+
+src/core/auto_router.i: src/core/auto_router.cpp.i
+.PHONY : src/core/auto_router.i
+
+# target to preprocess a source file
+src/core/auto_router.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.i
+.PHONY : src/core/auto_router.cpp.i
+
+src/core/auto_router.s: src/core/auto_router.cpp.s
+.PHONY : src/core/auto_router.s
+
+# target to generate assembly for a file
+src/core/auto_router.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.s
+.PHONY : src/core/auto_router.cpp.s
+
 src/core/element.obj: src/core/element.cpp.obj
 .PHONY : src/core/element.obj
 
@@ -484,6 +508,9 @@ help:
 	@echo ... src/components/peripherals.obj
 	@echo ... src/components/peripherals.i
 	@echo ... src/components/peripherals.s
+	@echo ... src/core/auto_router.obj
+	@echo ... src/core/auto_router.i
+	@echo ... src/core/auto_router.s
 	@echo ... src/core/element.obj
 	@echo ... src/core/element.i
 	@echo ... src/core/element.s

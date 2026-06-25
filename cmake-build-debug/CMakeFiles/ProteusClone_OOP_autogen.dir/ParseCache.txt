@@ -1556,3 +1556,5 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/mainwindow.cpp
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/main.cpp
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/wire.h
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/wire.cpp
+C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/auto_router.h
+C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/auto_router.cpp

@@ -5,15 +5,32 @@
 Wire::Wire(Terminal *startTerm, QPointF startPos) {
     startTerminal = startTerm;
     endTerminal = nullptr;
-    p1 = startPos;
-    p2 = startPos;
-    // با منفی کردن این مقدار، سیم‌ها همیشه زیر قطعات مدار قرار می‌گیرند و روی آن‌ها را نمی‌پوشانند
+
+    // نقطه شروع را دو بار به لیست اضافه می‌کنیم (دومی برای انتهای متحرک سیم است)
+    points.append(startPos);
+    points.append(startPos);
     setZValue(-1);
 }
 
 void Wire::setEndPoint(QPointF endPos) {
-    p2 = endPos;
-    prepareGeometryChange(); // دستور به موتور گرافیکی Qt برای رسم مجدد
+    if (!points.isEmpty()) {
+        points.last() = endPos; // همیشه آخرین نقطه به دنبال موس حرکت می‌کند
+        prepareGeometryChange();
+    }
+}
+
+void Wire::addWaypoint(QPointF point) {
+    if (points.size() >= 2) {
+        // نقطه جدید را درست قبل از نقطه متحرک پایانی وارد می‌کنیم
+        points.insert(points.size() - 1, point);
+    }
+}
+
+void Wire::setFullRoute(const QVector<QPointF> &route) {
+    points.clear();
+    points.append(startTerminal->sceneBoundingRect().center());
+    points.append(route);
+    prepareGeometryChange();
 }
 
 void Wire::confirmConnection(Terminal *endTerm) {
@@ -21,27 +38,44 @@ void Wire::confirmConnection(Terminal *endTerm) {
 }
 
 QRectF Wire::boundingRect() const {
-    // ایجاد یک مستطیل فرضی که خط سیم دقیقا در قطر آن قرار می‌گیرد
-    return QRectF(p1, p2).normalized().adjusted(-5, -5, 5, 5);
+    // پیدا کردن کادری که تمام گره‌های سیم را در بر بگیرد
+    if (points.isEmpty()) return QRectF();
+
+    qreal minX = points[0].x(), maxX = points[0].x();
+    qreal minY = points[0].y(), maxY = points[0].y();
+
+    for (const QPointF &p : points) {
+        if (p.x() < minX) minX = p.x();
+        if (p.x() > maxX) maxX = p.x();
+        if (p.y() < minY) minY = p.y();
+        if (p.y() > maxY) maxY = p.y();
+    }
+
+    return QRectF(minX, minY, maxX - minX, maxY - minY).adjusted(-5, -5, 5, 5);
 }
 
 void Wire::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
-    QPen pen(Qt::blue, 2); // رنگ پیش‌فرض سیم
+    QPen pen(Qt::blue, 2);
     painter->setPen(pen);
 
-    // ==========================================
-    // الگوریتم سیم‌کشی اورتوگونال (Manhattan Routing)
-    // ==========================================
+    if (points.size() < 2) return;
 
-    // ۱. پیدا کردن نقطه میانی در محور X
-    qreal midX = (p1.x() + p2.x()) / 2.0;
+    // اگر سیم در حال کشیده شدن با موس است (نقاط کمی دارد)
+    if (points.size() <= 3) {
+        for (int i = 0; i < points.size() - 1; ++i) {
+            QPointF pA = points[i];
+            QPointF pB = points[i+1];
+            qreal midX = (pA.x() + pB.x()) / 2.0;
 
-    // ۲. تعریف دو نقطه شکست (گوشه‌های ۹۰ درجه)
-    QPointF corner1(midX, p1.y());
-    QPointF corner2(midX, p2.y());
-
-    // ۳. رسم سیم در ۳ قطعه متصل به هم
-    painter->drawLine(p1, corner1);       // قطعه اول: حرکت افقی از مبدا تا وسط
-    painter->drawLine(corner1, corner2);  // قطعه دوم: حرکت عمودی تا ارتفاع مقصد
-    painter->drawLine(corner2, p2);       // قطعه سوم: حرکت افقی تا نقطه مقصد
+            painter->drawLine(pA, QPointF(midX, pA.y()));
+            painter->drawLine(QPointF(midX, pA.y()), QPointF(midX, pB.y()));
+            painter->drawLine(QPointF(midX, pB.y()), pB);
+        }
+    } else {
+        // اگر سیم توسط هوش مصنوعی مسیردهی شده (صدها نقطه 10 پیکسلی دارد)
+        // خطوط مستقیماً به هم وصل می‌شوند تا زیگ‌زاگ نشود
+        for (int i = 0; i < points.size() - 1; ++i) {
+            painter->drawLine(points[i], points[i+1]);
+        }
+    }
 }
