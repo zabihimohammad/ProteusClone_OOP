@@ -1,8 +1,15 @@
 #include "basic_components.h"
 #include <QPainter>
 #include <QPainterPath> // برای رسم شکل‌های پیچیده‌تر
+#include "../core/terminal.h"
 Resistor::Resistor() {
-    // تنظیمات اولیه می‌تواند اینجا قرار بگیرد
+    // ساخت ترمینال سمت چپ و قرار دادن آن در مختصات انتهای سیم چپ
+    Terminal *t1 = new Terminal(this);
+    t1->setPos(-30, 0);
+
+    // ساخت ترمینال سمت راست
+    Terminal *t2 = new Terminal(this);
+    t2->setPos(30, 0);
 }
 
 QRectF Resistor::boundingRect() const {
@@ -36,7 +43,10 @@ void Resistor::process() {
 // ==========================================
 // پیاده‌سازی ظاهر گرافیکی خازن
 // ==========================================
-Capacitor::Capacitor() {}
+Capacitor::Capacitor() {
+    (new Terminal(this))->setPos(-30, 0);
+    (new Terminal(this))->setPos(30, 0);
+}
 
 QRectF Capacitor::boundingRect() const {
     // کادر فرضی خازن: کمی بلندتر از مقاومت در نظر می‌گیریم تا صفحات خازن جا شوند
@@ -63,7 +73,10 @@ void Capacitor::process() {}
 // ==========================================
 // پیاده‌سازی ظاهر گرافیکی منبع تغذیه (باتری)
 // ==========================================
-DCVoltageSource::DCVoltageSource() {}
+DCVoltageSource::DCVoltageSource() {
+    (new Terminal(this))->setPos(-30, 0);
+    (new Terminal(this))->setPos(30, 0);
+}
 
 QRectF DCVoltageSource::boundingRect() const {
     return QRectF(-40, -30, 80, 60);
@@ -95,7 +108,9 @@ void DCVoltageSource::paint(QPainter *painter, const QStyleOptionGraphicsItem *o
 
 void DCVoltageSource::process() {}
 // --- پیاده‌سازی زمین (GND) ---
-Ground::Ground() {}
+Ground::Ground() {
+    (new Terminal(this))->setPos(0, 0);
+}
 QRectF Ground::boundingRect() const { return QRectF(-20, 0, 40, 30); }
 void Ground::process() {}
 
@@ -111,7 +126,10 @@ void Ground::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
 }
 
 // --- پیاده‌سازی سلف (Inductor) ---
-Inductor::Inductor() {}
+Inductor::Inductor() {
+    (new Terminal(this))->setPos(-30, 0);
+    (new Terminal(this))->setPos(30, 0);
+}
 QRectF Inductor::boundingRect() const { return QRectF(-35, -15, 70, 30); }
 void Inductor::process() {}
 
@@ -131,7 +149,9 @@ void Inductor::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
 
 // --- پالس کلاک ---
-PulseGenerator::PulseGenerator() {}
+PulseGenerator::PulseGenerator() {
+    (new Terminal(this))->setPos(30, 0);
+}
 QRectF PulseGenerator::boundingRect() const { return QRectF(-25, -25, 50, 50); }
 void PulseGenerator::process() {}
 void PulseGenerator::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -148,7 +168,10 @@ void PulseGenerator::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
 }
 
 // --- کلید قطع و وصل (Switch) ---
-Switch::Switch() {}
+Switch::Switch() {
+    (new Terminal(this))->setPos(-30, 0);
+    (new Terminal(this))->setPos(30, 0);
+}
 QRectF Switch::boundingRect() const { return QRectF(-35, -25, 70, 50); }
 void Switch::process() {}
 void Switch::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -163,7 +186,10 @@ void Switch::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
 }
 
 // --- دکمه فشاری (Push Button) ---
-PushButton::PushButton() {}
+PushButton::PushButton() {
+    (new Terminal(this))->setPos(-30, 0);
+    (new Terminal(this))->setPos(30, 0);
+}
 QRectF PushButton::boundingRect() const { return QRectF(-35, -30, 70, 50); }
 void PushButton::process() {}
 void PushButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -179,7 +205,10 @@ void PushButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
 }
 
 // --- دیود نورانی (LED) ---
-LED::LED() {}
+LED::LED() {
+    (new Terminal(this))->setPos(-30, 0);
+    (new Terminal(this))->setPos(30, 0);
+}
 QRectF LED::boundingRect() const { return QRectF(-35, -30, 70, 60); }
 void LED::process() {}
 void LED::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {

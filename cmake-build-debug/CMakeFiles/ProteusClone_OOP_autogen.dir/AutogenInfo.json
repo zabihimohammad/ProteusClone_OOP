@@ -367,9 +367,27 @@
 			null
 		],
 		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/auto_router.h",
+			"MU",
+			"PRMOGMWJPH/moc_auto_router.cpp",
+			null
+		],
+		[
 			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/element.h",
 			"MU",
 			"PRMOGMWJPH/moc_element.cpp",
+			null
+		],
+		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h",
+			"MU",
+			"PRMOGMWJPH/moc_terminal.cpp",
+			null
+		],
+		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/wire.h",
+			"MU",
+			"PRMOGMWJPH/moc_wire.cpp",
 			null
 		],
 		[
@@ -485,7 +503,22 @@
 			null
 		],
 		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/auto_router.cpp",
+			"MU",
+			null
+		],
+		[
 			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/element.cpp",
+			"MU",
+			null
+		],
+		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.cpp",
+			"MU",
+			null
+		],
+		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/wire.cpp",
 			"MU",
 			null
 		],

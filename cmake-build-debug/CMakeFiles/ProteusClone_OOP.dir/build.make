@@ -233,6 +233,51 @@ CMakeFiles/ProteusClone_OOP.dir/src/core/element.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ProteusClone_OOP.dir/src/core/element.cpp.s"
 	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\core\element.cpp -o CMakeFiles\ProteusClone_OOP.dir\src\core\element.cpp.s
 
+CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/flags.make
+CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/includes_CXX.rsp
+CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.obj: ../src/core/terminal.cpp
+CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.obj -MF CMakeFiles\ProteusClone_OOP.dir\src\core\terminal.cpp.obj.d -o CMakeFiles\ProteusClone_OOP.dir\src\core\terminal.cpp.obj -c C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\core\terminal.cpp
+
+CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\core\terminal.cpp > CMakeFiles\ProteusClone_OOP.dir\src\core\terminal.cpp.i
+
+CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\core\terminal.cpp -o CMakeFiles\ProteusClone_OOP.dir\src\core\terminal.cpp.s
+
+CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/flags.make
+CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/includes_CXX.rsp
+CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.obj: ../src/core/wire.cpp
+CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.obj -MF CMakeFiles\ProteusClone_OOP.dir\src\core\wire.cpp.obj.d -o CMakeFiles\ProteusClone_OOP.dir\src\core\wire.cpp.obj -c C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\core\wire.cpp
+
+CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\core\wire.cpp > CMakeFiles\ProteusClone_OOP.dir\src\core\wire.cpp.i
+
+CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\core\wire.cpp -o CMakeFiles\ProteusClone_OOP.dir\src\core\wire.cpp.s
+
+CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/flags.make
+CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/includes_CXX.rsp
+CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.obj: ../src/core/auto_router.cpp
+CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.obj: CMakeFiles/ProteusClone_OOP.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.obj"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.obj -MF CMakeFiles\ProteusClone_OOP.dir\src\core\auto_router.cpp.obj.d -o CMakeFiles\ProteusClone_OOP.dir\src\core\auto_router.cpp.obj -c C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\core\auto_router.cpp
+
+CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.i"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\core\auto_router.cpp > CMakeFiles\ProteusClone_OOP.dir\src\core\auto_router.cpp.i
+
+CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.s"
+	C:\Qt\Tools\mingw1310_64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\core\auto_router.cpp -o CMakeFiles\ProteusClone_OOP.dir\src\core\auto_router.cpp.s
+
 # Object files for target ProteusClone_OOP
 ProteusClone_OOP_OBJECTS = \
 "CMakeFiles/ProteusClone_OOP.dir/ProteusClone_OOP_autogen/mocs_compilation.cpp.obj" \
@@ -245,7 +290,10 @@ ProteusClone_OOP_OBJECTS = \
 "CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.obj" \
 "CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj" \
 "CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj" \
-"CMakeFiles/ProteusClone_OOP.dir/src/core/element.cpp.obj"
+"CMakeFiles/ProteusClone_OOP.dir/src/core/element.cpp.obj" \
+"CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.obj" \
+"CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.obj" \
+"CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.obj"
 
 # External object files for target ProteusClone_OOP
 ProteusClone_OOP_EXTERNAL_OBJECTS =
@@ -261,6 +309,9 @@ ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/src/components/mcu.cpp.obj
 ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/src/components/peripherals.cpp.obj
 ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj
 ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/src/core/element.cpp.obj
+ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.obj
+ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.obj
+ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/src/core/auto_router.cpp.obj
 ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/build.make
 ProteusClone_OOP.exe: C:/Qt/6.11.1/mingw_64/lib/libQt6Widgets.a
 ProteusClone_OOP.exe: C:/Qt/6.11.1/mingw_64/lib/libQt6Gui.a
@@ -268,7 +319,7 @@ ProteusClone_OOP.exe: C:/Qt/6.11.1/mingw_64/lib/libQt6Core.a
 ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/linklibs.rsp
 ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/objects1.rsp
 ProteusClone_OOP.exe: CMakeFiles/ProteusClone_OOP.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Linking CXX executable ProteusClone_OOP.exe"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Linking CXX executable ProteusClone_OOP.exe"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles\ProteusClone_OOP.dir\link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

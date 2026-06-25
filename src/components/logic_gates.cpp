@@ -1,7 +1,12 @@
 #include "logic_gates.h"
 #include <QPainter>
 #include <QPainterPath>
-AndGate::AndGate() {}
+#include "../core/terminal.h"
+AndGate::AndGate() {
+    (new Terminal(this))->setPos(-30, -10); // ورودی A
+    (new Terminal(this))->setPos(-30, 10);  // ورودی B
+    (new Terminal(this))->setPos(30, 0);    // خروجی Y
+}
 QRectF AndGate::boundingRect() const { return QRectF(-30, -25, 60, 50); }
 void AndGate::process() {}
 
@@ -26,7 +31,11 @@ void AndGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 
 
 // --- گیت OR ---
-OrGate::OrGate() {}
+OrGate::OrGate() {
+    (new Terminal(this))->setPos(-30, -10);
+    (new Terminal(this))->setPos(-30, 10);
+    (new Terminal(this))->setPos(30, 0);
+}
 QRectF OrGate::boundingRect() const { return QRectF(-30, -25, 60, 50); }
 void OrGate::process() {}
 void OrGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -47,7 +56,10 @@ void OrGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
 }
 
 // --- گیت NOT ---
-NotGate::NotGate() {}
+NotGate::NotGate() {
+    (new Terminal(this))->setPos(-30, 0);
+    (new Terminal(this))->setPos(30, 0);
+}
 QRectF NotGate::boundingRect() const { return QRectF(-30, -25, 60, 50); }
 void NotGate::process() {}
 void NotGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -64,7 +76,11 @@ void NotGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 }
 
 // --- گیت XOR ---
-XorGate::XorGate() {}
+XorGate::XorGate() {
+    (new Terminal(this))->setPos(-30, -10);
+    (new Terminal(this))->setPos(-30, 10);
+    (new Terminal(this))->setPos(30, 0);
+}
 QRectF XorGate::boundingRect() const { return QRectF(-30, -25, 60, 50); }
 void XorGate::process() {}
 void XorGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -90,7 +106,11 @@ void XorGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 }
 
 // --- گیت NAND ---
-NandGate::NandGate() {}
+NandGate::NandGate() {
+    (new Terminal(this))->setPos(-30, -10);
+    (new Terminal(this))->setPos(-30, 10);
+    (new Terminal(this))->setPos(35, 0);
+}
 QRectF NandGate::boundingRect() const { return QRectF(-30, -25, 70, 50); }
 void NandGate::process() {}
 void NandGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
@@ -110,7 +130,12 @@ void NandGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 }
 
 // --- فلیپ‌فلاپ (D-FlipFlop) ---
-DFlipFlop::DFlipFlop() {}
+DFlipFlop::DFlipFlop() {
+    (new Terminal(this))->setPos(-40, -15); // D
+    (new Terminal(this))->setPos(-40, 15);  // CLK
+    (new Terminal(this))->setPos(40, -15);  // Q
+    (new Terminal(this))->setPos(45, 15);   // Q'
+}
 QRectF DFlipFlop::boundingRect() const { return QRectF(-40, -40, 90, 80); }
 void DFlipFlop::process() {}
 void DFlipFlop::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {

@@ -357,12 +357,71 @@ CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_scene.cpp.obj: \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qfont.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qendian.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qpen.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsSceneMouseEvent \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicssceneevent.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreevent.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qbasictimer.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qabstracteventdispatcher.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qeventloop.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qdeadlinetimer.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qset.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qhash.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/QPainter \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qpainter.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qtextoption.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontinfo.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontvariableaxis.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/QRectF \
  C:/Qt/6.11.1/mingw_64/include/QtGui/QPen \
- C:/Qt/6.11.1/mingw_64/include/QtGui/QColor
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QColor \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsItem \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsitem.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qvariant.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qdebug.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qtextstream.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qcontiguouscache.h \
+ C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/climits \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qsharedpointer.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qsharedpointer_impl.h \
+ C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/set \
+ C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_set.h \
+ C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_multiset.h \
+ C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/unordered_set \
+ C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/unordered_set.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qmap.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qshareddata_impl.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qvarlengtharray.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qalloc.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qpainterpath.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/wire.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QVector \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qvector.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QPointF \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/auto_router.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QKeyEvent \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qevent.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qiodevice.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qurl.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qeventpoint.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qvector2d.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qvectornd.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qpointingdevice.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qinputdevice.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qscreen.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QObject \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QRect \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QSize \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QSizeF \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QTransform \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qnativeinterface.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qscreen_platform.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qguiapplication.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreapplication.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreapplication_platform.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qinputmethod.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qlocale.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qguiapplication_platform.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qkeysequence.h
