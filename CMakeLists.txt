@@ -38,6 +38,8 @@ set(PROJECT_SOURCES
         src/core/element.h
         src/core/terminal.cpp
         src/core/terminal.h
+        src/core/wire.cpp
+        src/core/wire.h
         )
 
 add_executable(ProteusClone_OOP ${PROJECT_SOURCES})

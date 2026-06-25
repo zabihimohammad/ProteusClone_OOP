@@ -1,18 +1,25 @@
 #pragma once
 #include <QGraphicsScene>
-#include <QPainter>
-#include <QRectF>
+
+class Wire;
+class Terminal;
 
 class CircuitScene : public QGraphicsScene {
-    Q_OBJECT
+Q_OBJECT
 public:
     explicit CircuitScene(QObject *parent = nullptr);
 
 protected:
-    // این تابع هسته گرافیکی ما برای پس‌زمینه است.
-    // موتور Qt به صورت خودکار هر زمان که نیاز به رسم مجدد صفحه باشد (مثلا وقتی زوم می‌کنید) این تابع را صدا می‌زند.
+    // تابع رسم پس‌زمینه شطرنجی
     void drawBackground(QPainter *painter, const QRectF &rect) override;
 
+    // توابع رهگیری موس برای سیم‌کشی
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
+
 private:
-    int gridSize; // فاصله بین نقطه‌های شطرنجی (مثلاً ۲۰ پیکسل)
+    int gridSize;            // فاصله بین نقطه‌های شطرنجی
+    bool isWiring;           // آیا کاربر در حال سیم‌کشی است؟
+    Wire *tempWire;          // سیمی که در حال کشیده شدن است
+    Terminal *startTerminal; // پایه‌ای که سیم از آن شروع شده
 };

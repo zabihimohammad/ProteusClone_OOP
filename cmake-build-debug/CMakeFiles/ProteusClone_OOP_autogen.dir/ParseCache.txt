@@ -3,7 +3,6 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mmc:Q_OBJECT
  mdp:C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/cmake-build-debug/ProteusClone_OOP_autogen/moc_predefs.h
- mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/QRectF
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/q17memory.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/q20bit.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/q20functional.h
@@ -120,16 +119,11 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qversiontagging.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qxptype_traits.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qyieldcpu.h
- mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/QPainter
  mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qbrush.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qcolor.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qfont.h
- mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qfontinfo.h
- mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h
- mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qfontvariableaxis.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qimage.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qpaintdevice.h
- mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qpainter.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qpen.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qpixelformat.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qpixmap.h
@@ -137,7 +131,6 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qregion.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qrgb.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qrgba64.h
- mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qtextoption.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qtgui-config.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qtguiexports.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qtguiglobal.h
@@ -356,8 +349,6 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/time.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/vadefs.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wchar.h
-C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.cpp
-C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_view.h
  mmc:Q_OBJECT
  mdp:C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_view.h
@@ -773,8 +764,9 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_view.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/time.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/vadefs.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wchar.h
+C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.cpp
+C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/basic_components.h
-C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.h
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.h
  mmc:Q_OBJECT
  mdp:C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.h
@@ -1170,6 +1162,7 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/vadefs.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wchar.h
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/logic_gates.h
+C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.h
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/element.h
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/mcu.h
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/mainwindow.h
@@ -1553,11 +1546,13 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/mainwindow.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wchar.h
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_view.cpp
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/basic_components.cpp
-C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.cpp
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/logic_gates.cpp
+C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.cpp
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/mcu.cpp
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.cpp
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/element.cpp
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.cpp
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/mainwindow.cpp
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/main.cpp
+C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/wire.h
+C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/wire.cpp

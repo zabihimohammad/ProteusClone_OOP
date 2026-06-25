@@ -357,6 +357,30 @@ src/core/terminal.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.s
 .PHONY : src/core/terminal.cpp.s
 
+src/core/wire.obj: src/core/wire.cpp.obj
+.PHONY : src/core/wire.obj
+
+# target to build an object file
+src/core/wire.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.obj
+.PHONY : src/core/wire.cpp.obj
+
+src/core/wire.i: src/core/wire.cpp.i
+.PHONY : src/core/wire.i
+
+# target to preprocess a source file
+src/core/wire.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.i
+.PHONY : src/core/wire.cpp.i
+
+src/core/wire.s: src/core/wire.cpp.s
+.PHONY : src/core/wire.s
+
+# target to generate assembly for a file
+src/core/wire.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.s
+.PHONY : src/core/wire.cpp.s
+
 src/gui/hex_upload_dialog.obj: src/gui/hex_upload_dialog.cpp.obj
 .PHONY : src/gui/hex_upload_dialog.obj
 
@@ -466,6 +490,9 @@ help:
 	@echo ... src/core/terminal.obj
 	@echo ... src/core/terminal.i
 	@echo ... src/core/terminal.s
+	@echo ... src/core/wire.obj
+	@echo ... src/core/wire.i
+	@echo ... src/core/wire.s
 	@echo ... src/gui/hex_upload_dialog.obj
 	@echo ... src/gui/hex_upload_dialog.i
 	@echo ... src/gui/hex_upload_dialog.s
