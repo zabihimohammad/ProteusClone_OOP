@@ -2,7 +2,7 @@
 #include <QPointF>
 #include <qmath.h> // برای استفاده از توابع گرد کردن ریاضی
 
-QVariant Element::itemChange(GraphicsItemChange change, const QVariant &value) {
+/*QVariant Element::itemChange(GraphicsItemChange change, const QVariant &value) {
     // بررسی می‌کنیم که آیا تغییر از نوع "جابجایی موقعیت قطعه" است و آیا قطعه روی بوم قرار دارد؟
     if (change == ItemPositionChange && scene()) {
 
@@ -23,4 +23,4 @@ QVariant Element::itemChange(GraphicsItemChange change, const QVariant &value) {
 
     // اگر تغییرات دیگری بود (مثلاً انتخاب شدن یا تغییر رنگ)، اجازه می‌دهیم روال عادی Qt انجام شود
     return QGraphicsItem::itemChange(change, value);
-}
+}*/
