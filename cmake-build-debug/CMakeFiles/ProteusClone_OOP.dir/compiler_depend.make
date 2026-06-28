@@ -360,6 +360,33 @@ CMakeFiles/ProteusClone_OOP.dir/ProteusClone_OOP_autogen/mocs_compilation.cpp.ob
   C:/Qt/6.11.1/mingw_64/include/QtGui/qfont.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qendian.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpen.h \
+  C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsSceneDragDropEvent \
+  C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicssceneevent.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreevent.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qbasictimer.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qabstracteventdispatcher.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qeventloop.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qdeadlinetimer.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qset.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qhash.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QMimeData \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qmimedata.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qvariant.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qdebug.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qtextstream.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qcontiguouscache.h \
+  C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/climits \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qsharedpointer.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qsharedpointer_impl.h \
+  C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/set \
+  C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_set.h \
+  C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_multiset.h \
+  C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/unordered_set \
+  C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/unordered_set.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qmap.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qshareddata_impl.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qvarlengtharray.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qalloc.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qtmochelpers.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qtmocconstants.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/q20algorithm.h \
@@ -379,35 +406,12 @@ CMakeFiles/ProteusClone_OOP.dir/ProteusClone_OOP_autogen/mocs_compilation.cpp.ob
   C:/Qt/6.11.1/mingw_64/include/QtGui/qaction.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qkeysequence.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qicon.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qvariant.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qdebug.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qtextstream.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qcontiguouscache.h \
-  C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/climits \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qsharedpointer.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qsharedpointer_impl.h \
-  C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/set \
-  C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_set.h \
-  C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_multiset.h \
-  C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/unordered_set \
-  C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/unordered_set.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qmap.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qshareddata_impl.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qset.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qhash.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qvarlengtharray.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qalloc.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpalette.h \
   C:/Qt/6.11.1/mingw_64/include/QtWidgets/qsizepolicy.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qcursor.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qbitmap.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/QWheelEvent \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qevent.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreevent.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qbasictimer.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qabstracteventdispatcher.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qeventloop.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qdeadlinetimer.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qiodevice.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qurl.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qeventpoint.h \
@@ -810,7 +814,7 @@ CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_scene.cpp.obj: ../src/canvas/
   C:/Qt/6.11.1/mingw_64/include/QtGui/qfont.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qendian.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpen.h \
-  C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsSceneMouseEvent \
+  C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsSceneDragDropEvent \
   C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicssceneevent.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreevent.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qbasictimer.h \
@@ -819,17 +823,8 @@ CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_scene.cpp.obj: ../src/canvas/
   C:/Qt/6.11.1/mingw_64/include/QtCore/qdeadlinetimer.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qset.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qhash.h \
-  C:/Qt/6.11.1/mingw_64/include/QtGui/QPainter \
-  C:/Qt/6.11.1/mingw_64/include/QtGui/qpainter.h \
-  C:/Qt/6.11.1/mingw_64/include/QtGui/qtextoption.h \
-  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontinfo.h \
-  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontvariableaxis.h \
-  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h \
-  C:/Qt/6.11.1/mingw_64/include/QtGui/QPen \
-  C:/Qt/6.11.1/mingw_64/include/QtGui/QColor \
-  ../src/core/terminal.h \
-  C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsItem \
-  C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsitem.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QMimeData \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qmimedata.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qvariant.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qdebug.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qtextstream.h \
@@ -846,6 +841,18 @@ CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_scene.cpp.obj: ../src/canvas/
   C:/Qt/6.11.1/mingw_64/include/QtCore/qshareddata_impl.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qvarlengtharray.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qalloc.h \
+  C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsSceneMouseEvent \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/QPainter \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qpainter.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qtextoption.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontinfo.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontvariableaxis.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/QPen \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/QColor \
+  ../src/core/terminal.h \
+  C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsItem \
+  C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsitem.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpainterpath.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
   ../src/core/wire.h \
@@ -877,7 +884,12 @@ CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_scene.cpp.obj: ../src/canvas/
   C:/Qt/6.11.1/mingw_64/include/QtGui/qinputmethod.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qlocale.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qguiapplication_platform.h \
-  C:/Qt/6.11.1/mingw_64/include/QtGui/qkeysequence.h
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qkeysequence.h \
+  ../src/components/mcu.h \
+  ../src/core/element.h \
+  ../src/components/basic_components.h \
+  ../src/components/logic_gates.h \
+  ../src/components/peripherals.h
 
 CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_view.cpp.obj: ../src/canvas/circuit_view.cpp \
   ../src/canvas/circuit_view.h \
@@ -5294,6 +5306,15 @@ CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj: ../src/gui/mainwindo
   C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsScene \
   C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsscene.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpen.h \
+  C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsSceneDragDropEvent \
+  C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicssceneevent.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreevent.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qbasictimer.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qabstracteventdispatcher.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qeventloop.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qdeadlinetimer.h \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QMimeData \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/qmimedata.h \
   ../src/canvas/circuit_view.h \
   C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsView \
   C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsview.h \
@@ -5304,11 +5325,6 @@ CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj: ../src/gui/mainwindo
   C:/Qt/6.11.1/mingw_64/include/QtWidgets/qframe.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/QWheelEvent \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qevent.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreevent.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qbasictimer.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qabstracteventdispatcher.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qeventloop.h \
-  C:/Qt/6.11.1/mingw_64/include/QtCore/qdeadlinetimer.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qiodevice.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qurl.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qeventpoint.h \
@@ -5341,7 +5357,12 @@ CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj: ../src/gui/mainwindo
   ../src/core/terminal.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
   ../src/components/mcu.h \
-  ../src/components/peripherals.h
+  ../src/components/peripherals.h \
+  C:/Qt/6.11.1/mingw_64/include/QtWidgets/QPushButton \
+  C:/Qt/6.11.1/mingw_64/include/QtWidgets/qpushbutton.h \
+  C:/Qt/6.11.1/mingw_64/include/QtWidgets/qabstractbutton.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/QDrag \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qdrag.h
 
 CMakeFiles/ProteusClone_OOP.dir/src/main.cpp.obj: ../src/main.cpp \
   C:/Qt/6.11.1/mingw_64/include/QtWidgets/QApplication \
@@ -5960,9 +5981,9 @@ C:/Qt/6.11.1/mingw_64/include/QtCore/qstringbuilder.h:
 
 C:/Qt/6.11.1/mingw_64/include/QtCore/qtconfigmacros.h:
 
-C:/Qt/6.11.1/mingw_64/include/QtCore/qprocessordetection.h:
-
 C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/fs_path.h:
+
+C:/Qt/6.11.1/mingw_64/include/QtCore/qprocessordetection.h:
 
 C:/Qt/6.11.1/mingw_64/include/QtCore/qsystemdetection.h:
 
@@ -6118,9 +6139,11 @@ C:/Qt/6.11.1/mingw_64/include/QtCore/QMap:
 
 C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/compare:
 
-C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/stdio.h:
-
 C:/Qt/6.11.1/mingw_64/include/QtCore/qexceptionhandling.h:
+
+C:/Qt/6.11.1/mingw_64/include/QtCore/qmimedata.h:
+
+C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/stdio.h:
 
 C:/Qt/6.11.1/mingw_64/include/QtCore/qforeach.h:
 
@@ -6412,6 +6435,8 @@ C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/loca
 
 C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/pthread.h:
 
+C:/Qt/6.11.1/mingw_64/include/QtGui/qdrag.h:
+
 C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/process.h:
 
 C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/signal.h:
@@ -6632,6 +6657,44 @@ C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cassert:
 
 C:/Qt/6.11.1/mingw_64/include/QtCore/q20iterator.h:
 
+C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsSceneDragDropEvent:
+
+../src/components/logic_gates.cpp:
+
+C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicssceneevent.h:
+
+C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreevent.h:
+
+C:/Qt/6.11.1/mingw_64/include/QtCore/qbasictimer.h:
+
+C:/Qt/6.11.1/mingw_64/include/QtCore/qabstracteventdispatcher.h:
+
+C:/Qt/6.11.1/mingw_64/include/QtCore/qeventloop.h:
+
+C:/Qt/6.11.1/mingw_64/include/QtCore/qdeadlinetimer.h:
+
+C:/Qt/6.11.1/mingw_64/include/QtCore/qset.h:
+
+C:/Qt/6.11.1/mingw_64/include/QtCore/qhash.h:
+
+C:/Qt/6.11.1/mingw_64/include/QtCore/QMimeData:
+
+C:/Qt/6.11.1/mingw_64/include/QtWidgets/QPushButton:
+
+C:/Qt/6.11.1/mingw_64/include/QtCore/qvariant.h:
+
+C:/Qt/6.11.1/mingw_64/include/QtCore/qdebug.h:
+
+C:/Qt/6.11.1/mingw_64/include/QtCore/qtextstream.h:
+
+C:/Qt/6.11.1/mingw_64/include/QtCore/qcontiguouscache.h:
+
+C:/Qt/6.11.1/mingw_64/include/QtCore/qsharedpointer_impl.h:
+
+C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/unordered_set.h:
+
+C:/Qt/6.11.1/mingw_64/include/QtCore/qalloc.h:
+
 C:/Qt/6.11.1/mingw_64/include/QtCore/qtmochelpers.h:
 
 C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsview.h:
@@ -6654,24 +6717,6 @@ C:/Qt/6.11.1/mingw_64/include/QtGui/qaction.h:
 
 C:/Qt/6.11.1/mingw_64/include/QtGui/qkeysequence.h:
 
-C:/Qt/6.11.1/mingw_64/include/QtCore/qvariant.h:
-
-C:/Qt/6.11.1/mingw_64/include/QtCore/qdebug.h:
-
-C:/Qt/6.11.1/mingw_64/include/QtCore/qtextstream.h:
-
-C:/Qt/6.11.1/mingw_64/include/QtCore/qcontiguouscache.h:
-
-C:/Qt/6.11.1/mingw_64/include/QtCore/qsharedpointer_impl.h:
-
-C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/unordered_set.h:
-
-C:/Qt/6.11.1/mingw_64/include/QtCore/qset.h:
-
-C:/Qt/6.11.1/mingw_64/include/QtCore/qhash.h:
-
-C:/Qt/6.11.1/mingw_64/include/QtCore/qalloc.h:
-
 C:/Qt/6.11.1/mingw_64/include/QtGui/qpalette.h:
 
 C:/Qt/6.11.1/mingw_64/include/QtWidgets/qsizepolicy.h:
@@ -6681,16 +6726,6 @@ C:/Qt/6.11.1/mingw_64/include/QtGui/qcursor.h:
 ../src/gui/mainwindow.h:
 
 C:/Qt/6.11.1/mingw_64/include/QtGui/QWheelEvent:
-
-C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreevent.h:
-
-C:/Qt/6.11.1/mingw_64/include/QtCore/qbasictimer.h:
-
-C:/Qt/6.11.1/mingw_64/include/QtCore/qabstracteventdispatcher.h:
-
-C:/Qt/6.11.1/mingw_64/include/QtCore/qeventloop.h:
-
-C:/Qt/6.11.1/mingw_64/include/QtCore/qdeadlinetimer.h:
 
 C:/Qt/6.11.1/mingw_64/include/QtGui/qvectornd.h:
 
@@ -6730,8 +6765,6 @@ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qpushbutton.h:
 
 ../src/components/basic_components.cpp:
 
-C:/Qt/6.11.1/mingw_64/include/QtWidgets/QPushButton:
-
 C:/Qt/6.11.1/mingw_64/include/QtWidgets/qabstractbutton.h:
 
 ProteusClone_OOP_autogen/MXUWEOXILK/moc_mainwindow.cpp:
@@ -6743,8 +6776,6 @@ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qmainwindow.h:
 ../src/canvas/circuit_scene.cpp:
 
 C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsSceneMouseEvent:
-
-C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicssceneevent.h:
 
 C:/Qt/6.11.1/mingw_64/include/QtGui/QPen:
 
@@ -6769,8 +6800,6 @@ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qabstractslider.h:
 C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/fs_ops.h:
 
 C:/Qt/6.11.1/mingw_64/include/QtGui/QPainterPath:
-
-../src/components/logic_gates.cpp:
 
 ../src/components/mcu.cpp:
 
@@ -6839,5 +6868,7 @@ C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/sstr
 C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/fs_dir.h:
 
 ../src/gui/mainwindow.cpp:
+
+C:/Qt/6.11.1/mingw_64/include/QtGui/QDrag:
 
 ../src/main.cpp:
