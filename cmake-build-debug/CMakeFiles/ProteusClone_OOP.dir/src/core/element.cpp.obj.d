@@ -372,5 +372,10 @@ CMakeFiles/ProteusClone_OOP.dir/src/core/element.cpp.obj: \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qrgba64.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qimage.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qpixelformat.h \
+ C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\core\terminal.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
+ C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\src\core\wire.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QVector \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qvector.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/QPointF \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qmath.h

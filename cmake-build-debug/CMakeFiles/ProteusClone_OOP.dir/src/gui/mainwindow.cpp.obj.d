@@ -437,9 +437,13 @@ CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj: \
  C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsItem \
  C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsitem.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qpainterpath.h \
- C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/logic_gates.h \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/wire.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QVector \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qvector.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QPointF \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/logic_gates.h \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/mcu.h \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.h \
  C:/Qt/6.11.1/mingw_64/include/QtWidgets/QPushButton \
