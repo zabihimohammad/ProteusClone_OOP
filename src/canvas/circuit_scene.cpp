@@ -7,6 +7,10 @@
 #include "../core/wire.h"
 #include "../core/auto_router.h"
 #include <QKeyEvent>
+#include "../components/mcu.h" // یا هر قطعه‌ای که قبلاً ساختید
+#include "../components/basic_components.h"
+#include "../components/logic_gates.h"
+#include "../components/peripherals.h"
 CircuitScene::CircuitScene(QObject *parent)
         : QGraphicsScene(parent), isWiring(false), tempWire(nullptr), startTerminal(nullptr) {
 
@@ -112,4 +116,73 @@ void CircuitScene::keyPressEvent(QKeyEvent *event) {
 
     // اجرای رویدادهای پیش‌فرض کیبورد
     QGraphicsScene::keyPressEvent(event);
+}
+// ==========================================
+// ۱. لحظه ورود آیتم به فضای بوم
+// ==========================================
+void CircuitScene::dragEnterEvent(QGraphicsSceneDragDropEvent *event) {
+    // بررسی می‌کنیم که آیا پاکت نامه حاوی "متن" است؟
+    // تیم UI قرار است نام قطعه را به صورت متنی (مثلاً "MCU") ارسال کند
+    if (event->mimeData()->hasText()) {
+        event->acceptProposedAction(); // اجازه ورود بده
+    } else {
+        event->ignore(); // اگر چیز دیگری بود (مثلا عکس) آن را پس بزن
+    }
+}
+
+// ==========================================
+// ۲. حرکت دادن آیتم روی فضای بوم
+// ==========================================
+void CircuitScene::dragMoveEvent(QGraphicsSceneDragDropEvent *event) {
+    // باید در حال حرکت هم آن را بپذیریم تا آیکون موس به شکل "ممنوع" در نیاید
+    if (event->mimeData()->hasText()) {
+        event->acceptProposedAction();
+    } else {
+        event->ignore();
+    }
+}
+
+// ==========================================
+// ۳. لحظه رها کردن قطعه (مهم‌ترین بخش)
+// ==========================================
+void CircuitScene::dropEvent(QGraphicsSceneDragDropEvent *event) {
+    if (event->mimeData()->hasText()) {
+
+        QString componentType = event->mimeData()->text();
+        QPointF dropPosition = event->scenePos();
+
+        // ۱. ساخت یک اشاره‌گر خالی از نوع QGraphicsItem (یا ComponentBase اگر دارید)
+        QGraphicsItem *newItem = nullptr;
+
+        // ۲. کارخانه تولید قطعات (Factory)
+        if (componentType == "MCU") {
+            newItem = new MCUChip();
+        }
+        else if (componentType == "RESISTOR") {
+            newItem = new Resistor(); // نام دقیق کلاس مقاومت خودتان را جایگزین کنید
+        }
+        else if (componentType == "CAPACITOR") {
+            newItem = new Capacitor();
+        }
+        else if (componentType == "AND_GATE") {
+            newItem = new AndGate();
+        }
+        else if (componentType == "OR_GATE") {
+            newItem = new OrGate();
+        }
+        else if (componentType == "LED") {
+            newItem = new LED();
+        }
+        // می‌توانید هر تعداد else if که نیاز دارید برای سایر قطعات اینجا اضافه کنید...
+
+        // ۳. جلوگیری از کد تکراری: اگر قطعه با موفقیت ساخته شد، آن را روی بوم قرار بده
+        if (newItem != nullptr) {
+            newItem->setPos(dropPosition);
+            addItem(newItem);
+        }
+
+        event->acceptProposedAction();
+    } else {
+        event->ignore();
+    }
 }
