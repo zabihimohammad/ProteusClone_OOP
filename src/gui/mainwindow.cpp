@@ -9,6 +9,61 @@
 #include "../components/logic_gates.h"
 #include "../components/mcu.h"
 #include "../components/peripherals.h"
+#include <QPushButton>
+#include <QDrag>
+#include <QMimeData>
+#include <QMouseEvent>
+#include <QPainter> // این کتابخانه را به بالای فایل اضافه کنید
+
+// ====================================================
+// کلاس موقت تست با قابلیت نمایش تصویر گرافیکی حین Drag
+// ====================================================
+class TestDragButton : public QPushButton {
+public:
+    TestDragButton(QString text, QWidget *parent = nullptr) : QPushButton(text, parent) {}
+
+protected:
+    void mouseMoveEvent(QMouseEvent *event) override {
+        QDrag *drag = new QDrag(this);
+        QMimeData *mimeData = new QMimeData;
+
+        // ۱. قرار دادن نام قطعه در پاکت نامه (برای بوم)
+        mimeData->setText(this->text());
+        drag->setMimeData(mimeData);
+
+        // ==========================================
+        // بخش جدید: ساخت شبح گرافیکی برای زیر موس
+        // ==========================================
+
+        // الف) یک بوم نقاشی کوچک (Pixmap) موقت می‌سازیم
+        QPixmap pixmap(80, 40);
+        pixmap.fill(Qt::transparent); // پس‌زمینه را شفاف می‌کنیم
+
+        // ب) نقاشی کردن شکل قطعه روی این تصویر
+        QPainter painter(&pixmap);
+        painter.setRenderHint(QPainter::Antialiasing); // نرم کردن لبه‌ها
+
+        // کشیدن یک مستطیل نیمه‌شفاف (شبح قطعه)
+        painter.setBrush(QColor(0, 51, 102, 180)); // رنگ آبی با شفافیت
+        painter.setPen(QPen(Qt::white, 2));
+        painter.drawRoundedRect(2, 2, 76, 36, 5, 5); // مستطیل گوشه‌گرد
+
+        // نوشتن نام قطعه وسط آن
+        painter.drawText(pixmap.rect(), Qt::AlignCenter, this->text());
+        painter.end();
+
+        // ج) چسباندن این نقاشی به نشانگر موس
+        drag->setPixmap(pixmap);
+
+        // د) تنظیم نقطه ثقل (HotSpot): می‌خواهیم موس دقیقاً وسط قطعه باشد
+        drag->setHotSpot(QPoint(pixmap.width() / 2, pixmap.height() / 2));
+
+        // ==========================================
+
+        // پرتاب کردن پاکت به سمت بوم!
+        drag->exec(Qt::CopyAction);
+    }
+};
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // ۱. تنظیم ویژگی‌های ظاهری پنجره اصلی نرم‌افزار
     setWindowTitle("Proteus Clone - OOP Project");
@@ -19,7 +74,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     view = new CircuitView(this);
     view->setScene(scene);
     setCentralWidget(view);
+    //موقت برای تست
+    TestDragButton *testBtn1 = new TestDragButton("MCU", this);
+    testBtn1->setGeometry(10, 10, 100, 40); // قرار دادن دکمه در بالا-سمت چپ
 
+    TestDragButton *testBtn2 = new TestDragButton("RESISTOR", this);
+    testBtn2->setGeometry(10, 60, 100, 40);
     // =========================================================
     // بخش جدید: چیدن ویترین قطعات روی صفحه شطرنجی
     // =========================================================

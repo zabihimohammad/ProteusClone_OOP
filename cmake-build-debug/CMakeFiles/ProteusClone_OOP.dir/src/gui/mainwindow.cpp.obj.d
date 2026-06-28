@@ -390,6 +390,15 @@ CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj: \
  C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsScene \
  C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsscene.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qpen.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsSceneDragDropEvent \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicssceneevent.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreevent.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qbasictimer.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qabstracteventdispatcher.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qeventloop.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qdeadlinetimer.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QMimeData \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qmimedata.h \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_view.h \
  C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsView \
  C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsview.h \
@@ -400,11 +409,6 @@ CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj: \
  C:/Qt/6.11.1/mingw_64/include/QtWidgets/qframe.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/QWheelEvent \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qevent.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreevent.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/qbasictimer.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/qabstracteventdispatcher.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/qeventloop.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/qdeadlinetimer.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qiodevice.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qurl.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qeventpoint.h \
@@ -437,4 +441,10 @@ CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj: \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/mcu.h \
- C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.h
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QPushButton \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qpushbutton.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qabstractbutton.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QDrag \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qdrag.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QPainter

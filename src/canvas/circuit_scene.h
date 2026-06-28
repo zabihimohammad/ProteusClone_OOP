@@ -1,6 +1,7 @@
 #pragma once
 #include <QGraphicsScene>
-
+#include <QGraphicsSceneDragDropEvent>
+#include <QMimeData>
 class Wire;
 class Terminal;
 
@@ -17,6 +18,9 @@ protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
+    void dragEnterEvent(QGraphicsSceneDragDropEvent *event) override;
+    void dragMoveEvent(QGraphicsSceneDragDropEvent *event) override;
+    void dropEvent(QGraphicsSceneDragDropEvent *event) override;
 private:
     int gridSize;            // فاصله بین نقطه‌های شطرنجی
     bool isWiring;           // آیا کاربر در حال سیم‌کشی است؟

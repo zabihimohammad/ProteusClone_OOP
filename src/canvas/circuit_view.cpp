@@ -11,6 +11,8 @@ CircuitView::CircuitView(QWidget *parent) : QGraphicsView(parent), isPanning(fal
     // مخفی کردن نوارهای اسکرول کنار صفحه (چون با کلیک وسط موس جابجا می‌شویم)
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setAcceptDrops(true);
+
 }
 
 // --- بخش اول: پیاده‌سازی زوم ---

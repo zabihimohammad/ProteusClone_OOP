@@ -3,6 +3,7 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mmc:Q_OBJECT
  mdp:C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/cmake-build-debug/ProteusClone_OOP_autogen/moc_predefs.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/QMimeData
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/q17memory.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/q20bit.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/q20functional.h
@@ -12,7 +13,9 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/q20utility.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/q23type_traits.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/q23utility.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qabstracteventdispatcher.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qalgorithms.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qalloc.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qanystringview.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qarraydata.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qarraydataops.h
@@ -21,6 +24,7 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qatomic.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qatomic_cxx11.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qbasicatomic.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qbasictimer.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qbindingstorage.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qbytearray.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qbytearrayalgorithms.h
@@ -37,9 +41,14 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qcontainerfwd.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qcontainerinfo.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qcontainertools_impl.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qcontiguouscache.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qcoreevent.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qdarwinhelpers.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qdatastream.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qdeadlinetimer.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qdebug.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qendian.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qeventloop.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qexceptionhandling.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qflags.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qfloat16.h
@@ -49,6 +58,7 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qgenericatomic.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qglobal.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qglobalstatic.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qhash.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qhashfunctions.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qiodevicebase.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qiterable.h
@@ -58,10 +68,12 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qlist.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qlogging.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qmalloc.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qmap.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qmargins.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qmath.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qmetacontainer.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qmetatype.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qmimedata.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qminmax.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qnamespace.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qnumeric.h
@@ -77,7 +89,11 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qrefcount.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qscopedpointer.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qscopeguard.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qset.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qshareddata.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qshareddata_impl.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qsharedpointer.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qsharedpointer_impl.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qsize.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qspan.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qstdlibdetection.h
@@ -104,6 +120,7 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qtdeprecationdefinitions.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qtdeprecationmarkers.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qtenvironmentvariables.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qtextstream.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qtformat_impl.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qtmetamacros.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qtnoop.h
@@ -116,6 +133,8 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qtypeinfo.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qtypes.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qutf8stringview.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qvariant.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qvarlengtharray.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qversiontagging.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qxptype_traits.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtCore/qyieldcpu.h
@@ -138,7 +157,9 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qwindowdefs.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtGui/qwindowdefs_win.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsScene
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsSceneDragDropEvent
  mdp:C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsscene.h
+ mdp:C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicssceneevent.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtWidgets/qtwidgets-config.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtWidgets/qtwidgetsexports.h
  mdp:C:/Qt/6.11.1/mingw_64/include/QtWidgets/qtwidgetsglobal.h
@@ -212,10 +233,12 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_list.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_map.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_multimap.h
+ mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_multiset.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_numeric.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_pair.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_raw_storage_iter.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_relops.h
+ mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_set.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_tempbuf.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_tree.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_uninitialized.h
@@ -228,6 +251,7 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/uniform_int_dist.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/unique_ptr.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/unordered_map.h
+ mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/unordered_set.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/uses_allocator.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/uses_allocator_args.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/utility.h
@@ -236,6 +260,7 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cctype
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cerrno
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/chrono
+ mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/climits
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/clocale
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cmath
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/compare
@@ -273,6 +298,7 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/pstl/glue_numeric_defs.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/pstl/pstl_config.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/ratio
+ mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/set
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/stdexcept
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/stdlib.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/streambuf
@@ -295,6 +321,7 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/type_traits
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/typeinfo
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/unordered_map
+ mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/unordered_set
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/utility
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/variant
  mdp:C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/vector
@@ -349,8 +376,6 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/time.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/vadefs.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wchar.h
-C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.cpp
-C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_view.h
  mmc:Q_OBJECT
  mdp:C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_view.h
@@ -766,8 +791,9 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_view.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/time.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/vadefs.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wchar.h
+C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_scene.cpp
+C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/basic_components.h
-C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.h
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.h
  mmc:Q_OBJECT
  mdp:C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.h
@@ -1163,6 +1189,7 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/vadefs.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wchar.h
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/logic_gates.h
+C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.h
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/element.h
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/mcu.h
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/mainwindow.h
@@ -1546,8 +1573,8 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/mainwindow.h
  mdp:C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wchar.h
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_view.cpp
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/basic_components.cpp
-C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.cpp
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/logic_gates.cpp
+C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.cpp
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/mcu.cpp
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.cpp
 C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/element.cpp
