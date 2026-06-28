@@ -148,8 +148,8 @@ void DAC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
         painter->drawLine(-40, i, -30, i);
     }
 }
-/*
- * QVariant MemoryChip::itemChange(GraphicsItemChange change, const QVariant &value) {
+
+  /*QVariant MemoryChip::itemChange(GraphicsItemChange change, const QVariant &value) {
     // اگر کاربر در حال کشیدن قطعه با موس است و مختصات در حال تغییر است
     if (change == ItemPositionHasChanged) {
 
@@ -167,4 +167,4 @@ void DAC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     // بازگرداندن روال عادی کیوت
     return QGraphicsItem::itemChange(change, value);
 }
- */
+*/
