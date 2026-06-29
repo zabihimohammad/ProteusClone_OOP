@@ -21,6 +21,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/wire.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.obj.d"
   "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/gui/hex_upload_dialog.cpp.obj.d"
   "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/mainwindow.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj.d"
+  "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/properties_dialog.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/gui/properties_dialog.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/gui/properties_dialog.cpp.obj.d"
   "C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/main.cpp" "CMakeFiles/ProteusClone_OOP.dir/src/main.cpp.obj" "gcc" "CMakeFiles/ProteusClone_OOP.dir/src/main.cpp.obj.d"
   )
 

@@ -366,8 +366,11 @@ CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_scene.cpp.obj: \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qdeadlinetimer.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qset.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qhash.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/QMimeData \
- C:/Qt/6.11.1/mingw_64/include/QtCore/qmimedata.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsSceneMouseEvent \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QKeyEvent \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qevent.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qiodevice.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qurl.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qvariant.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qdebug.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qtextstream.h \
@@ -384,29 +387,6 @@ CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_scene.cpp.obj: \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qshareddata_impl.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qvarlengtharray.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qalloc.h \
- C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsSceneMouseEvent \
- C:/Qt/6.11.1/mingw_64/include/QtGui/QPainter \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qpainter.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qtextoption.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qfontinfo.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qfontvariableaxis.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/QPen \
- C:/Qt/6.11.1/mingw_64/include/QtGui/QColor \
- C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h \
- C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsItem \
- C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsitem.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qpainterpath.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
- C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/wire.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/QVector \
- C:/Qt/6.11.1/mingw_64/include/QtCore/qvector.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/QPointF \
- C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/auto_router.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/QKeyEvent \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qevent.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/qiodevice.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/qurl.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qeventpoint.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qvector2d.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qvectornd.h \
@@ -428,8 +408,60 @@ CMakeFiles/ProteusClone_OOP.dir/src/canvas/circuit_scene.cpp.obj: \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qlocale.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qguiapplication_platform.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qkeysequence.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QMimeData \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qmimedata.h \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsItem \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsitem.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qpainterpath.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QPainter \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qpainter.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qtextoption.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qfontinfo.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qfontvariableaxis.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QPen \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QColor \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/wire.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QVector \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qvector.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QPointF \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/auto_router.h \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/mcu.h \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/element.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QDebug \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QMap \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/properties_dialog.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QDialog \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qdialog.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qwidget.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qaction.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qicon.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qpalette.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qsizepolicy.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qcursor.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qbitmap.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QLineEdit \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qlineedit.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qframe.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qtextcursor.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qtextdocument.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qtextformat.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QPushButton \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qpushbutton.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qabstractbutton.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QVBoxLayout \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qboxlayout.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qlayout.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qlayoutitem.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgridlayout.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QFormLayout \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qformlayout.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QLayout \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QLabel \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qlabel.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qpicture.h \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/basic_components.h \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/logic_gates.h \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.h

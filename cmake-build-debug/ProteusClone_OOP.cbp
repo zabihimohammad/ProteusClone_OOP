@@ -197,6 +197,12 @@
 		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/mainwindow.h">
 			<Option target="ProteusClone_OOP"/>
 		</Unit>
+		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/properties_dialog.cpp">
+			<Option target="ProteusClone_OOP"/>
+		</Unit>
+		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/properties_dialog.h">
+			<Option target="ProteusClone_OOP"/>
+		</Unit>
 		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/main.cpp">
 			<Option target="ProteusClone_OOP"/>
 		</Unit>
