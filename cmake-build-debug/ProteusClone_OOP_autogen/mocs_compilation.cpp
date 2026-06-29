@@ -3,3 +3,4 @@
 #include "SXBUF2WVFU/moc_circuit_view.cpp"
 #include "MXUWEOXILK/moc_hex_upload_dialog.cpp"
 #include "MXUWEOXILK/moc_mainwindow.cpp"
+#include "MXUWEOXILK/moc_properties_dialog.cpp"

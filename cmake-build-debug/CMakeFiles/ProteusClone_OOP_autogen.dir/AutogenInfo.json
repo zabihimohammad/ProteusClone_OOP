@@ -401,6 +401,12 @@
 			"MU",
 			"MXUWEOXILK/moc_mainwindow.cpp",
 			null
+		],
+		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/properties_dialog.h",
+			"MU",
+			"MXUWEOXILK/moc_properties_dialog.cpp",
+			null
 		]
 	],
 	"HEADER_EXTENSIONS" : [ "h", "hh", "h++", "hm", "hpp", "hxx", "in", "txx" ],
@@ -529,6 +535,11 @@
 		],
 		[
 			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/mainwindow.cpp",
+			"MU",
+			null
+		],
+		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/properties_dialog.cpp",
 			"MU",
 			null
 		],

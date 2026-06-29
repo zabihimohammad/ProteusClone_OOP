@@ -453,6 +453,30 @@ src/gui/mainwindow.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.s
 .PHONY : src/gui/mainwindow.cpp.s
 
+src/gui/properties_dialog.obj: src/gui/properties_dialog.cpp.obj
+.PHONY : src/gui/properties_dialog.obj
+
+# target to build an object file
+src/gui/properties_dialog.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/gui/properties_dialog.cpp.obj
+.PHONY : src/gui/properties_dialog.cpp.obj
+
+src/gui/properties_dialog.i: src/gui/properties_dialog.cpp.i
+.PHONY : src/gui/properties_dialog.i
+
+# target to preprocess a source file
+src/gui/properties_dialog.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/gui/properties_dialog.cpp.i
+.PHONY : src/gui/properties_dialog.cpp.i
+
+src/gui/properties_dialog.s: src/gui/properties_dialog.cpp.s
+.PHONY : src/gui/properties_dialog.s
+
+# target to generate assembly for a file
+src/gui/properties_dialog.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/gui/properties_dialog.cpp.s
+.PHONY : src/gui/properties_dialog.cpp.s
+
 src/main.obj: src/main.cpp.obj
 .PHONY : src/main.obj
 
@@ -526,6 +550,9 @@ help:
 	@echo ... src/gui/mainwindow.obj
 	@echo ... src/gui/mainwindow.i
 	@echo ... src/gui/mainwindow.s
+	@echo ... src/gui/properties_dialog.obj
+	@echo ... src/gui/properties_dialog.i
+	@echo ... src/gui/properties_dialog.s
 	@echo ... src/main.obj
 	@echo ... src/main.i
 	@echo ... src/main.s

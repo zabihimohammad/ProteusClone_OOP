@@ -367,8 +367,11 @@ CMakeFiles/ProteusClone_OOP.dir/ProteusClone_OOP_autogen/mocs_compilation.cpp.ob
  C:/Qt/6.11.1/mingw_64/include/QtCore/qdeadlinetimer.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qset.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qhash.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/QMimeData \
- C:/Qt/6.11.1/mingw_64/include/QtCore/qmimedata.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsSceneMouseEvent \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QKeyEvent \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qevent.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qiodevice.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qurl.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qvariant.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qdebug.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qtextstream.h \
@@ -385,33 +388,6 @@ CMakeFiles/ProteusClone_OOP.dir/ProteusClone_OOP_autogen/mocs_compilation.cpp.ob
  C:/Qt/6.11.1/mingw_64/include/QtCore/qshareddata_impl.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qvarlengtharray.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qalloc.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/qtmochelpers.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/qtmocconstants.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/q20algorithm.h \
- C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\ProteusClone_OOP_autogen\SXBUF2WVFU/moc_circuit_view.cpp \
- C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_view.h \
- C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsView \
- C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsview.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qpainter.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qtextoption.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qfontinfo.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qfontvariableaxis.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h \
- C:/Qt/6.11.1/mingw_64/include/QtWidgets/qscrollarea.h \
- C:/Qt/6.11.1/mingw_64/include/QtWidgets/qabstractscrollarea.h \
- C:/Qt/6.11.1/mingw_64/include/QtWidgets/qframe.h \
- C:/Qt/6.11.1/mingw_64/include/QtWidgets/qwidget.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qaction.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qkeysequence.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qicon.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qpalette.h \
- C:/Qt/6.11.1/mingw_64/include/QtWidgets/qsizepolicy.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qcursor.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qbitmap.h \
- C:/Qt/6.11.1/mingw_64/include/QtGui/QWheelEvent \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qevent.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/qiodevice.h \
- C:/Qt/6.11.1/mingw_64/include/QtCore/qurl.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qeventpoint.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qvector2d.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qvectornd.h \
@@ -432,6 +408,37 @@ CMakeFiles/ProteusClone_OOP.dir/ProteusClone_OOP_autogen/mocs_compilation.cpp.ob
  C:/Qt/6.11.1/mingw_64/include/QtGui/qinputmethod.h \
  C:/Qt/6.11.1/mingw_64/include/QtCore/qlocale.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/qguiapplication_platform.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qkeysequence.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QMimeData \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qmimedata.h \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsItem \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsitem.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qpainterpath.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QList \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qtmochelpers.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qtmocconstants.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/q20algorithm.h \
+ C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\ProteusClone_OOP_autogen\SXBUF2WVFU/moc_circuit_view.cpp \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/canvas/circuit_view.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QGraphicsView \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgraphicsview.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qpainter.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qtextoption.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qfontinfo.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qfontvariableaxis.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qscrollarea.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qabstractscrollarea.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qframe.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qwidget.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qaction.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qicon.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qpalette.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qsizepolicy.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qcursor.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qbitmap.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QWheelEvent \
  C:/Qt/6.11.1/mingw_64/include/QtGui/QMouseEvent \
  C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\ProteusClone_OOP_autogen\MXUWEOXILK/moc_hex_upload_dialog.cpp \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.h \
@@ -452,4 +459,15 @@ CMakeFiles/ProteusClone_OOP.dir/ProteusClone_OOP_autogen/mocs_compilation.cpp.ob
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/mainwindow.h \
  C:/Qt/6.11.1/mingw_64/include/QtWidgets/QMainWindow \
  C:/Qt/6.11.1/mingw_64/include/QtWidgets/qmainwindow.h \
- C:/Qt/6.11.1/mingw_64/include/QtWidgets/qtabwidget.h
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qtabwidget.h \
+ C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\ProteusClone_OOP_autogen\MXUWEOXILK/moc_properties_dialog.cpp \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/properties_dialog.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QVBoxLayout \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qboxlayout.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qlayout.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qlayoutitem.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qgridlayout.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QFormLayout \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/qformlayout.h \
+ C:/Qt/6.11.1/mingw_64/include/QtWidgets/QLayout \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QMap
