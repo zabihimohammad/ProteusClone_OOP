@@ -2,6 +2,15 @@
 #include "../core/element.h"
 #include "../core/wire.h"
 #include "../core/terminal.h"
+
+// =========================================
+// هدرهای قطعات (برای ساخته شدن در تابع Load)
+// =========================================
+#include "../components/basic_components.h"
+#include "../components/logic_gates.h"
+#include "../components/mcu.h"
+#include "../components/peripherals.h"
+
 #include <QFile>
 #include <QTextStream>
 #include <QDebug>
@@ -30,6 +39,7 @@ bool FileManager::saveCircuit(const QString &filePath, QGraphicsScene *scene)
     qDebug() << "Circuit successfully saved to" << filePath;
     return true;
 }
+
 QJsonArray FileManager::serializeElements(QGraphicsScene *scene)
 {
     QJsonArray elementsArray;
@@ -61,14 +71,31 @@ QJsonArray FileManager::serializeElements(QGraphicsScene *scene)
     }
     return elementsArray;
 }
+
 QJsonArray FileManager::serializeWires(QGraphicsScene *scene)
 {
     QJsonArray wiresArray;
     // فعلاً آرایه سیم‌ها را خالی برمی‌گردانیم.
-    // نکته: برای ذخیره سیم‌ها، باید به هر ترمینال یک ID اختصاص دهیم.
-    // در گام بعدی وقتی ساختار لود را تکمیل کردیم، این قسمت را با مکانیزم ID گذاری کامل می‌کنم.
+    // نکته: برای ذخیره سیم‌ها، در قدم بعدی به هر ترمینال یک ID اختصاص می‌دهیم.
     return wiresArray;
 }
+
+// =========================================
+// تابع کارخانه (Factory): تولید شیء از روی نام
+// =========================================
+Element* createComponent(const QString &type) {
+    if (type == "Microcontroller (MCU)") return new MCUChip();
+    if (type == "Resistor") return new Resistor();
+    if (type == "Capacitor") return new Capacitor();
+    if (type == "LED") return new LED();
+    if (type == "7-Segment Display") return new SevenSegment();
+    if (type == "AND Gate") return new AndGate();
+    if (type == "OR Gate") return new OrGate();
+    if (type == "External Memory Chip") return new MemoryChip();
+    // در صورت نیاز بقیه قطعات (مثل سلف، منابع تغذیه و ...) را می‌توانید اینجا اضافه کنید
+    return nullptr;
+}
+
 bool FileManager::loadCircuit(const QString &filePath, QGraphicsScene *scene)
 {
     if (!scene || filePath.isEmpty())
@@ -87,10 +114,39 @@ bool FileManager::loadCircuit(const QString &filePath, QGraphicsScene *scene)
         qDebug() << "Invalid JSON file.";
         return false;
     }
-    // پیش از بارگذاری مدار جدید، بوم فعلی را پاک می‌کنیم
+
+    // پیش از بارگذاری مدار جدید، بوم فعلی را کاملاً پاک می‌کنیم
     scene->clear();
     QJsonObject rootObject = doc.object();
+
     // خواندن قطعات و تزریق به مدار
-    // (منطق این بخش را در پیام بعدی پس از تایید شما برای ساختن Factory قطعات اضافه می‌کنیم)
+    QJsonArray elementsArray = rootObject["elements"].toArray();
+    for (const QJsonValue &value : elementsArray) {
+        QJsonObject elObj = value.toObject();
+        QString type = elObj["type"].toString();
+
+        // ۱. ساخت قطعه با استفاده از کارخانه
+        Element *newElement = createComponent(type);
+        if (newElement) {
+            // ۲. تنظیم موقعیت (مختصات) قطعه
+            QJsonObject posObj = elObj["position"].toObject();
+            newElement->setPos(posObj["x"].toDouble(), posObj["y"].toDouble());
+
+            // ۳. برگرداندن ویژگی‌ها (Properties) به قطعه
+            QJsonObject propsObj = elObj["properties"].toObject();
+            QMap<QString, QString> props;
+            for (auto it = propsObj.constBegin(); it != propsObj.constEnd(); ++it) {
+                props[it.key()] = it.value().toString();
+            }
+            newElement->setProperties(props);
+
+            // ۴. اضافه کردن قطعه به بوم طراحی
+            scene->addItem(newElement);
+        } else {
+            qDebug() << "Unknown component type in JSON:" << type;
+        }
+    }
+
+    qDebug() << "Circuit successfully loaded from" << filePath;
     return true;
 }
