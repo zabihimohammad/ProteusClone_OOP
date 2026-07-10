@@ -333,3 +333,104 @@ void SevenSegment::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
 }
 
 void SevenSegment::process() {}
+// ============================================================================
+// پیاده‌سازی Ground (زمین)
+// ============================================================================
+Ground::Ground() {
+    outGnd = new Terminal(this);
+    outGnd->setPos(0, -20);
+}
+QRectF Ground::boundingRect() const { return QRectF(-20, -25, 40, 45); }
+void Ground::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawLine(0, -20, 0, 0); // سیم پایه
+    painter->drawLine(-15, 0, 15, 0); // خط اول
+    painter->drawLine(-10, 5, 10, 5); // خط دوم
+    painter->drawLine(-5, 10, 5, 10); // خط سوم
+}
+void Ground::process() {
+    outGnd->setVoltage(0.0); // مرجع ولتاژ صفر
+}
+
+// ============================================================================
+// پیاده‌سازی DC Voltage Source
+// ============================================================================
+DCVoltageSource::DCVoltageSource() {
+    outPos = new Terminal(this);
+    outPos->setPos(0, -20);
+}
+QRectF DCVoltageSource::boundingRect() const { return QRectF(-20, -25, 40, 50); }
+void DCVoltageSource::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawLine(0, -20, 0, -10);
+    painter->drawEllipse(-10, -10, 20, 20);
+    painter->drawLine(-5, 0, 5, 0); // علامت +
+    painter->drawLine(0, -5, 0, 5);
+
+    painter->setFont(QFont("Consolas", 8));
+    painter->drawText(QRectF(-20, 15, 40, 15), Qt::AlignCenter, voltage);
+}
+void DCVoltageSource::process() {
+    double v = voltage.replace("V", "").toDouble();
+    outPos->setVoltage(v); // تزریق ولتاژ تنظیمی به مدار
+}
+QMap<QString, QString> DCVoltageSource::getProperties() const {
+    QMap<QString, QString> props;
+    props["Voltage"] = voltage;
+    return props;
+}
+void DCVoltageSource::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Voltage")) voltage = props["Voltage"];
+}
+
+// ============================================================================
+// پیاده‌سازی Clock Generator
+// ============================================================================
+ClockGenerator::ClockGenerator() {
+    outClk = new Terminal(this);
+    outClk->setPos(25, 0);
+}
+QRectF ClockGenerator::boundingRect() const { return QRectF(-25, -25, 55, 65); }
+void ClockGenerator::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawRect(-20, -20, 40, 40);
+    painter->drawLine(20, 0, 25, 0); // سیم خروجی
+
+    // رسم گرافیک موج مربعی
+    painter->drawLine(-10, 10, -5, 10);
+    painter->drawLine(-5, 10, -5, -10);
+    painter->drawLine(-5, -10, 5, -10);
+    painter->drawLine(5, -10, 5, 10);
+    painter->drawLine(5, 10, 10, 10);
+
+    painter->setFont(QFont("Consolas", 7));
+    painter->drawText(QRectF(-25, 25, 50, 15), Qt::AlignCenter, frequency);
+}
+void ClockGenerator::process() {
+    // اگر کلاک در وضعیت بالا بود ولتاژ اعمال کن، وگرنه 0 ولت
+    double v = currentState ? amplitude.replace("V", "").toDouble() : 0.0;
+    outClk->setVoltage(v);
+}
+void ClockGenerator::toggleClock() {
+    currentState = !currentState; // برعکس کردن وضعیت صفر و یک
+    update();
+}
+QMap<QString, QString> ClockGenerator::getProperties() const {
+    QMap<QString, QString> props;
+    props["Frequency"] = frequency;
+    props["Amplitude"] = amplitude;
+    return props;
+}
+void ClockGenerator::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Frequency")) frequency = props["Frequency"];
+    if (props.contains("Amplitude")) amplitude = props["Amplitude"];
+}

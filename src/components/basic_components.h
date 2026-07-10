@@ -265,4 +265,54 @@ public:
         if (props.contains("LED Color")) color = props["LED Color"];
         if (props.contains("Configuration")) type = props["Configuration"];
     }
+    // ==========================================
+// منبع تغذیه زمین (Ground / GND)
+// ==========================================
+    class Ground : public Element {
+    private:
+        Terminal *outGnd;
+    public:
+        Ground();
+        QRectF boundingRect() const override;
+        void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+        void process() override;
+        QString getComponentName() const override { return "Ground (GND)"; }
+    };
+
+// ==========================================
+// منبع ولتاژ مستقیم (DC Voltage Source)
+// ==========================================
+    class DCVoltageSource : public Element {
+    private:
+        QString voltage = "5V";
+        Terminal *outPos;
+    public:
+        DCVoltageSource();
+        QRectF boundingRect() const override;
+        void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+        void process() override;
+        QString getComponentName() const override { return "DC Voltage Source"; }
+        QMap<QString, QString> getProperties() const override;
+        void setProperties(const QMap<QString, QString>& props) override;
+    };
+
+// ==========================================
+// تولیدکننده کلاک (Clock Generator)
+// ==========================================
+    class ClockGenerator : public Element {
+    private:
+        QString frequency = "1Hz";
+        QString amplitude = "5V";
+        Terminal *outClk;
+        bool currentState = false;
+    public:
+        ClockGenerator();
+        QRectF boundingRect() const override;
+        void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+        void process() override;
+        void toggleClock(); // متدی برای موتور شبیه‌ساز جهت تغییر لبه کلاک
+        QString getComponentName() const override { return "Clock Generator"; }
+        QMap<QString, QString> getProperties() const override;
+        void setProperties(const QMap<QString, QString>& props) override;
+    };
 };

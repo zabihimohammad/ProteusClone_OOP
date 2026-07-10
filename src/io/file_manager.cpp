@@ -55,6 +55,9 @@ static Element* createComponent(const QString &type) {
     if (type == "AND Gate") return new AndGate();
     if (type == "OR Gate") return new OrGate();
     if (type == "External Memory Chip") return new MemoryChip();
+    if (type == "Ground (GND)") return new Ground();
+    if (type == "DC Voltage Source") return new DCVoltageSource();
+    if (type == "Clock Generator") return new ClockGenerator();
     return nullptr;
 }
 
