@@ -19,6 +19,9 @@ public:
 // در بخش public اضافه کنید:
     void updateRoute();
     ~Wire() override; // مخرب برای پاک کردن تمیز از حافظه
+    // توابع کمکی برای خواندن پایه‌های متصل به سیم در سیستم ذخیره‌سازی
+    Terminal* getStartTerminal() const { return startTerminal; }
+    Terminal* getEndTerminal() const { return endTerminal; }
 private:
     Terminal *startTerminal;
     Terminal *endTerminal;
