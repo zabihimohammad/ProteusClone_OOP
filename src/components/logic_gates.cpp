@@ -1,59 +1,79 @@
 #include "logic_gates.h"
 #include <QPainter>
 #include <QPainterPath>
-#include <QFont> // اضافه شده برای تنظیم فونت نوشته‌ها
-#include "../core/terminal.h"
+#include <QFont>
+#include <QDebug>
 
-// ==========================================
-// ۱. گیت AND
-// ==========================================
+// ============================================================================
+// پیاده‌سازی گیت AND
+// ============================================================================
 AndGate::AndGate() {
-    (new Terminal(this))->setPos(-30, -10); // ورودی A
-    (new Terminal(this))->setPos(-30, 10);  // ورودی B
-    (new Terminal(this))->setPos(30, 0);    // خروجی Y
+    inA = new Terminal(this); inA->setPos(-30, -10);
+    inB = new Terminal(this); inB->setPos(-30, 10);
+    outY = new Terminal(this); outY->setPos(30, 0);
 }
 
-QRectF AndGate::boundingRect() const {
-    // ارتفاع کادر افزایش یافته تا متنِ پایین گیت بریده نشود
-    return QRectF(-30, -25, 60, 65);
-}
-
-void AndGate::process() {}
+QRectF AndGate::boundingRect() const { return QRectF(-35, -25, 70, 65); }
 
 void AndGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(Qt::black, 2);
     if (isSelected()) pen.setColor(Qt::red);
     painter->setPen(pen);
 
-    // رسم پایه‌های ورودی و خروجی
     painter->drawLine(-30, -10, -15, -10);
     painter->drawLine(-30, 10, -15, 10);
     painter->drawLine(20, 0, 30, 0);
 
-    // رسم بدنه گیت AND (استاندارد IEEE)
-    painter->drawLine(-15, -20, -15, 20); // خط صاف پشت
-    painter->drawLine(-15, -20, 0, -20);  // سقف
-    painter->drawLine(-15, 20, 0, 20);    // کف
-    painter->drawArc(-20, -20, 40, 40, -90 * 16, 180 * 16); // انحنای جلو
+    painter->setBrush(QColor(240, 240, 240));
+    QPainterPath path;
+    path.moveTo(-15, -20);
+    path.lineTo(0, -20);
+    path.arcTo(QRectF(-20, -20, 40, 40), 90, -180);
+    path.lineTo(-15, 20);
+    path.closeSubpath();
+    painter->drawPath(path);
 
-    // === نمایش داینامیک میزان تأخیر ===
-    painter->setFont(QFont("Consolas", 7, QFont::Bold));
-    painter->setPen(Qt::darkBlue);
+    painter->setFont(QFont("Consolas", 6));
+    painter->setPen(Qt::darkGray);
     painter->drawText(QRectF(-30, 25, 60, 15), Qt::AlignCenter, propagationDelay);
 }
 
-// ==========================================
-// ۲. گیت OR
-// ==========================================
-OrGate::OrGate() {
-    (new Terminal(this))->setPos(-30, -10);
-    (new Terminal(this))->setPos(-30, 10);
-    (new Terminal(this))->setPos(30, 0);
+void AndGate::process() {
+    if (inA->getConnectedWires().isEmpty() || inB->getConnectedWires().isEmpty()) {
+        qWarning() << "DRC Warning: Floating input detected on AND Gate!";
+        return;
+    }
+    // گیت‌های دیجیتال وضعیت فلوتینگ/نامشخص بودن را به این صورت بررسی می‌کنند
+    bool stateA = (inA->getConnectedWires().first()->boundingRect().width() > 0); // منطق پیش‌فرض شما
+    bool stateB = (inB->getConnectedWires().first()->boundingRect().width() > 0);
+
+    bool result = stateA && stateB;
+    double vMax = highVoltage.replace("V", "").toDouble();
+    // در گام بعدی با توسعه موتور شبیه‌ساز، ولتاژهای حقیقی را به ترمینال‌ها پاس می‌دهیم
 }
 
-QRectF OrGate::boundingRect() const { return QRectF(-30, -25, 60, 65); }
+QMap<QString, QString> AndGate::getProperties() const {
+    QMap<QString, QString> props;
+    props["Propagation Delay"] = propagationDelay;
+    props["Logic HIGH (V)"] = highVoltage;
+    return props;
+}
 
-void OrGate::process() {}
+void AndGate::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
+    if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
+}
+
+// ============================================================================
+// پیاده‌سازی گیت OR
+// ============================================================================
+OrGate::OrGate() {
+    inA = new Terminal(this); inA->setPos(-30, -10);
+    inB = new Terminal(this); inB->setPos(-30, 10);
+    outY = new Terminal(this); outY->setPos(30, 0);
+}
+
+QRectF OrGate::boundingRect() const { return QRectF(-35, -25, 70, 65); }
 
 void OrGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(Qt::black, 2);
@@ -62,178 +82,259 @@ void OrGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
 
     painter->drawLine(-30, -10, -10, -10);
     painter->drawLine(-30, 10, -10, 10);
-    painter->drawLine(20, 0, 30, 0);
+    painter->drawLine(18, 0, 30, 0);
 
-    // رسم بدنه منحنی گیت OR با استفاده از مسیرها (Paths)
+    painter->setBrush(QColor(240, 240, 240));
     QPainterPath path;
     path.moveTo(-15, -20);
-    path.cubicTo(0, -20, 10, -10, 20, 0);
-    path.cubicTo(10, 10, 0, 20, -15, 20);
-    path.quadTo(-5, 0, -15, -20);
+    path.quadTo(QPointF(-5, -20), QPointF(18, 0));
+    path.quadTo(QPointF(-5, 20), QPointF(-15, 20));
+    path.quadTo(QPointF(-5, 0), QPointF(-15, -20));
     painter->drawPath(path);
 
-    // === نمایش داینامیک میزان تأخیر ===
-    painter->setFont(QFont("Consolas", 7, QFont::Bold));
-    painter->setPen(Qt::darkBlue);
+    painter->setFont(QFont("Consolas", 6));
+    painter->setPen(Qt::darkGray);
     painter->drawText(QRectF(-30, 25, 60, 15), Qt::AlignCenter, propagationDelay);
 }
 
-// ==========================================
-// ۳. گیت NOT
-// ==========================================
+void OrGate::process() {
+    if (inA->getConnectedWires().isEmpty() || inB->getConnectedWires().isEmpty()) {
+        qWarning() << "DRC Warning: Floating input detected on OR Gate!";
+        return;
+    }
+}
+
+QMap<QString, QString> OrGate::getProperties() const {
+    QMap<QString, QString> props;
+    props["Propagation Delay"] = propagationDelay;
+    props["Logic HIGH (V)"] = highVoltage;
+    return props;
+}
+
+void OrGate::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
+    if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
+}
+
+// ============================================================================
+// پیاده‌سازی گیت NOT
+// ============================================================================
 NotGate::NotGate() {
-    (new Terminal(this))->setPos(-30, 0);
-    (new Terminal(this))->setPos(30, 0);
+    inA = new Terminal(this); inA->setPos(-25, 0);
+    outY = new Terminal(this); outY->setPos(25, 0);
 }
 
 QRectF NotGate::boundingRect() const { return QRectF(-30, -25, 60, 65); }
-
-void NotGate::process() {}
 
 void NotGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(Qt::black, 2);
     if (isSelected()) pen.setColor(Qt::red);
     painter->setPen(pen);
 
-    painter->drawLine(-30, 0, -15, 0);
-    painter->drawLine(10, 0, 30, 0);
+    painter->drawLine(-25, 0, -15, 0);
+    painter->drawLine(15, 0, 25, 0);
 
-    // رسم مثلث و دایره نات
-    QPolygonF triangle;
-    triangle << QPointF(-15, -15) << QPointF(-15, 15) << QPointF(5, 0);
-    painter->drawPolygon(triangle);
-    painter->drawEllipse(5, -2.5, 5, 5);
+    painter->setBrush(QColor(240, 240, 240));
+    QPainterPath path;
+    path.moveTo(-15, -15);
+    path.lineTo(7, 0);
+    path.lineTo(-15, 15);
+    path.closeSubpath();
+    painter->drawPath(path);
+    painter->drawEllipse(7, -4, 8, 8); // دایره نات خروجی
 
-    // === نمایش داینامیک میزان تأخیر ===
-    painter->setFont(QFont("Consolas", 7, QFont::Bold));
-    painter->setPen(Qt::darkBlue);
-    painter->drawText(QRectF(-30, 20, 60, 15), Qt::AlignCenter, propagationDelay);
+    painter->setFont(QFont("Consolas", 6));
+    painter->setPen(Qt::darkGray);
+    painter->drawText(QRectF(-25, 25, 50, 15), Qt::AlignCenter, propagationDelay);
 }
 
-// ==========================================
-// ۴. گیت XOR
-// ==========================================
+void NotGate::process() {
+    if (inA->getConnectedWires().isEmpty()) {
+        qWarning() << "DRC Warning: Floating input detected on NOT Gate!";
+        return;
+    }
+}
+
+QMap<QString, QString> NotGate::getProperties() const {
+    QMap<QString, QString> props;
+    props["Propagation Delay"] = propagationDelay;
+    props["Logic HIGH (V)"] = highVoltage;
+    return props;
+}
+
+void NotGate::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
+    if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
+}
+
+// ============================================================================
+// پیاده‌سازی گیت XOR
+// ============================================================================
 XorGate::XorGate() {
-    (new Terminal(this))->setPos(-30, -10);
-    (new Terminal(this))->setPos(-30, 10);
-    (new Terminal(this))->setPos(30, 0);
+    inA = new Terminal(this); inA->setPos(-35, -10);
+    inB = new Terminal(this); inB->setPos(-35, 10);
+    outY = new Terminal(this); outY->setPos(35, 0);
 }
 
-QRectF XorGate::boundingRect() const { return QRectF(-30, -25, 60, 65); }
-
-void XorGate::process() {}
+QRectF XorGate::boundingRect() const { return QRectF(-40, -25, 80, 65); }
 
 void XorGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(Qt::black, 2);
     if (isSelected()) pen.setColor(Qt::red);
     painter->setPen(pen);
 
-    painter->drawLine(-30, -10, -10, -10);
-    painter->drawLine(-30, 10, -10, 10);
-    painter->drawLine(20, 0, 30, 0);
+    painter->drawLine(-35, -10, -12, -10);
+    painter->drawLine(-35, 10, -12, 10);
+    painter->drawLine(23, 0, 35, 0);
 
+    // کمان پشت گیت XOR
+    QPainterPath backArc;
+    backArc.moveTo(-22, -20);
+    backArc.quadTo(QPointF(-12, 0), QPointF(-22, 20));
+    painter->drawPath(backArc);
+
+    painter->setBrush(QColor(240, 240, 240));
     QPainterPath path;
-    path.moveTo(-15, -20);
-    path.cubicTo(0, -20, 10, -10, 20, 0);
-    path.cubicTo(10, 10, 0, 20, -15, 20);
-    path.quadTo(-5, 0, -15, -20);
+    path.moveTo(-17, -20);
+    path.quadTo(QPointF(-7, -20), QPointF(23, 0));
+    path.quadTo(QPointF(-7, 20), QPointF(-17, 20));
+    path.quadTo(QPointF(-7, 0), QPointF(-17, -20));
     painter->drawPath(path);
 
-    // خط منحنی اضافی پشت گیت برای XOR
-    QPainterPath extraArc;
-    extraArc.moveTo(-20, -20);
-    extraArc.quadTo(-10, 0, -20, 20);
-    painter->drawPath(extraArc);
-
-    // === نمایش داینامیک میزان تأخیر ===
-    painter->setFont(QFont("Consolas", 7, QFont::Bold));
-    painter->setPen(Qt::darkBlue);
-    painter->drawText(QRectF(-30, 25, 60, 15), Qt::AlignCenter, propagationDelay);
+    painter->setFont(QFont("Consolas", 6));
+    painter->setPen(Qt::darkGray);
+    painter->drawText(QRectF(-35, 25, 70, 15), Qt::AlignCenter, propagationDelay);
 }
 
-// ==========================================
-// ۵. گیت NAND
-// ==========================================
+void XorGate::process() {
+    if (inA->getConnectedWires().isEmpty() || inB->getConnectedWires().isEmpty()) {
+        qWarning() << "DRC Warning: Floating input detected on XOR Gate!";
+        return;
+    }
+}
+
+QMap<QString, QString> XorGate::getProperties() const {
+    QMap<QString, QString> props;
+    props["Propagation Delay"] = propagationDelay;
+    props["Logic HIGH (V)"] = highVoltage;
+    return props;
+}
+
+void XorGate::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
+    if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
+}
+
+// ============================================================================
+// پیاده‌سازی گیت NAND
+// ============================================================================
 NandGate::NandGate() {
-    (new Terminal(this))->setPos(-30, -10);
-    (new Terminal(this))->setPos(-30, 10);
-    (new Terminal(this))->setPos(35, 0);
+    inA = new Terminal(this); inA->setPos(-35, -10);
+    inB = new Terminal(this); inB->setPos(-35, 10);
+    outY = new Terminal(this); outY->setPos(35, 0);
 }
 
-QRectF NandGate::boundingRect() const { return QRectF(-30, -25, 70, 65); }
-
-void NandGate::process() {}
+QRectF NandGate::boundingRect() const { return QRectF(-40, -25, 80, 65); }
 
 void NandGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(Qt::black, 2);
     if (isSelected()) pen.setColor(Qt::red);
     painter->setPen(pen);
 
-    painter->drawLine(-30, -10, -15, -10);
-    painter->drawLine(-30, 10, -15, 10);
-    painter->drawLine(-15, -20, -15, 20);
-    painter->drawLine(-15, -20, 0, -20);
-    painter->drawLine(-15, 20, 0, 20);
-    painter->drawArc(-20, -20, 40, 40, -90 * 16, 180 * 16);
+    painter->drawLine(-35, -10, -20, -10);
+    painter->drawLine(-35, 10, -20, 10);
+    painter->drawLine(25, 0, 35, 0);
 
-    painter->drawEllipse(20, -2.5, 5, 5); // دایره NOT
-    painter->drawLine(25, 0, 35, 0);      // پایه خروجی
+    painter->setBrush(QColor(240, 240, 240));
+    QPainterPath path;
+    path.moveTo(-20, -20);
+    path.lineTo(-5, -20);
+    path.arcTo(QRectF(-25, -20, 40, 40), 90, -180);
+    path.lineTo(-20, 20);
+    path.closeSubpath();
+    painter->drawPath(path);
+    painter->drawEllipse(15, -4, 8, 8); // حبّاب نات خروجی NAND
 
-    // === نمایش داینامیک میزان تأخیر ===
-    painter->setFont(QFont("Consolas", 7, QFont::Bold));
-    painter->setPen(Qt::darkBlue);
-    painter->drawText(QRectF(-30, 25, 70, 15), Qt::AlignCenter, propagationDelay);
+    painter->setFont(QFont("Consolas", 6));
+    painter->setPen(Qt::darkGray);
+    painter->drawText(QRectF(-35, 25, 70, 15), Qt::AlignCenter, propagationDelay);
 }
 
-// ==========================================
-// ۶. فلیپ‌فلاپ (D-FlipFlop)
-// ==========================================
+void NandGate::process() {
+    if (inA->getConnectedWires().isEmpty() || inB->getConnectedWires().isEmpty()) {
+        qWarning() << "DRC Warning: Floating input detected on NAND Gate!";
+        return;
+    }
+}
+
+QMap<QString, QString> NandGate::getProperties() const {
+    QMap<QString, QString> props;
+    props["Propagation Delay"] = propagationDelay;
+    props["Logic HIGH (V)"] = highVoltage;
+    return props;
+}
+
+void NandGate::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
+    if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
+}
+
+// ============================================================================
+// پیاده‌سازی فلیپ‌فلاپ D
+// ============================================================================
 DFlipFlop::DFlipFlop() {
-    (new Terminal(this))->setPos(-40, -15); // D
-    (new Terminal(this))->setPos(-40, 15);  // CLK
-    (new Terminal(this))->setPos(40, -15);  // Q
-    (new Terminal(this))->setPos(45, 15);   // Q'
+    inD = new Terminal(this); inD->setPos(-40, -15);
+    clk = new Terminal(this); clk->setPos(-40, 15);
+    outQ = new Terminal(this); outQ->setPos(40, -15);
+    outQBar = new Terminal(this); outQBar->setPos(40, 15);
 }
 
-QRectF DFlipFlop::boundingRect() const {
-    // گسترش کادر بالا و پایین برای نمایش وضعیت اولیه و تأخیر
-    return QRectF(-45, -50, 100, 100);
-}
-
-void DFlipFlop::process() {}
+QRectF DFlipFlop::boundingRect() const { return QRectF(-45, -50, 90, 100); }
 
 void DFlipFlop::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(Qt::black, 2);
     if (isSelected()) pen.setColor(Qt::red);
     painter->setPen(pen);
 
-    painter->drawRect(-30, -30, 60, 60); // بدنه فلیپ‌فلاپ
+    painter->drawRect(-30, -35, 60, 70);
 
-    // پایه‌های ورودی
+    // سیم‌های اتصالی پایه‌ها
     painter->drawLine(-40, -15, -30, -15);
-    painter->drawText(-25, -10, "D");
-
     painter->drawLine(-40, 15, -30, 15);
-    painter->drawLine(-30, 10, -25, 15); // مثلث کلاک
-    painter->drawLine(-25, 15, -30, 20);
-
-    // پایه‌های خروجی
     painter->drawLine(30, -15, 40, -15);
-    painter->drawText(15, -10, "Q");
-
     painter->drawLine(30, 15, 40, 15);
-    painter->drawEllipse(30, 12.5, 5, 5);  // دایره نات برای Q'
-    painter->drawLine(35, 15, 45, 15);
-    painter->drawText(15, 20, "Q'");
 
-    // === نمایش داینامیک وضعیت اولیه و تأخیر ===
-    painter->setFont(QFont("Consolas", 7, QFont::Bold));
-    painter->setPen(Qt::darkBlue);
+    // لیبل‌های داخلی پایه‌ها
+    painter->setFont(QFont("Consolas", 8, QFont::Bold));
+    painter->drawText(QRectF(-25, -23, 20, 15), Qt::AlignLeft, "D");
+    painter->drawText(QRectF(10, -23, 20, 15), Qt::AlignRight, "Q");
+    painter->drawText(QRectF(5, 7, 25, 15), Qt::AlignRight, "Q'");
 
-    // چاپ وضعیت اولیه در بالای قطعه
-    QString stateText = "Init Q=" + initialQState;
-    painter->drawText(QRectF(-40, -45, 80, 15), Qt::AlignCenter, stateText);
+    // رسم نماد کلاک (مثلث لبه)
+    painter->drawLine(-30, 7, -23, 15);
+    painter->drawLine(-23, 15, -30, 23);
 
-    // چاپ میزان تأخیر در پایین قطعه
-    painter->drawText(QRectF(-40, 32, 80, 15), Qt::AlignCenter, propagationDelay);
+    painter->setFont(QFont("Consolas", 6));
+    painter->setPen(Qt::darkGray);
+    painter->drawText(QRectF(-40, 40, 80, 15), Qt::AlignCenter, propagationDelay);
+}
+
+void DFlipFlop::process() {
+    if (inD->getConnectedWires().isEmpty() || clk->getConnectedWires().isEmpty()) {
+        qWarning() << "DRC Warning: Floating input detected on D-FlipFlop!";
+        return;
+    }
+    // منطق تشخیص لبه بالارونده کلاک (Sequential Logic) در استپ بعدی شبیه‌ساز فعال خواهد شد
+}
+
+QMap<QString, QString> DFlipFlop::getProperties() const {
+    QMap<QString, QString> props;
+    props["Propagation Delay"] = propagationDelay;
+    props["Initial Q State (0/1)"] = initialQState;
+    return props;
+}
+
+void DFlipFlop::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
+    if (props.contains("Initial Q State (0/1)")) initialQState = props["Initial Q State (0/1)"];
 }
