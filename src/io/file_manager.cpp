@@ -12,16 +12,18 @@
 #include <QDebug>
 #include <QMap>
 
+// مقداردهی اولیه متغیرهای استاتیک (تاریخچه مدار)
+QStack<QByteArray> FileManager::undoStack;
+QStack<QByteArray> FileManager::redoStack;
+QByteArray FileManager::currentState;
+
 // =========================================
-// توابع کمکی برای پیدا کردن شماره (Index) پایه‌ها
+// توابع کمکی پیدا کردن شماره (Index)
 // =========================================
-static int getTerminalIndex(Element* el, Terminal* target)
-{
+static int getTerminalIndex(Element* el, Terminal* target) {
     int index = 0;
-    for (QGraphicsItem* child : el->childItems())
-    {
-        if (Terminal* term = dynamic_cast<Terminal*>(child))
-        {
+    for (QGraphicsItem* child : el->childItems()) {
+        if (Terminal* term = dynamic_cast<Terminal*>(child)) {
             if (term == target) return index;
             index++;
         }
@@ -29,13 +31,10 @@ static int getTerminalIndex(Element* el, Terminal* target)
     return -1;
 }
 
-static Terminal* getTerminalByIndex(Element* el, int index)
-{
+static Terminal* getTerminalByIndex(Element* el, int index) {
     int currentIndex = 0;
-    for (QGraphicsItem* child : el->childItems())
-    {
-        if (Terminal* term = dynamic_cast<Terminal*>(child))
-        {
+    for (QGraphicsItem* child : el->childItems()) {
+        if (Terminal* term = dynamic_cast<Terminal*>(child)) {
             if (currentIndex == index) return term;
             currentIndex++;
         }
@@ -44,7 +43,7 @@ static Terminal* getTerminalByIndex(Element* el, int index)
 }
 
 // =========================================
-// تابع کارخانه (Factory)
+// تابع کارخانه (Factory Pattern)
 // =========================================
 static Element* createComponent(const QString &type) {
     if (type == "Microcontroller (MCU)") return new MCUChip();
@@ -54,27 +53,25 @@ static Element* createComponent(const QString &type) {
     if (type == "7-Segment Display") return new SevenSegment();
     if (type == "AND Gate") return new AndGate();
     if (type == "OR Gate") return new OrGate();
-    if (type == "External Memory Chip") return new MemoryChip();
+    if (type == "NOT Gate") return new NotGate();
+    if (type == "XOR Gate") return new XorGate();
+    if (type == "NAND Gate") return new NandGate();
+    if (type == "D-Type Flip-Flop") return new DFlipFlop();
     if (type == "Ground (GND)") return new Ground();
     if (type == "DC Voltage Source") return new DCVoltageSource();
     if (type == "Clock Generator") return new ClockGenerator();
+    if (type == "External Memory Chip") return new MemoryChip();
     return nullptr;
 }
 
-// =========================================
-// توابع ذخیره‌سازی (Save)
-// =========================================
-bool FileManager::saveCircuit(const QString &filePath, QGraphicsScene *scene)
-{
-    if (!scene || filePath.isEmpty())
-        return false;
+// ============================================================================
+// موتور اصلی سریالایز و دی‌سریالایز (استفاده مشترک برای فایل و Undo/Redo)
+// ============================================================================
 
-    // ۱. استخراج تمام قطعات به یک لیست مشخص تا ترتیبشان حفظ شود (برای ID گذاری)
+QByteArray FileManager::captureSceneState(QGraphicsScene *scene) {
     QList<Element*> elementsList;
-    for (QGraphicsItem *item : scene->items())
-    {
-        if (Element *el = dynamic_cast<Element*>(item))
-        {
+    for (QGraphicsItem *item : scene->items()) {
+        if (Element *el = dynamic_cast<Element*>(item)) {
             elementsList.append(el);
         }
     }
@@ -84,25 +81,150 @@ bool FileManager::saveCircuit(const QString &filePath, QGraphicsScene *scene)
     rootObject["wires"] = serializeWires(scene, elementsList);
 
     QJsonDocument doc(rootObject);
-    QFile file(filePath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-    {
-        qDebug() << "Failed to open file for saving:" << filePath;
-        return false;
+    return doc.toJson(QJsonDocument::Compact); // فشرده ذخیره می‌کنیم تا رم اشغال نشود
+}
+
+void FileManager::restoreSceneState(const QByteArray &stateData, QGraphicsScene *scene) {
+    if (stateData.isEmpty()) return;
+
+    QJsonDocument doc = QJsonDocument::fromJson(stateData);
+    if (doc.isNull() || !doc.isObject()) return;
+
+    scene->clear();
+    QJsonObject rootObject = doc.object();
+    QList<Element*> loadedElements;
+
+    // بازیابی قطعات
+    QJsonArray elementsArray = rootObject["elements"].toArray();
+    for (const QJsonValue &value : elementsArray) {
+        QJsonObject elObj = value.toObject();
+        Element *newElement = createComponent(elObj["type"].toString());
+
+        if (newElement) {
+            QJsonObject posObj = elObj["position"].toObject();
+            newElement->setPos(posObj["x"].toDouble(), posObj["y"].toDouble());
+
+            QJsonObject propsObj = elObj["properties"].toObject();
+            QMap<QString, QString> props;
+            for (auto it = propsObj.constBegin(); it != propsObj.constEnd(); ++it) {
+                props[it.key()] = it.value().toString();
+            }
+            newElement->setProperties(props);
+
+            scene->addItem(newElement);
+            loadedElements.append(newElement);
+        } else {
+            loadedElements.append(nullptr);
+        }
     }
 
+    // بازیابی سیم‌ها و مسیریابی خودکار
+    QJsonArray wiresArray = rootObject["wires"].toArray();
+    for (const QJsonValue &value : wiresArray) {
+        QJsonObject wireObj = value.toObject();
+        QJsonObject startObj = wireObj["start"].toObject();
+        QJsonObject endObj = wireObj["end"].toObject();
+
+        int startElIdx = startObj["element_index"].toInt(-1);
+        int startTermIdx = startObj["terminal_index"].toInt(-1);
+        int endElIdx = endObj["element_index"].toInt(-1);
+        int endTermIdx = endObj["terminal_index"].toInt(-1);
+
+        if (startElIdx >= 0 && endElIdx >= 0) {
+            Element *startEl = loadedElements.value(startElIdx, nullptr);
+            Element *endEl = loadedElements.value(endElIdx, nullptr);
+
+            if (startEl && endEl) {
+                Terminal *startTerm = getTerminalByIndex(startEl, startTermIdx);
+                Terminal *endTerm = getTerminalByIndex(endEl, endTermIdx);
+
+                if (startTerm && endTerm) {
+                    Wire *newWire = new Wire(startTerm, startTerm->scenePos());
+                    newWire->confirmConnection(endTerm);
+                    scene->addItem(newWire);
+                    newWire->updateRoute();
+                }
+            }
+        }
+    }
+}
+
+// =========================================
+// سیستم کنترل فایل (Save / Load)
+// =========================================
+bool FileManager::saveCircuit(const QString &filePath, QGraphicsScene *scene) {
+    if (!scene || filePath.isEmpty()) return false;
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) return false;
+
+    // تبدیل بوم به JSON ولی این بار با فرمت خوانا (Indented) برای ذخیره در هارد
+    QJsonDocument doc = QJsonDocument::fromJson(captureSceneState(scene));
     QTextStream out(&file);
     out << doc.toJson(QJsonDocument::Indented);
     file.close();
-    qDebug() << "Circuit successfully saved to" << filePath;
     return true;
 }
 
-QJsonArray FileManager::serializeElements(const QList<Element*> &elementsList)
-{
+bool FileManager::loadCircuit(const QString &filePath, QGraphicsScene *scene) {
+    if (!scene || filePath.isEmpty()) return false;
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return false;
+
+    QByteArray fileData = file.readAll();
+    file.close();
+
+    restoreSceneState(fileData, scene);
+
+    // پاک کردن تاریخچه به خاطر لود شدن مدار کاملاً جدید
+    undoStack.clear();
+    redoStack.clear();
+    currentState = captureSceneState(scene);
+
+    return true;
+}
+
+// =========================================
+// منطق اصلی Undo / Redo
+// =========================================
+void FileManager::recordState(QGraphicsScene *scene) {
+    if (!currentState.isEmpty()) {
+        undoStack.push(currentState);
+    }
+    currentState = captureSceneState(scene);
+    redoStack.clear(); // با انجام یک کار جدید، تاریخچه‌ی آینده پاک می‌شود
+    qDebug() << "[History] State recorded. Undo level:" << undoStack.size();
+}
+
+void FileManager::undo(QGraphicsScene *scene) {
+    if (undoStack.isEmpty()) {
+        qDebug() << "[History] Nothing to undo.";
+        return;
+    }
+    redoStack.push(currentState);
+    currentState = undoStack.pop();
+    restoreSceneState(currentState, scene);
+    qDebug() << "[History] Undo performed.";
+}
+
+void FileManager::redo(QGraphicsScene *scene) {
+    if (redoStack.isEmpty()) {
+        qDebug() << "[History] Nothing to redo.";
+        return;
+    }
+    undoStack.push(currentState);
+    currentState = redoStack.pop();
+    restoreSceneState(currentState, scene);
+    qDebug() << "[History] Redo performed.";
+}
+
+// =========================================
+// استخراج قطعات و سیم‌ها
+// =========================================
+QJsonArray FileManager::serializeElements(const QList<Element*> &elementsList) {
     QJsonArray elementsArray;
-    for (Element *element : elementsList)
-    {
+    for (Element *element : elementsList) {
         QJsonObject elementObj;
         elementObj["type"] = element->getComponentName();
 
@@ -113,8 +235,7 @@ QJsonArray FileManager::serializeElements(const QList<Element*> &elementsList)
 
         QJsonObject propsObj;
         QMap<QString, QString> props = element->getProperties();
-        for (auto it = props.constBegin(); it != props.constEnd(); ++it)
-        {
+        for (auto it = props.constBegin(); it != props.constEnd(); ++it) {
             propsObj[it.key()] = it.value();
         }
         elementObj["properties"] = propsObj;
@@ -123,138 +244,34 @@ QJsonArray FileManager::serializeElements(const QList<Element*> &elementsList)
     return elementsArray;
 }
 
-QJsonArray FileManager::serializeWires(QGraphicsScene *scene, const QList<Element*> &elementsList)
-{
+QJsonArray FileManager::serializeWires(QGraphicsScene *scene, const QList<Element*> &elementsList) {
     QJsonArray wiresArray;
-    for (QGraphicsItem *item : scene->items())
-    {
-        if (Wire *wire = dynamic_cast<Wire*>(item))
-        {
+    for (QGraphicsItem *item : scene->items()) {
+        if (Wire *wire = dynamic_cast<Wire*>(item)) {
             Terminal *startTerm = wire->getStartTerminal();
             Terminal *endTerm = wire->getEndTerminal();
-
-            if (!startTerm || !endTerm) continue; // سیم‌های ناقص را ذخیره نمی‌کنیم
+            if (!startTerm || !endTerm) continue;
 
             Element *startEl = dynamic_cast<Element*>(startTerm->parentItem());
             Element *endEl = dynamic_cast<Element*>(endTerm->parentItem());
-            if (!startEl || !endEl)
-                continue;
+            if (!startEl || !endEl) continue;
 
             int startElIndex = elementsList.indexOf(startEl);
             int endElIndex = elementsList.indexOf(endEl);
-
-            if (startElIndex == -1 || endElIndex == -1)
-                continue;
+            if (startElIndex == -1 || endElIndex == -1) continue;
 
             QJsonObject wireObj;
+            QJsonObject startObj, endObj;
 
-            QJsonObject startObj;
             startObj["element_index"] = startElIndex;
             startObj["terminal_index"] = getTerminalIndex(startEl, startTerm);
-
-            QJsonObject endObj;
             endObj["element_index"] = endElIndex;
             endObj["terminal_index"] = getTerminalIndex(endEl, endTerm);
 
             wireObj["start"] = startObj;
             wireObj["end"] = endObj;
-
             wiresArray.append(wireObj);
         }
     }
     return wiresArray;
-}
-
-// =========================================
-// توابع بازیابی (Load)
-// =========================================
-bool FileManager::loadCircuit(const QString &filePath, QGraphicsScene *scene)
-{
-    if (!scene || filePath.isEmpty())
-        return false;
-
-    QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        qDebug() << "Failed to open file for loading:" << filePath;
-        return false;
-    }
-    QByteArray fileData = file.readAll();
-    file.close();
-
-    QJsonDocument doc = QJsonDocument::fromJson(fileData);
-    if (doc.isNull() || !doc.isObject()) return false;
-
-    scene->clear(); // پاک کردن بوم فعلی
-    QJsonObject rootObject = doc.object();
-
-    QList<Element*> loadedElements; // لیستی برای نگهداری قطعاتِ لود شده جهت سیم‌کشی
-
-    // ۱. ساخت قطعات
-    QJsonArray elementsArray = rootObject["elements"].toArray();
-    for (const QJsonValue &value : elementsArray)
-    {
-        QJsonObject elObj = value.toObject();
-        QString type = elObj["type"].toString();
-
-        Element *newElement = createComponent(type);
-        if (newElement)
-        {
-            QJsonObject posObj = elObj["position"].toObject();
-            newElement->setPos(posObj["x"].toDouble(), posObj["y"].toDouble());
-
-            QJsonObject propsObj = elObj["properties"].toObject();
-            QMap<QString, QString> props;
-            for (auto it = propsObj.constBegin(); it != propsObj.constEnd(); ++it)
-            {
-                props[it.key()] = it.value().toString();
-            }
-            newElement->setProperties(props);
-
-            scene->addItem(newElement);
-            loadedElements.append(newElement); // ثبت قطعه در لیست برای اتصال سیم‌ها
-        }
-        else
-        {
-            loadedElements.append(nullptr); // برای حفظ نظم Index ها
-        }
-    }
-
-    // ۲. ساخت سیم‌ها
-    QJsonArray wiresArray = rootObject["wires"].toArray();
-    for (const QJsonValue &value : wiresArray) {
-        QJsonObject wireObj = value.toObject();
-        QJsonObject startObj = wireObj["start"].toObject();
-        QJsonObject endObj = wireObj["end"].toObject();
-        int startElIdx = startObj["element_index"].toInt(-1);
-        int startTermIdx = startObj["terminal_index"].toInt(-1);
-        int endElIdx = endObj["element_index"].toInt(-1);
-        int endTermIdx = endObj["terminal_index"].toInt(-1);
-        if (startElIdx >= 0 && startElIdx < loadedElements.size() &&
-            endElIdx >= 0 && endElIdx < loadedElements.size())
-        {
-
-            Element *startEl = loadedElements[startElIdx];
-            Element *endEl = loadedElements[endElIdx];
-
-            if (startEl && endEl)
-            {
-                Terminal *startTerm = getTerminalByIndex(startEl, startTermIdx);
-                Terminal *endTerm = getTerminalByIndex(endEl, endTermIdx);
-
-                if (startTerm && endTerm)
-                {
-                    Wire *newWire = new Wire(startTerm, startTerm->scenePos());
-                    newWire->confirmConnection(endTerm);
-                    scene->addItem(newWire);
-
-                    // شبیه‌سازی زنده: فرمان می‌دهیم تا هوش مصنوعی مسیر را با زاویه ۹۰ درجه رسم کند
-                    newWire->updateRoute();
-                }
-            }
-        }
-    }
-
-    qDebug() << "Circuit successfully loaded from" << filePath;
-    return true;
 }

@@ -11,6 +11,7 @@
 #include "../components/basic_components.h"
 #include "../components/logic_gates.h"
 #include "../components/peripherals.h"
+#include "../io/file_manager.h"
 CircuitScene::CircuitScene(QObject *parent)
         : QGraphicsScene(parent), isWiring(false), tempWire(nullptr), startTerminal(nullptr) {
 
@@ -99,6 +100,21 @@ void CircuitScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
 // رویداد فشردن کلیدهای کیبورد (برای حذف قطعات)
 // ==========================================
 void CircuitScene::keyPressEvent(QKeyEvent *event) {
+    void CircuitScene::keyPressEvent(QKeyEvent *event) {
+        // === کدهای مربوط به Undo / Redo ===
+        if (event->modifiers() & Qt::ControlModifier) {
+            if (event->key() == Qt::Key_Z) {
+                if (event->modifiers() & Qt::ShiftModifier) {
+                    FileManager::redo(this); // Ctrl + Shift + Z
+                } else {
+                    FileManager::undo(this); // Ctrl + Z
+                }
+                return;
+            } else if (event->key() == Qt::Key_Y) {
+                FileManager::redo(this); // Ctrl + Y
+                return;
+            }
+        }
     // اگر کاربر کلید Delete یا Backspace را فشار داد
     if (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace) {
 
@@ -185,4 +201,5 @@ void CircuitScene::dropEvent(QGraphicsSceneDragDropEvent *event) {
     } else {
         event->ignore();
     }
+    FileManager::recordState(this);
 }
