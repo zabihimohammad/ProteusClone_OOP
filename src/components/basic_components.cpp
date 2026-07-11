@@ -170,6 +170,8 @@ void Inductor::process() {}
 // ==========================================
 // ۶. پیاده‌سازی پالس کلاک (Pulse Generator)
 // ==========================================
+// ۶. پیاده‌سازی پالس کلاک (Pulse Generator)
+// ==========================================
 PulseGenerator::PulseGenerator() {
     (new Terminal(this))->setPos(30, 0);
 }
@@ -188,14 +190,34 @@ void PulseGenerator::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     painter->drawLine(0, 10, 10, 10);
     painter->drawLine(20, 0, 30, 0);
 
-    // === بخش جدید: نمایش فرکانس روی قطعه ===
+    // نمایش فرکانس روی قطعه
     painter->setFont(QFont("Consolas", 7, QFont::Bold));
     painter->setPen(Qt::darkBlue);
     painter->drawText(QRectF(-25, -35, 50, 15), Qt::AlignCenter, frequency);
 }
 
-void PulseGenerator::process() {}
+// 🛠️ بخش اصلاح شده: موتور شبیه‌ساز هر 0.1 ثانیه این تابع را صدا می‌زند
+void PulseGenerator::process() {
+    tickCount++;
+    if (tickCount >= 10) { // هر 1 ثانیه (10 تا 100 میلی‌ثانیه)
+        tickCount = 0;
 
+        // تغییر وضعیت (Toggle)
+        if (currentMockVoltage == "0.0V") {
+            currentMockVoltage = "5.0V";
+        } else {
+            currentMockVoltage = "0.0V";
+        }
+    }
+
+    // تزریق ولتاژ به ترمینال خروجی
+    for (QGraphicsItem *child : childItems()) {
+        Terminal *term = dynamic_cast<Terminal*>(child);
+        if (term) {
+            term->voltageLevel = currentMockVoltage;
+        }
+    }
+}
 // ==========================================
 // ۷. کلید قطع و وصل (Switch)
 // ==========================================

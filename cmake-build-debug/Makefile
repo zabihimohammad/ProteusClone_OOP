@@ -381,6 +381,30 @@ src/core/probe_item.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/core/probe_item.cpp.s
 .PHONY : src/core/probe_item.cpp.s
 
+src/core/simulation_engine.obj: src/core/simulation_engine.cpp.obj
+.PHONY : src/core/simulation_engine.obj
+
+# target to build an object file
+src/core/simulation_engine.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/core/simulation_engine.cpp.obj
+.PHONY : src/core/simulation_engine.cpp.obj
+
+src/core/simulation_engine.i: src/core/simulation_engine.cpp.i
+.PHONY : src/core/simulation_engine.i
+
+# target to preprocess a source file
+src/core/simulation_engine.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/core/simulation_engine.cpp.i
+.PHONY : src/core/simulation_engine.cpp.i
+
+src/core/simulation_engine.s: src/core/simulation_engine.cpp.s
+.PHONY : src/core/simulation_engine.s
+
+# target to generate assembly for a file
+src/core/simulation_engine.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ProteusClone_OOP.dir\build.make CMakeFiles/ProteusClone_OOP.dir/src/core/simulation_engine.cpp.s
+.PHONY : src/core/simulation_engine.cpp.s
+
 src/core/terminal.obj: src/core/terminal.cpp.obj
 .PHONY : src/core/terminal.obj
 
@@ -565,6 +589,9 @@ help:
 	@echo ... src/core/probe_item.obj
 	@echo ... src/core/probe_item.i
 	@echo ... src/core/probe_item.s
+	@echo ... src/core/simulation_engine.obj
+	@echo ... src/core/simulation_engine.i
+	@echo ... src/core/simulation_engine.s
 	@echo ... src/core/terminal.obj
 	@echo ... src/core/terminal.i
 	@echo ... src/core/terminal.s

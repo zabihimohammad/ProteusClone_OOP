@@ -130,6 +130,8 @@ public:
 // ==========================================
 class PulseGenerator : public Element {
 private:
+    int tickCount = 0; // شمارنده زمان
+    QString currentMockVoltage = "0.0V"; // ولتاژ فعلی
     QString amplitude = "5V";
     QString frequency = "1kHz";
     QString dutyCycle = "50%";

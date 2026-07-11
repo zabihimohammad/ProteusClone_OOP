@@ -1,3 +1,4 @@
+//terminal.h
 #pragma once
 #include <QGraphicsItem>
 #include <QList>
@@ -16,6 +17,7 @@ public:
     void removeWire(Wire *wire);
     QList<Wire*> getConnectedWires() const;
     QString voltageLevel = "Undefined";
+    ~Terminal() override;
 protected:
     // بازنویسی رویدادهای موس برای تغییر رنگ هنگام نزدیک شدن نشانگر (Hover)
     void hoverEnterEvent(QGraphicsSceneHoverEvent *event) override;
@@ -23,7 +25,7 @@ protected:
 
     // رویداد کلیک برای شروع سیم‌کشی
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
-    void hoverMoveEvent(QGraphicsSceneHoverEvent *event) override;
+   // void hoverMoveEvent(QGraphicsSceneHoverEvent *event) override;
     void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
 private:
     bool isHovered; // متغیری برای تشخیص اینکه آیا موس روی پایه است یا خیر

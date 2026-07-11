@@ -44,6 +44,8 @@ set(PROJECT_SOURCES
         src/core/auto_router.h
         src/core/probe_item.cpp
         src/core/probe_item.h
+        src/core/simulation_engine.cpp
+        src/core/simulation_engine.h
         src/gui/properties_dialog.cpp
         src/gui/properties_dialog.h
 

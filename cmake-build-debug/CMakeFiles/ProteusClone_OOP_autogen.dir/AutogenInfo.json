@@ -385,6 +385,12 @@
 			null
 		],
 		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/simulation_engine.h",
+			"MU",
+			"PRMOGMWJPH/moc_simulation_engine.cpp",
+			null
+		],
+		[
 			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h",
 			"MU",
 			"PRMOGMWJPH/moc_terminal.cpp",
@@ -526,6 +532,11 @@
 		],
 		[
 			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/probe_item.cpp",
+			"MU",
+			null
+		],
+		[
+			"C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/simulation_engine.cpp",
 			"MU",
 			null
 		],
