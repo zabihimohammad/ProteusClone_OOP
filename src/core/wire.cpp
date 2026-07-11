@@ -2,6 +2,10 @@
 #include "terminal.h"
 #include <QPainter>
 #include "auto_router.h" // برای دسترسی به هوش مصنوعی
+#include <QToolTip>
+#include <QGraphicsSceneHoverEvent>
+#include "probe_item.h"
+#include "../canvas/circuit_scene.h"
 Wire::Wire(Terminal *startTerm, QPointF startPos) {
     startTerminal = startTerm;
     endTerminal = nullptr;
@@ -12,6 +16,7 @@ Wire::Wire(Terminal *startTerm, QPointF startPos) {
     setZValue(-1);
     // اضافه کردن این خط: اجازه انتخاب شدن با موس
     setFlag(QGraphicsItem::ItemIsSelectable);
+    setAcceptHoverEvents(true);
 }
 
 void Wire::setEndPoint(QPointF endPos) {
@@ -59,6 +64,7 @@ QRectF Wire::boundingRect() const {
     return QRectF(minX, minY, maxX - minX, maxY - minY).adjusted(-5, -5, 5, 5);
 }
 
+
 void Wire::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(isSelected() ? Qt::red : Qt::blue, 2);
     painter->setPen(pen);
@@ -105,4 +111,40 @@ Wire::~Wire() {
     // وقتی کاربر سیم را با کلید Delete پاک می‌کند، سیم باید نام خودش را از لیست پایه‌ها خط بزند
     if (startTerminal) startTerminal->removeWire(this);
     if (endTerminal) endTerminal->removeWire(this);
+}
+/*void Wire::hoverMoveEvent(QGraphicsSceneHoverEvent *event) {
+    // ساخت متنی که قرار است نمایش داده شود
+    QString displayText = "Voltage: " + voltageLevel;
+
+    // نمایش کادر کوچک دقیقاً در مختصات فعلی نشانگر موس روی مانیتور
+    QToolTip::showText(event->screenPos(), displayText);
+
+    // فراخوانی متد اصلی برای جلوگیری از اختلال در رویدادهای پیش‌فرض Qt
+    QGraphicsItem::hoverMoveEvent(event); // اگر کلاس پایه شما چیز دیگری مثل QGraphicsPathItem است، نام آن را بنویسید
+}*/
+void Wire::hoverMoveEvent(QGraphicsSceneHoverEvent *event) {
+    // دسترسی به بوم مدار
+    CircuitScene *scene = dynamic_cast<CircuitScene*>(this->scene());
+
+    if (scene && scene->voltageProbe) {
+        // ارسال ولتاژ و موقعیت فعلی موس به پروب برای نمایش روی بوم
+        scene->voltageProbe->updateProbe(voltageLevel, event->scenePos());
+        if(scene->isProbeEnabled){
+            scene->voltageProbe->updateProbe(voltageLevel, event->scenePos());
+        }
+        else {
+            scene->voltageProbe->hide();
+        }
+    }
+    QGraphicsItem::hoverMoveEvent(event);
+
+}
+
+// برای پنهان شدن پروب وقتی موس از روی سیم کنار می‌رود:
+void Wire::hoverLeaveEvent(QGraphicsSceneHoverEvent *event) {
+    CircuitScene *scene = dynamic_cast<CircuitScene*>(this->scene());
+    if (scene && scene->voltageProbe) {
+        scene->voltageProbe->hide();
+    }
+    QGraphicsItem::hoverLeaveEvent(event);
 }

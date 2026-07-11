@@ -5,7 +5,7 @@
 #include <QKeyEvent>
 #include <QMimeData>
 #include "../core/terminal.h"
-
+#include "../core/probe_item.h"
 // Forward declarations
 class Wire;
 
@@ -13,7 +13,8 @@ class CircuitScene : public QGraphicsScene {
 Q_OBJECT
 public:
     explicit CircuitScene(QObject *parent = nullptr);
-
+    ProbeItem *voltageProbe;
+    bool isProbeEnabled = false;
 protected:
     // تابع رسم پس‌زمینه شطرنجی
     void drawBackground(QPainter *painter, const QRectF &rect) override;

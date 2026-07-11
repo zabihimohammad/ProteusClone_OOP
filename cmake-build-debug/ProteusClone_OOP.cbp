@@ -173,6 +173,12 @@
 		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/element.h">
 			<Option target="ProteusClone_OOP"/>
 		</Unit>
+		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/probe_item.cpp">
+			<Option target="ProteusClone_OOP"/>
+		</Unit>
+		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/probe_item.h">
+			<Option target="ProteusClone_OOP"/>
+		</Unit>
 		<Unit filename="C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.cpp">
 			<Option target="ProteusClone_OOP"/>
 		</Unit>

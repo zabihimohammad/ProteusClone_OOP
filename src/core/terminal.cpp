@@ -2,6 +2,9 @@
 #include <QPainter>
 #include <QCursor>
 #include <QGraphicsSceneHoverEvent>
+#include <QToolTip>
+#include "../canvas/circuit_scene.h"
+#include <QGraphicsSceneHoverEvent>
 #include <QGraphicsSceneMouseEvent>
 Terminal::Terminal(QGraphicsItem *parent) : QGraphicsItem(parent), isHovered(false) {
     // این دو فلگ بسیار مهم هستند:
@@ -9,6 +12,7 @@ Terminal::Terminal(QGraphicsItem *parent) : QGraphicsItem(parent), isHovered(fal
     // دومی باعث می‌شود پایه از قطعه مادر خود (مثلا مقاومت) بیرون نزند
     setAcceptHoverEvents(true);
     setFlag(ItemIgnoresTransformations, false);
+    setAcceptHoverEvents(true);
 }
 
 QRectF Terminal::boundingRect() const {
@@ -41,11 +45,11 @@ void Terminal::hoverEnterEvent(QGraphicsSceneHoverEvent *event) {
     update(); // دستور به Qt برای رسم مجدد پایه (تا آبی شود)
 }
 
-void Terminal::hoverLeaveEvent(QGraphicsSceneHoverEvent *event) {
+/*void Terminal::hoverLeaveEvent(QGraphicsSceneHoverEvent *event) {
     isHovered = false;
     setCursor(Qt::ArrowCursor); // بازگشت موس به حالت عادی
     update(); // رسم مجدد (تا دوباره نامرئی شود)
-}
+}*/
 
 void Terminal::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     // فعلاً فقط رویداد را ثبت می‌کنیم. منطق رسم سیم را در مراحل بعدی اینجا اضافه خواهیم کرد
@@ -63,4 +67,30 @@ void Terminal::removeWire(Wire *wire) {
 
 QList<Wire*> Terminal::getConnectedWires() const {
     return connectedWires;
+}
+void Terminal::hoverMoveEvent(QGraphicsSceneHoverEvent *event) {
+    CircuitScene *scene = dynamic_cast<CircuitScene*>(this->scene());
+    if (scene && scene->voltageProbe) {
+        // ارسال ولتاژ ترمینال به پروب گرافیکی
+        scene->voltageProbe->updateProbe(voltageLevel, event->scenePos());
+        if(scene->isProbeEnabled){
+            scene->voltageProbe->updateProbe(voltageLevel, event->scenePos());
+        }
+        else {
+            scene->voltageProbe->hide();
+        }
+    }
+    QGraphicsItem::hoverMoveEvent(event);
+}
+
+void Terminal::hoverLeaveEvent(QGraphicsSceneHoverEvent *event) {
+    isHovered = false;
+    setCursor(Qt::ArrowCursor); // بازگشت موس به حالت عادی
+    update(); // رسم مجدد (تا دوباره نامرئی شود)
+    CircuitScene *scene = dynamic_cast<CircuitScene*>(this->scene());
+    if (scene && scene->voltageProbe) {
+        // پنهان کردن پروب با کنار رفتن موس
+        scene->voltageProbe->hide();
+    }
+    QGraphicsItem::hoverLeaveEvent(event);
 }

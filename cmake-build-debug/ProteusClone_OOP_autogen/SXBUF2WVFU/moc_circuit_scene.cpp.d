@@ -6,6 +6,7 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/cmake-build-debug/ProteusClone_
   C:/Qt/6.11.1/mingw_64/include/QtCore/QRect \
   C:/Qt/6.11.1/mingw_64/include/QtCore/QSize \
   C:/Qt/6.11.1/mingw_64/include/QtCore/QSizeF \
+  C:/Qt/6.11.1/mingw_64/include/QtCore/QString \
   C:/Qt/6.11.1/mingw_64/include/QtCore/q17memory.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/q20bit.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/q20functional.h \
@@ -147,12 +148,16 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/cmake-build-debug/ProteusClone_
   C:/Qt/6.11.1/mingw_64/include/QtCore/qxptype_traits.h \
   C:/Qt/6.11.1/mingw_64/include/QtCore/qyieldcpu.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/QKeyEvent \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/QPainter \
   C:/Qt/6.11.1/mingw_64/include/QtGui/QTransform \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qbrush.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qcolor.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qevent.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qeventpoint.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qfont.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontinfo.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontmetrics.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qfontvariableaxis.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qguiapplication.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qguiapplication_platform.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qimage.h \
@@ -160,6 +165,7 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/cmake-build-debug/ProteusClone_
   C:/Qt/6.11.1/mingw_64/include/QtGui/qinputmethod.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qkeysequence.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpaintdevice.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qpainter.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpainterpath.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpen.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qpixelformat.h \
@@ -171,6 +177,7 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/cmake-build-debug/ProteusClone_
   C:/Qt/6.11.1/mingw_64/include/QtGui/qrgba64.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qscreen.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qscreen_platform.h \
+  C:/Qt/6.11.1/mingw_64/include/QtGui/qtextoption.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qtgui-config.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qtguiexports.h \
   C:/Qt/6.11.1/mingw_64/include/QtGui/qtguiglobal.h \
@@ -402,4 +409,5 @@ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/cmake-build-debug/ProteusClone_
   C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/time.h \
   C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/vadefs.h \
   C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/wchar.h \
+  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/probe_item.h \
   C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/terminal.h

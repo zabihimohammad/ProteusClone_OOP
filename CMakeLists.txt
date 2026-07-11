@@ -42,8 +42,11 @@ set(PROJECT_SOURCES
         src/core/wire.h
         src/core/auto_router.cpp
         src/core/auto_router.h
+        src/core/probe_item.cpp
+        src/core/probe_item.h
         src/gui/properties_dialog.cpp
         src/gui/properties_dialog.h
+
         )
 
 add_executable(ProteusClone_OOP ${PROJECT_SOURCES})
