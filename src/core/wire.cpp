@@ -112,39 +112,13 @@ Wire::~Wire() {
     if (startTerminal) startTerminal->removeWire(this);
     if (endTerminal) endTerminal->removeWire(this);
 }
-/*void Wire::hoverMoveEvent(QGraphicsSceneHoverEvent *event) {
-    // ساخت متنی که قرار است نمایش داده شود
-    QString displayText = "Voltage: " + voltageLevel;
-
-    // نمایش کادر کوچک دقیقاً در مختصات فعلی نشانگر موس روی مانیتور
-    QToolTip::showText(event->screenPos(), displayText);
-
-    // فراخوانی متد اصلی برای جلوگیری از اختلال در رویدادهای پیش‌فرض Qt
-    QGraphicsItem::hoverMoveEvent(event); // اگر کلاس پایه شما چیز دیگری مثل QGraphicsPathItem است، نام آن را بنویسید
-}*/
-void Wire::hoverMoveEvent(QGraphicsSceneHoverEvent *event) {
-    // دسترسی به بوم مدار
-    CircuitScene *scene = dynamic_cast<CircuitScene*>(this->scene());
-
-    if (scene && scene->voltageProbe) {
-        // ارسال ولتاژ و موقعیت فعلی موس به پروب برای نمایش روی بوم
-        scene->voltageProbe->updateProbe(voltageLevel, event->scenePos());
-        if(scene->isProbeEnabled){
-            scene->voltageProbe->updateProbe(voltageLevel, event->scenePos());
-        }
-        else {
-            scene->voltageProbe->hide();
-        }
+void Wire::disconnectTerminal(Terminal *term) {
+    // اگر ترمینالی که دارد نابود می‌شود پایه شروع من است، آن را فراموش کن
+    if (startTerminal == term) {
+        startTerminal = nullptr;
     }
-    QGraphicsItem::hoverMoveEvent(event);
-
-}
-
-// برای پنهان شدن پروب وقتی موس از روی سیم کنار می‌رود:
-void Wire::hoverLeaveEvent(QGraphicsSceneHoverEvent *event) {
-    CircuitScene *scene = dynamic_cast<CircuitScene*>(this->scene());
-    if (scene && scene->voltageProbe) {
-        scene->voltageProbe->hide();
+    // اگر پایه انتهایی من است، آن را فراموش کن
+    if (endTerminal == term) {
+        endTerminal = nullptr;
     }
-    QGraphicsItem::hoverLeaveEvent(event);
 }

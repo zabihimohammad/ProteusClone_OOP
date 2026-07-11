@@ -443,6 +443,9 @@ CMakeFiles/ProteusClone_OOP.dir/ProteusClone_OOP_autogen/mocs_compilation.cpp.ob
  C:/Qt/6.11.1/mingw_64/include/QtGui/qbitmap.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/QWheelEvent \
  C:/Qt/6.11.1/mingw_64/include/QtGui/QMouseEvent \
+ C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\ProteusClone_OOP_autogen\PRMOGMWJPH/moc_simulation_engine.cpp \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/simulation_engine.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QObject \
  C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug\ProteusClone_OOP_autogen\MXUWEOXILK/moc_hex_upload_dialog.cpp \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/gui/hex_upload_dialog.h \
  C:/Qt/6.11.1/mingw_64/include/QtWidgets/QDialog \

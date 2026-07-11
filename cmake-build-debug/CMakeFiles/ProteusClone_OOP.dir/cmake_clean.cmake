@@ -22,6 +22,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/ProteusClone_OOP.dir/src/core/element.cpp.obj.d"
   "CMakeFiles/ProteusClone_OOP.dir/src/core/probe_item.cpp.obj"
   "CMakeFiles/ProteusClone_OOP.dir/src/core/probe_item.cpp.obj.d"
+  "CMakeFiles/ProteusClone_OOP.dir/src/core/simulation_engine.cpp.obj"
+  "CMakeFiles/ProteusClone_OOP.dir/src/core/simulation_engine.cpp.obj.d"
   "CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.obj"
   "CMakeFiles/ProteusClone_OOP.dir/src/core/terminal.cpp.obj.d"
   "CMakeFiles/ProteusClone_OOP.dir/src/core/wire.cpp.obj"

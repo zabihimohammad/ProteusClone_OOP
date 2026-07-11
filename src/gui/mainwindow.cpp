@@ -14,7 +14,12 @@
 #include <QMimeData>
 #include <QMouseEvent>
 #include <QPainter>
-
+#include "../core/simulation_engine.h"
+#include <QTimer>
+#include <QCursor>
+#include "../core/wire.h"
+#include "../core/terminal.h"
+#include "../core/probe_item.h"
 // ====================================================
 // کلاس موقت تست با قابلیت نمایش تصویر گرافیکی حین Drag
 // ====================================================
@@ -183,6 +188,51 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     DAC_Chip *dac = new DAC_Chip();
     dac->setPos(350, 100);
     scene->addItem(dac);
+    // =========================================================
+    // ⚙️ راه‌اندازی قلب تپنده شبیه‌ساز (Simulation Engine)
+    // =========================================================
+
+    SimulationEngine *engine = new SimulationEngine(scene, this);
+
+    QTimer *simTimer = new QTimer(this);
+    connect(simTimer, &QTimer::timeout, this, [=]() {
+
+        // ۱. اجرای محاسبات ریاضی مدار
+        engine->stepSimulation();
+
+        // ۲. سیستم رهگیری ایمن (Safe Tracking)
+        // شرط جدید: فقط اگر پنجره برنامه فعال است و موس داخل بوم است، پروب را آپدیت کن
+        if (isActiveWindow() && view->underMouse() && scene->isProbeEnabled && scene->voltageProbe) {
+
+            QPoint globalPos = QCursor::pos();
+            QPoint viewPos = view->mapFromGlobal(globalPos);
+            QPointF scenePos = view->mapToScene(viewPos);
+
+            QList<QGraphicsItem*> items = scene->items(scenePos);
+            bool found = false;
+
+            for (QGraphicsItem* item : items) {
+                if (Wire* wire = dynamic_cast<Wire*>(item)) {
+                    scene->voltageProbe->updateProbe(wire->voltageLevel, scenePos);
+                    found = true;
+                    break;
+                }
+                else if (Terminal* term = dynamic_cast<Terminal*>(item)) {
+                    scene->voltageProbe->updateProbe(term->voltageLevel, scenePos);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) scene->voltageProbe->hide();
+
+        } else if (scene->voltageProbe) {
+            // اگر موس از برنامه خارج شد، فوراً پروب را مخفی کن تا کرش نکند
+            scene->voltageProbe->hide();
+        }
+    });
+
+    simTimer->start(100);
 }
 
 // ====================================================

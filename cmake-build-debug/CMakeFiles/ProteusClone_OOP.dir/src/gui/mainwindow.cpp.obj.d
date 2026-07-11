@@ -476,4 +476,9 @@ CMakeFiles/ProteusClone_OOP.dir/src/gui/mainwindow.cpp.obj: \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/mcu.h \
  C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/components/peripherals.h \
  C:/Qt/6.11.1/mingw_64/include/QtGui/QDrag \
- C:/Qt/6.11.1/mingw_64/include/QtGui/qdrag.h
+ C:/Qt/6.11.1/mingw_64/include/QtGui/qdrag.h \
+ C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/src/core/simulation_engine.h \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QObject \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/QTimer \
+ C:/Qt/6.11.1/mingw_64/include/QtCore/qtimer.h \
+ C:/Qt/6.11.1/mingw_64/include/QtGui/QCursor

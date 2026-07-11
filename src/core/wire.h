@@ -1,3 +1,4 @@
+//wire.h
 #pragma once
 #include <QGraphicsItem>
 #include <QVector>
@@ -21,11 +22,14 @@ public:
     ~Wire() override; // مخرب برای پاک کردن تمیز از حافظه
     // این متغیر بعداً توسط موتور شبیه‌ساز آپدیت می‌شود (مثلاً "5.0V" یا "0.0V")
     QString voltageLevel = "Undefined";
+    Terminal* getStartTerminal() const { return startTerminal; }
+    Terminal* getEndTerminal() const { return endTerminal; }
+    void disconnectTerminal(Terminal *term);
 private:
     Terminal *startTerminal;
     Terminal *endTerminal;
     QVector<QPointF> points; // جایگزین p1 و p2 شد تا بتواند چندین شکستگی را ذخیره کند
 protected:
-    void hoverMoveEvent(QGraphicsSceneHoverEvent *event) override;
-    void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
+    //void hoverMoveEvent(QGraphicsSceneHoverEvent *event) override;
+   // void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
 };
