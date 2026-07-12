@@ -1,74 +1,77 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'properties_dialog.h'
 **
-** Created by: The Qt Meta Object Compiler version 69 (Qt 6.11.1)
+** Created by: The Qt Meta Object Compiler version 67 (Qt 5.14.0)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
 
-#include "../../../src/gui/properties_dialog.h"
-#include <QtGui/qtextcursor.h>
-#include <QtCore/qmetatype.h>
-
-#include <QtCore/qtmochelpers.h>
-
 #include <memory>
-
-
-#include <QtCore/qxptype_traits.h>
+#include "../../../src/gui/properties_dialog.h"
+#include <QtCore/qbytearray.h>
+#include <QtCore/qmetatype.h>
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'properties_dialog.h' doesn't include <QObject>."
-#elif Q_MOC_OUTPUT_REVISION != 69
-#error "This file was generated using the moc from 6.11.1. It"
+#elif Q_MOC_OUTPUT_REVISION != 67
+#error "This file was generated using the moc from 5.14.0. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
 
-#ifndef Q_CONSTINIT
-#define Q_CONSTINIT
-#endif
-
+QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
-QT_WARNING_DISABLE_GCC("-Wuseless-cast")
-namespace {
-struct qt_meta_tag_ZN16PropertiesDialogE_t {};
-} // unnamed namespace
+struct qt_meta_stringdata_PropertiesDialog_t {
+    QByteArrayData data[1];
+    char stringdata0[17];
+};
+#define QT_MOC_LITERAL(idx, ofs, len) \
+    Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
+    qptrdiff(offsetof(qt_meta_stringdata_PropertiesDialog_t, stringdata0) + ofs \
+        - idx * sizeof(QByteArrayData)) \
+    )
+static const qt_meta_stringdata_PropertiesDialog_t qt_meta_stringdata_PropertiesDialog = {
+    {
+QT_MOC_LITERAL(0, 0, 16) // "PropertiesDialog"
 
-template <> constexpr inline auto PropertiesDialog::qt_create_metaobjectdata<qt_meta_tag_ZN16PropertiesDialogE_t>()
-{
-    namespace QMC = QtMocConstants;
-    QtMocHelpers::StringRefStorage qt_stringData {
-        "PropertiesDialog"
-    };
+    },
+    "PropertiesDialog"
+};
+#undef QT_MOC_LITERAL
 
-    QtMocHelpers::UintData qt_methods {
-    };
-    QtMocHelpers::UintData qt_properties {
-    };
-    QtMocHelpers::UintData qt_enums {
-    };
-    return QtMocHelpers::metaObjectData<PropertiesDialog, qt_meta_tag_ZN16PropertiesDialogE_t>(QMC::MetaObjectFlag{}, qt_stringData,
-            qt_methods, qt_properties, qt_enums);
-}
-Q_CONSTINIT const QMetaObject PropertiesDialog::staticMetaObject = { {
-    QMetaObject::SuperData::link<QDialog::staticMetaObject>(),
-    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN16PropertiesDialogE_t>.stringdata,
-    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN16PropertiesDialogE_t>.data,
-    qt_static_metacall,
-    nullptr,
-    qt_staticMetaObjectRelocatingContent<qt_meta_tag_ZN16PropertiesDialogE_t>.metaTypes,
-    nullptr
-} };
+static const uint qt_meta_data_PropertiesDialog[] = {
+
+ // content:
+       8,       // revision
+       0,       // classname
+       0,    0, // classinfo
+       0,    0, // methods
+       0,    0, // properties
+       0,    0, // enums/sets
+       0,    0, // constructors
+       0,       // flags
+       0,       // signalCount
+
+       0        // eod
+};
 
 void PropertiesDialog::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
 {
-    auto *_t = static_cast<PropertiesDialog *>(_o);
-    (void)_t;
-    (void)_c;
-    (void)_id;
-    (void)_a;
+    Q_UNUSED(_o);
+    Q_UNUSED(_id);
+    Q_UNUSED(_c);
+    Q_UNUSED(_a);
 }
+
+QT_INIT_METAOBJECT const QMetaObject PropertiesDialog::staticMetaObject = { {
+    QMetaObject::SuperData::link<QDialog::staticMetaObject>(),
+    qt_meta_stringdata_PropertiesDialog.data,
+    qt_meta_data_PropertiesDialog,
+    qt_static_metacall,
+    nullptr,
+    nullptr
+} };
+
 
 const QMetaObject *PropertiesDialog::metaObject() const
 {
@@ -78,7 +81,7 @@ const QMetaObject *PropertiesDialog::metaObject() const
 void *PropertiesDialog::qt_metacast(const char *_clname)
 {
     if (!_clname) return nullptr;
-    if (!strcmp(_clname, qt_staticMetaObjectStaticContent<qt_meta_tag_ZN16PropertiesDialogE_t>.strings))
+    if (!strcmp(_clname, qt_meta_stringdata_PropertiesDialog.stringdata0))
         return static_cast<void*>(this);
     return QDialog::qt_metacast(_clname);
 }
@@ -89,3 +92,4 @@ int PropertiesDialog::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     return _id;
 }
 QT_WARNING_POP
+QT_END_MOC_NAMESPACE

@@ -1,5 +1,10 @@
-"C:\Program Files\JetBrains\CLion 2022.2\bin\cmake\win\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=C:\Qt\6.11.1\mingw_64 -G "CodeBlocks - MinGW Makefiles" -S C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP -B C:\Users\Noor-Rayaneh\Desktop\o\ProteusClone_OOP\cmake-build-debug
--- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR) 
+"C:\Program Files\JetBrains\CLion 2022.2\bin\cmake\win\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_MAKE_PROGRAM=C:/Program Files/JetBrains/CLion 2022.2/bin/ninja/win/ninja.exe" -G Ninja -S C:\Users\ADMIN\Desktop\6th_Semester\Objective_Programming\ProteusClone_OOP -B C:\Users\ADMIN\Desktop\6th_Semester\Objective_Programming\ProteusClone_OOP\cmake-build-debug
+CMake Warning (dev) at CMakeLists.txt:7:
+  Syntax Warning in cmake code at column 25
+
+  Argument not separated from preceding token by whitespace.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
 -- Configuring done
 -- Generating done
--- Build files have been written to: C:/Users/Noor-Rayaneh/Desktop/o/ProteusClone_OOP/cmake-build-debug
+-- Build files have been written to: C:/Users/ADMIN/Desktop/6th_Semester/Objective_Programming/ProteusClone_OOP/cmake-build-debug

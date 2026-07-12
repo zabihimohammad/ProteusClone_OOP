@@ -1,73 +1,77 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'circuit_scene.h'
 **
-** Created by: The Qt Meta Object Compiler version 69 (Qt 6.11.1)
+** Created by: The Qt Meta Object Compiler version 67 (Qt 5.14.0)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
 
-#include "../../../src/canvas/circuit_scene.h"
-#include <QtCore/qmetatype.h>
-
-#include <QtCore/qtmochelpers.h>
-
 #include <memory>
-
-
-#include <QtCore/qxptype_traits.h>
+#include "../../../src/canvas/circuit_scene.h"
+#include <QtCore/qbytearray.h>
+#include <QtCore/qmetatype.h>
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'circuit_scene.h' doesn't include <QObject>."
-#elif Q_MOC_OUTPUT_REVISION != 69
-#error "This file was generated using the moc from 6.11.1. It"
+#elif Q_MOC_OUTPUT_REVISION != 67
+#error "This file was generated using the moc from 5.14.0. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
 
-#ifndef Q_CONSTINIT
-#define Q_CONSTINIT
-#endif
-
+QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
-QT_WARNING_DISABLE_GCC("-Wuseless-cast")
-namespace {
-struct qt_meta_tag_ZN12CircuitSceneE_t {};
-} // unnamed namespace
+struct qt_meta_stringdata_CircuitScene_t {
+    QByteArrayData data[1];
+    char stringdata0[13];
+};
+#define QT_MOC_LITERAL(idx, ofs, len) \
+    Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
+    qptrdiff(offsetof(qt_meta_stringdata_CircuitScene_t, stringdata0) + ofs \
+        - idx * sizeof(QByteArrayData)) \
+    )
+static const qt_meta_stringdata_CircuitScene_t qt_meta_stringdata_CircuitScene = {
+    {
+QT_MOC_LITERAL(0, 0, 12) // "CircuitScene"
 
-template <> constexpr inline auto CircuitScene::qt_create_metaobjectdata<qt_meta_tag_ZN12CircuitSceneE_t>()
-{
-    namespace QMC = QtMocConstants;
-    QtMocHelpers::StringRefStorage qt_stringData {
-        "CircuitScene"
-    };
+    },
+    "CircuitScene"
+};
+#undef QT_MOC_LITERAL
 
-    QtMocHelpers::UintData qt_methods {
-    };
-    QtMocHelpers::UintData qt_properties {
-    };
-    QtMocHelpers::UintData qt_enums {
-    };
-    return QtMocHelpers::metaObjectData<CircuitScene, qt_meta_tag_ZN12CircuitSceneE_t>(QMC::MetaObjectFlag{}, qt_stringData,
-            qt_methods, qt_properties, qt_enums);
-}
-Q_CONSTINIT const QMetaObject CircuitScene::staticMetaObject = { {
-    QMetaObject::SuperData::link<QGraphicsScene::staticMetaObject>(),
-    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN12CircuitSceneE_t>.stringdata,
-    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN12CircuitSceneE_t>.data,
-    qt_static_metacall,
-    nullptr,
-    qt_staticMetaObjectRelocatingContent<qt_meta_tag_ZN12CircuitSceneE_t>.metaTypes,
-    nullptr
-} };
+static const uint qt_meta_data_CircuitScene[] = {
+
+ // content:
+       8,       // revision
+       0,       // classname
+       0,    0, // classinfo
+       0,    0, // methods
+       0,    0, // properties
+       0,    0, // enums/sets
+       0,    0, // constructors
+       0,       // flags
+       0,       // signalCount
+
+       0        // eod
+};
 
 void CircuitScene::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
 {
-    auto *_t = static_cast<CircuitScene *>(_o);
-    (void)_t;
-    (void)_c;
-    (void)_id;
-    (void)_a;
+    Q_UNUSED(_o);
+    Q_UNUSED(_id);
+    Q_UNUSED(_c);
+    Q_UNUSED(_a);
 }
+
+QT_INIT_METAOBJECT const QMetaObject CircuitScene::staticMetaObject = { {
+    QMetaObject::SuperData::link<QGraphicsScene::staticMetaObject>(),
+    qt_meta_stringdata_CircuitScene.data,
+    qt_meta_data_CircuitScene,
+    qt_static_metacall,
+    nullptr,
+    nullptr
+} };
+
 
 const QMetaObject *CircuitScene::metaObject() const
 {
@@ -77,7 +81,7 @@ const QMetaObject *CircuitScene::metaObject() const
 void *CircuitScene::qt_metacast(const char *_clname)
 {
     if (!_clname) return nullptr;
-    if (!strcmp(_clname, qt_staticMetaObjectStaticContent<qt_meta_tag_ZN12CircuitSceneE_t>.strings))
+    if (!strcmp(_clname, qt_meta_stringdata_CircuitScene.stringdata0))
         return static_cast<void*>(this);
     return QGraphicsScene::qt_metacast(_clname);
 }
@@ -88,3 +92,4 @@ int CircuitScene::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     return _id;
 }
 QT_WARNING_POP
+QT_END_MOC_NAMESPACE

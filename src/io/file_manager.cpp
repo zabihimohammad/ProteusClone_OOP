@@ -43,27 +43,43 @@ static Terminal* getTerminalByIndex(Element* el, int index) {
 }
 
 // =========================================
-// تابع کارخانه (Factory Pattern)
+// تابع کارخانه (Factory Pattern) - نسخه کامل
 // =========================================
 static Element* createComponent(const QString &type) {
     if (type == "Microcontroller (MCU)") return new MCUChip();
+
+    // -- قطعات پایه --
     if (type == "Resistor") return new Resistor();
     if (type == "Capacitor") return new Capacitor();
+    if (type == "Inductor") return new Inductor();
+    if (type == "Pulse Generator") return new PulseGenerator();
+    if (type == "Switch") return new Switch();
+    if (type == "Push Button") return new PushButton();
     if (type == "LED") return new LED();
     if (type == "7-Segment Display") return new SevenSegment();
+    if (type == "Ground (GND)") return new Ground();
+    if (type == "DC Voltage Source") return new DCVoltageSource();
+    if (type == "Clock Generator") return new ClockGenerator();
+
+    // -- گیت‌های منطقی --
     if (type == "AND Gate") return new AndGate();
     if (type == "OR Gate") return new OrGate();
     if (type == "NOT Gate") return new NotGate();
     if (type == "XOR Gate") return new XorGate();
     if (type == "NAND Gate") return new NandGate();
     if (type == "D-Type Flip-Flop") return new DFlipFlop();
-    if (type == "Ground (GND)") return new Ground();
-    if (type == "DC Voltage Source") return new DCVoltageSource();
-    if (type == "Clock Generator") return new ClockGenerator();
+
+    // -- پریفرال‌ها و آی‌سی‌ها --
     if (type == "External Memory Chip") return new MemoryChip();
+    if (type == "LCD 16x2 Display") return new LCD16x2();
+    if (type == "Matrix Keypad 4x4") return new Keypad();
+    if (type == "Analog to Digital Converter (ADC)") return new ADC_Chip();
+    if (type == "Digital to Analog Converter (DAC)") return new DAC_Chip();
+
+    // اگر نام قطعه‌ای در لیست نبود، ارور را در کنسول چاپ کن تا سریع پیدایش کنیم
+    qWarning() << "[FileManager] ERROR: Unknown component type in Factory:" << type;
     return nullptr;
 }
-
 // ============================================================================
 // موتور اصلی سریالایز و دی‌سریالایز (استفاده مشترک برای فایل و Undo/Redo)
 // ============================================================================

@@ -18,11 +18,12 @@ protected:
     // تابع رسم پس‌زمینه شطرنجی
     void drawBackground(QPainter *painter, const QRectF &rect) override;
 
-    // توابع رهگیری موس (برای سیم‌کشی تعاملی)
+    // توابع رهگیری موس (برای سیم‌کشی تعاملی و ثبت تاریخچه)
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override; // <-- این خط اضافه شد
 
-    // تابع رهگیری کیبورد (برای حذف ایمن قطعات)
+    // تابع رهگیری کیبورد (برای حذف ایمن قطعات و میانبرهای Undo/Redo/Save)
     void keyPressEvent(QKeyEvent *event) override;
 
     // توابع سیستم Drag & Drop (دریافت قطعات از منوی UI)

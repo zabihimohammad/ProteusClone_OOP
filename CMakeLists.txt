@@ -3,7 +3,8 @@ project(ProteusClone_OOP LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
+# معرفی مسیر نصب کیوتی به کامپایلر سی‌لاین (بر اساس پوشه‌ای که روی ویندوزت داری)
+set(CMAKE_PREFIX_PATH ""C:/Qt/Qt5.14.0/5.14.0/mingw73_64"")
 # این سه خط قابلیت‌های تولید خودکار کدهای مخفی Qt را روشن می‌کنند
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -44,6 +45,8 @@ set(PROJECT_SOURCES
         src/core/auto_router.h
         src/gui/properties_dialog.cpp
         src/gui/properties_dialog.h
+        src/io/file_manager.cpp
+        src/io/file_manager.h
         )
 
 add_executable(ProteusClone_OOP ${PROJECT_SOURCES})

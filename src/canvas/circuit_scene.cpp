@@ -1,17 +1,23 @@
 #include "circuit_scene.h"
 #include <QGraphicsSceneMouseEvent>
+#include <QGraphicsSceneDragDropEvent>
+#include <QMimeData> // اضافه شده برای پشتیبانی از Drag & Drop
 #include <QPainter>
 #include <QPen>
 #include <QColor>
+#include <QKeyEvent>
+#include <QDebug>
+
 #include "../core/terminal.h"
 #include "../core/wire.h"
 #include "../core/auto_router.h"
-#include <QKeyEvent>
-#include "../components/mcu.h" // یا هر قطعه‌ای که قبلاً ساختید
+#include "../core/element.h"
+#include "../components/mcu.h"
 #include "../components/basic_components.h"
 #include "../components/logic_gates.h"
 #include "../components/peripherals.h"
 #include "../io/file_manager.h"
+
 CircuitScene::CircuitScene(QObject *parent)
         : QGraphicsScene(parent), isWiring(false), tempWire(nullptr), startTerminal(nullptr) {
 
@@ -43,9 +49,11 @@ void CircuitScene::drawBackground(QPainter *painter, const QRectF &rect) {
     }
 }
 
+// ==========================================
+// رویدادهای موس (سیم‌کشی و جابجایی)
+// ==========================================
 void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     if (event->button() == Qt::LeftButton) {
-
         QGraphicsItem *item = itemAt(event->scenePos(), QTransform());
         Terminal *clickedTerminal = dynamic_cast<Terminal*>(item);
 
@@ -68,12 +76,15 @@ void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
                     // فراخوانی مسیریاب خودکار هوشمند
                     QVector<QPointF> smartPath = AutoRouter::findPath(this, startP, endP, startTerminal, clickedTerminal, tempWire);
 
-                    tempWire->setFullRoute(smartPath); // تزریق مسیر هوشمند به سیم
+                    tempWire->setFullRoute(smartPath);
                     tempWire->confirmConnection(clickedTerminal);
 
                     isWiring = false;
                     tempWire = nullptr;
                     startTerminal = nullptr;
+
+                    // ثبت در تاریخچه برای کارکردن Undo بعد از سیم‌کشی
+                    FileManager::recordState(this);
                     return;
                 }
             }
@@ -86,7 +97,6 @@ void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
             startTerminal = nullptr;
         }
     }
-
     QGraphicsScene::mousePressEvent(event);
 }
 
@@ -96,61 +106,70 @@ void CircuitScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
     }
     QGraphicsScene::mouseMoveEvent(event);
 }
+
+void CircuitScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
+    QGraphicsScene::mouseReleaseEvent(event);
+
+    // اگر قطعه‌ای در حال جابجایی (Drag) بوده و حالا رها شده، یک عکس برای Undo بگیریم
+    if (!isWiring && selectedItems().count() > 0) {
+        FileManager::recordState(this);
+    }
+}
+
 // ==========================================
-// رویداد فشردن کلیدهای کیبورد (برای حذف قطعات)
+// رویداد فشردن کلیدهای کیبورد (میانبرها و حذف)
 // ==========================================
 void CircuitScene::keyPressEvent(QKeyEvent *event) {
-    void CircuitScene::keyPressEvent(QKeyEvent *event) {
-        // === کدهای مربوط به Undo / Redo ===
-        if (event->modifiers() & Qt::ControlModifier) {
-            if (event->key() == Qt::Key_Z) {
-                if (event->modifiers() & Qt::ShiftModifier) {
-                    FileManager::redo(this); // Ctrl + Shift + Z
-                } else {
-                    FileManager::undo(this); // Ctrl + Z
-                }
-                return;
-            } else if (event->key() == Qt::Key_Y) {
-                FileManager::redo(this); // Ctrl + Y
-                return;
-            }
-        }
-    // اگر کاربر کلید Delete یا Backspace را فشار داد
+    // --- 1. سیستم پاک کردن قطعات (Delete) ---
     if (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace) {
-
-        // لیست تمام آیتم‌هایی که انتخاب شده‌اند را بگیر
-        QList<QGraphicsItem*> itemsToRemove = selectedItems();
-
-        for (QGraphicsItem *item : itemsToRemove) {
-            // ۱. ابتدا آیتم را از روی بوم پاک کن
+        bool somethingDeleted = false;
+        for (QGraphicsItem *item : selectedItems()) {
             removeItem(item);
-
-            // ۲. سپس آن را از حافظه سیستم کاملاً حذف کن (جلوگیری از Memory Leak)
             delete item;
+            somethingDeleted = true;
         }
+        // اگر چیزی پاک شد، وضعیت جدید را برای Undo ثبت کن
+        if (somethingDeleted) {
+            FileManager::recordState(this);
+            qDebug() << "[CircuitScene] Items deleted and state recorded.";
+        }
+        return;
     }
 
-    // اجرای رویدادهای پیش‌فرض کیبورد
+    // --- 2. میانبرهای ترکیبی با Control ---
+    if (event->modifiers() & Qt::ControlModifier) {
+        // 💾 سیستم Save
+        if (event->key() == Qt::Key_S) {
+            FileManager::saveCircuit("my_circuit_test.json", this);
+            qDebug() << "[TEST] Circuit Saved to my_circuit_test.json";
+            return;
+        }
+        // 📂 سیستم Load
+        if (event->key() == Qt::Key_O) {
+            FileManager::loadCircuit("my_circuit_test.json", this);
+            qDebug() << "[TEST] Circuit Loaded!";
+            return;
+        }
+        // ↩️ سیستم Undo / Redo
+        if (event->key() == Qt::Key_Z) {
+            if (event->modifiers() & Qt::ShiftModifier) {
+                FileManager::redo(this);
+            } else {
+                FileManager::undo(this);
+            }
+            return;
+        } else if (event->key() == Qt::Key_Y) {
+            FileManager::redo(this);
+            return;
+        }
+    }
     QGraphicsScene::keyPressEvent(event);
 }
-// ==========================================
-// ۱. لحظه ورود آیتم به فضای بوم
-// ==========================================
-void CircuitScene::dragEnterEvent(QGraphicsSceneDragDropEvent *event) {
-    // بررسی می‌کنیم که آیا پاکت نامه حاوی "متن" است؟
-    // تیم UI قرار است نام قطعه را به صورت متنی (مثلاً "MCU") ارسال کند
-    if (event->mimeData()->hasText()) {
-        event->acceptProposedAction(); // اجازه ورود بده
-    } else {
-        event->ignore(); // اگر چیز دیگری بود (مثلا عکس) آن را پس بزن
-    }
-}
 
 // ==========================================
-// ۲. حرکت دادن آیتم روی فضای بوم
+// سیستم Drag & Drop (کشیدن و رها کردن قطعات)
 // ==========================================
-void CircuitScene::dragMoveEvent(QGraphicsSceneDragDropEvent *event) {
-    // باید در حال حرکت هم آن را بپذیریم تا آیکون موس به شکل "ممنوع" در نیاید
+void CircuitScene::dragEnterEvent(QGraphicsSceneDragDropEvent *event) {
     if (event->mimeData()->hasText()) {
         event->acceptProposedAction();
     } else {
@@ -158,48 +177,44 @@ void CircuitScene::dragMoveEvent(QGraphicsSceneDragDropEvent *event) {
     }
 }
 
-// ==========================================
-// ۳. لحظه رها کردن قطعه (مهم‌ترین بخش)
-// ==========================================
+void CircuitScene::dragMoveEvent(QGraphicsSceneDragDropEvent *event) {
+    if (event->mimeData()->hasText()) {
+        event->acceptProposedAction();
+    } else {
+        event->ignore();
+    }
+}
+
 void CircuitScene::dropEvent(QGraphicsSceneDragDropEvent *event) {
     if (event->mimeData()->hasText()) {
-
         QString componentType = event->mimeData()->text();
         QPointF dropPosition = event->scenePos();
 
-        // ۱. ساخت یک اشاره‌گر خالی از نوع QGraphicsItem (یا ComponentBase اگر دارید)
+        // چسباندن خودکار قطعه به خطوط شبکه (Snap to Grid) برای تمیزی مدار
+        dropPosition.setX(qRound(dropPosition.x() / gridSize) * gridSize);
+        dropPosition.setY(qRound(dropPosition.y() / gridSize) * gridSize);
+
         QGraphicsItem *newItem = nullptr;
 
-        // ۲. کارخانه تولید قطعات (Factory)
-        if (componentType == "MCU") {
-            newItem = new MCUChip();
-        }
-        else if (componentType == "RESISTOR") {
-            newItem = new Resistor(); // نام دقیق کلاس مقاومت خودتان را جایگزین کنید
-        }
-        else if (componentType == "CAPACITOR") {
-            newItem = new Capacitor();
-        }
-        else if (componentType == "AND_GATE") {
-            newItem = new AndGate();
-        }
-        else if (componentType == "OR_GATE") {
-            newItem = new OrGate();
-        }
-        else if (componentType == "LED") {
-            newItem = new LED();
-        }
-        // می‌توانید هر تعداد else if که نیاز دارید برای سایر قطعات اینجا اضافه کنید...
+        // کارخانه تولید قطعات
+        if (componentType == "MCU") newItem = new MCUChip();
+        else if (componentType == "RESISTOR") newItem = new Resistor();
+        else if (componentType == "CAPACITOR") newItem = new Capacitor();
+        else if (componentType == "AND_GATE") newItem = new AndGate();
+        else if (componentType == "OR_GATE") newItem = new OrGate();
+        else if (componentType == "LED") newItem = new LED();
 
-        // ۳. جلوگیری از کد تکراری: اگر قطعه با موفقیت ساخته شد، آن را روی بوم قرار بده
+        // اگر قطعه با موفقیت ساخته شد
         if (newItem != nullptr) {
             newItem->setPos(dropPosition);
             addItem(newItem);
+
+            // ثبت وضعیت در تاریخچه
+            FileManager::recordState(this);
         }
 
         event->acceptProposedAction();
     } else {
         event->ignore();
     }
-    FileManager::recordState(this);
 }
