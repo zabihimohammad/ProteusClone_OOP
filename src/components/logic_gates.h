@@ -3,12 +3,16 @@
 #include "../core/terminal.h"
 
 // ==========================================
-// گیت AND
+// گیت AND (دو ورودی)
 // ==========================================
 class AndGate : public Element {
 private:
     QString propagationDelay = "10ns";
     QString highVoltage = "5V";
+
+    Terminal *inA;
+    Terminal *inB;
+    Terminal *outY;
 
 public:
     AndGate();
@@ -17,27 +21,21 @@ public:
     void process() override;
 
     QString getComponentName() const override { return "AND Gate"; }
-
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["Propagation Delay"] = propagationDelay;
-        props["Logic HIGH (V)"] = highVoltage;
-        return props;
-    }
-
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
-        if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
-    }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
 };
 
 // ==========================================
-// گیت OR
+// گیت OR (دو ورودی)
 // ==========================================
 class OrGate : public Element {
 private:
     QString propagationDelay = "10ns";
     QString highVoltage = "5V";
+
+    Terminal *inA;
+    Terminal *inB;
+    Terminal *outY;
 
 public:
     OrGate();
@@ -46,27 +44,20 @@ public:
     void process() override;
 
     QString getComponentName() const override { return "OR Gate"; }
-
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["Propagation Delay"] = propagationDelay;
-        props["Logic HIGH (V)"] = highVoltage;
-        return props;
-    }
-
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
-        if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
-    }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
 };
 
 // ==========================================
-// گیت NOT
+// گیت NOT (وارون‌گر)
 // ==========================================
 class NotGate : public Element {
 private:
-    QString propagationDelay = "5ns"; // گیت نات معمولا سریع‌تر است
+    QString propagationDelay = "5ns";
     QString highVoltage = "5V";
+
+    Terminal *inA;
+    Terminal *outY;
 
 public:
     NotGate();
@@ -75,27 +66,21 @@ public:
     void process() override;
 
     QString getComponentName() const override { return "NOT Gate"; }
-
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["Propagation Delay"] = propagationDelay;
-        props["Logic HIGH (V)"] = highVoltage;
-        return props;
-    }
-
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
-        if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
-    }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
 };
 
 // ==========================================
-// گیت XOR
+// گیت XOR (دو ورودی)
 // ==========================================
 class XorGate : public Element {
 private:
     QString propagationDelay = "12ns";
     QString highVoltage = "5V";
+
+    Terminal *inA;
+    Terminal *inB;
+    Terminal *outY;
 
 public:
     XorGate();
@@ -104,27 +89,21 @@ public:
     void process() override;
 
     QString getComponentName() const override { return "XOR Gate"; }
-
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["Propagation Delay"] = propagationDelay;
-        props["Logic HIGH (V)"] = highVoltage;
-        return props;
-    }
-
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
-        if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
-    }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
 };
 
 // ==========================================
-// گیت NAND
+// گیت NAND (دو ورودی)
 // ==========================================
 class NandGate : public Element {
 private:
     QString propagationDelay = "10ns";
     QString highVoltage = "5V";
+
+    Terminal *inA;
+    Terminal *inB;
+    Terminal *outY;
 
 public:
     NandGate();
@@ -133,27 +112,25 @@ public:
     void process() override;
 
     QString getComponentName() const override { return "NAND Gate"; }
-
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["Propagation Delay"] = propagationDelay;
-        props["Logic HIGH (V)"] = highVoltage;
-        return props;
-    }
-
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
-        if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
-    }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
 };
 
 // ==========================================
-// فلیپ‌فلاپ (D-FlipFlop)
+// فلیپ‌فلاپ لبه‌بالارونده D (D-FlipFlop)
 // ==========================================
 class DFlipFlop : public Element {
 private:
     QString propagationDelay = "15ns";
-    QString initialQState = "0"; // وضعیت اولیه خروجی Q
+    QString initialQState = "0";
+
+    Terminal *inD;
+    Terminal *clk;
+    Terminal *outQ;
+    Terminal *outQBar;
+
+    bool lastClockState = false; // ذخیره وضعیت قبلی کلاک برای تشخیص لبه بالارونده
+    bool currentInternalQ = false;
 
 public:
     DFlipFlop();
@@ -162,16 +139,6 @@ public:
     void process() override;
 
     QString getComponentName() const override { return "D-Type Flip-Flop"; }
-
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["Propagation Delay"] = propagationDelay;
-        props["Initial Q State (0/1)"] = initialQState;
-        return props;
-    }
-
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
-        if (props.contains("Initial Q State (0/1)")) initialQState = props["Initial Q State (0/1)"];
-    }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
 };

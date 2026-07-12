@@ -1,29 +1,24 @@
 #include "basic_components.h"
 #include <QPainter>
 #include <QPainterPath>
-#include <QFont> // اضافه شده برای تنظیم فونت نوشته‌ها
+#include <QFont>
 #include "../core/terminal.h"
 
 // ==========================================
 // ۱. پیاده‌سازی کلاس مقاومت (Resistor)
 // ==========================================
 Resistor::Resistor() {
-    // ایجاد ترمینال‌های (پایه‌های) سمت چپ و راست برای اتصال سیم‌ها
     (new Terminal(this))->setPos(-30, 0);
     (new Terminal(this))->setPos(30, 0);
 }
 
-QRectF Resistor::boundingRect() const {
-    // کادر احاطه‌کننده قطعه شامل فضای لازم برای رسم شکل و نمایش متن مقدار آن
-    return QRectF(-35, -25, 70, 50);
-}
+QRectF Resistor::boundingRect() const { return QRectF(-35, -25, 70, 50); }
 
 void Resistor::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(Qt::black, 2);
-    if (isSelected()) pen.setColor(Qt::red); // تغییر رنگ در حالت انتخاب
+    if (isSelected()) pen.setColor(Qt::red);
     painter->setPen(pen);
 
-    // رسم خطوط زیگزاگ مقاومت (استاندارد IEEE)
     painter->drawLine(-30, 0, -20, 0);
     painter->drawLine(-20, 0, -15, -10);
     painter->drawLine(-15, -10, -5, 10);
@@ -32,16 +27,23 @@ void Resistor::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     painter->drawLine(15, 10, 20, 0);
     painter->drawLine(20, 0, 30, 0);
 
-    // === بخش جدید: نمایش مقدار داینامیک روی بوم ===
     painter->setFont(QFont("Consolas", 8, QFont::Bold));
-    painter->setPen(Qt::darkBlue); // رنگ متن برای خوانایی بهتر متفاوت است
-    // چاپ متغیر resistance (مثلا 10k) بالای قطعه
+    painter->setPen(Qt::darkBlue);
     painter->drawText(QRectF(-35, -25, 70, 15), Qt::AlignCenter, resistance);
 }
 
-void Resistor::process() {
-    // منطق ریاضی و مداری برای بک‌اند (موتور شبیه‌ساز)
+void Resistor::process() {}
+
+QMap<QString, QString> Resistor::getProperties() const {
+    QMap<QString, QString> props;
+    props["Resistance"] = resistance;
+    return props;
 }
+
+void Resistor::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Resistance")) resistance = props["Resistance"];
+}
+
 
 // ==========================================
 // ۲. پیاده‌سازی کلاس خازن (Capacitor)
@@ -51,22 +53,18 @@ Capacitor::Capacitor() {
     (new Terminal(this))->setPos(30, 0);
 }
 
-QRectF Capacitor::boundingRect() const {
-    return QRectF(-35, -30, 70, 60);
-}
+QRectF Capacitor::boundingRect() const { return QRectF(-35, -30, 70, 60); }
 
 void Capacitor::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(Qt::black, 2);
     if (isSelected()) pen.setColor(Qt::red);
     painter->setPen(pen);
 
-    // رسم پایه‌ها و صفحات موازی خازن
     painter->drawLine(-30, 0, -5, 0);
     painter->drawLine(5, 0, 30, 0);
     painter->drawLine(-5, -15, -5, 15);
     painter->drawLine(5, -15, 5, 15);
 
-    // === بخش جدید: نمایش مقدار داینامیک ===
     painter->setFont(QFont("Consolas", 8, QFont::Bold));
     painter->setPen(Qt::darkBlue);
     painter->drawText(QRectF(-35, -30, 70, 15), Qt::AlignCenter, capacitance);
@@ -74,72 +72,19 @@ void Capacitor::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
 
 void Capacitor::process() {}
 
-// ==========================================
-// ۳. پیاده‌سازی باتری (DC Voltage Source)
-// ==========================================
-DCVoltageSource::DCVoltageSource() {
-    (new Terminal(this))->setPos(-30, 0);
-    (new Terminal(this))->setPos(30, 0);
+QMap<QString, QString> Capacitor::getProperties() const {
+    QMap<QString, QString> props;
+    props["Capacitance"] = capacitance;
+    return props;
 }
 
-QRectF DCVoltageSource::boundingRect() const {
-    return QRectF(-40, -40, 80, 80);
+void Capacitor::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Capacitance")) capacitance = props["Capacitance"];
 }
 
-void DCVoltageSource::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
-    QPen pen(Qt::black, 2);
-    if (isSelected()) pen.setColor(Qt::red);
-    painter->setPen(pen);
-
-    // رسم پایه‌ها و صفحات منبع ولتاژ
-    painter->drawLine(-30, 0, -10, 0);
-    painter->drawLine(10, 0, 30, 0);
-    painter->drawLine(-10, -20, -10, 20); // قطب مثبت (بلند)
-
-    QPen thickPen = pen;
-    thickPen.setWidth(5);
-    painter->setPen(thickPen);
-    painter->drawLine(10, -10, 10, 10); // قطب منفی (کوتاه و ضخیم)
-
-    // رسم علامت +
-    painter->setPen(pen);
-    painter->drawLine(-25, -15, -15, -15);
-    painter->drawLine(-20, -20, -20, -10);
-
-    // === بخش جدید: نمایش مقدار داینامیک ===
-    painter->setFont(QFont("Consolas", 8, QFont::Bold));
-    painter->setPen(Qt::darkBlue);
-    painter->drawText(QRectF(-40, -35, 80, 15), Qt::AlignCenter, voltage);
-}
-
-void DCVoltageSource::process() {}
 
 // ==========================================
-// ۴. پیاده‌سازی زمین (Ground)
-// ==========================================
-Ground::Ground() {
-    (new Terminal(this))->setPos(0, 0);
-}
-
-QRectF Ground::boundingRect() const { return QRectF(-20, 0, 40, 30); }
-
-void Ground::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
-    QPen pen(Qt::black, 2);
-    if (isSelected()) pen.setColor(Qt::red);
-    painter->setPen(pen);
-
-    painter->drawLine(0, 0, 0, 15);
-    painter->drawLine(-15, 15, 15, 15);
-    painter->drawLine(-10, 20, 10, 20);
-    painter->drawLine(-5, 25, 5, 25);
-
-    // زمین معمولاً مقدار متنی ندارد، لذا drawText نیازی نیست.
-}
-
-void Ground::process() {}
-
-// ==========================================
-// ۵. پیاده‌سازی سلف (Inductor)
+// ۳. پیاده‌سازی سلف (Inductor)
 // ==========================================
 Inductor::Inductor() {
     (new Terminal(this))->setPos(-30, 0);
@@ -159,7 +104,6 @@ void Inductor::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     painter->drawArc(6, -10, 13, 20, 0, 180 * 16);
     painter->drawLine(19, 0, 30, 0);
 
-    // === بخش جدید: نمایش مقدار داینامیک ===
     painter->setFont(QFont("Consolas", 8, QFont::Bold));
     painter->setPen(Qt::darkBlue);
     painter->drawText(QRectF(-35, -25, 70, 15), Qt::AlignCenter, inductance);
@@ -167,10 +111,19 @@ void Inductor::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
 void Inductor::process() {}
 
+QMap<QString, QString> Inductor::getProperties() const {
+    QMap<QString, QString> props;
+    props["Inductance"] = inductance;
+    return props;
+}
+
+void Inductor::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Inductance")) inductance = props["Inductance"];
+}
+
+
 // ==========================================
-// ۶. پیاده‌سازی پالس کلاک (Pulse Generator)
-// ==========================================
-// ۶. پیاده‌سازی پالس کلاک (Pulse Generator)
+// ۴. پیاده‌سازی پالس کلاک (Pulse Generator)
 // ==========================================
 PulseGenerator::PulseGenerator() {
     (new Terminal(this))->setPos(30, 0);
@@ -218,8 +171,20 @@ void PulseGenerator::process() {
         }
     }
 }
+
+QMap<QString, QString> PulseGenerator::getProperties() const {
+    QMap<QString, QString> props;
+    props["Frequency"] = frequency;
+    return props;
+}
+
+void PulseGenerator::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Frequency")) frequency = props["Frequency"];
+}
+
+
 // ==========================================
-// ۷. کلید قطع و وصل (Switch)
+// ۵. کلید قطع و وصل (Switch)
 // ==========================================
 Switch::Switch() {
     (new Terminal(this))->setPos(-30, 0);
@@ -236,17 +201,15 @@ void Switch::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
     painter->drawLine(-30, 0, -15, 0);
     painter->drawEllipse(-15, -2, 4, 4);
 
-    // رسم اهرم بر اساس وضعیت اولیه (Open/Closed)
     if (initialState == "Closed") {
-        painter->drawLine(-13, -2, 11, -2); // خط صاف
+        painter->drawLine(-13, -2, 11, -2);
     } else {
-        painter->drawLine(-13, -2, 10, -15); // خط کج
+        painter->drawLine(-13, -2, 10, -15);
     }
 
     painter->drawEllipse(11, -2, 4, 4);
     painter->drawLine(15, 0, 30, 0);
 
-    // === بخش جدید: نمایش وضعیت ===
     painter->setFont(QFont("Consolas", 8, QFont::Bold));
     painter->setPen(Qt::darkBlue);
     painter->drawText(QRectF(-35, -30, 70, 15), Qt::AlignCenter, initialState);
@@ -254,8 +217,19 @@ void Switch::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
 
 void Switch::process() {}
 
+QMap<QString, QString> Switch::getProperties() const {
+    QMap<QString, QString> props;
+    props["Initial State"] = initialState;
+    return props;
+}
+
+void Switch::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Initial State")) initialState = props["Initial State"];
+}
+
+
 // ==========================================
-// ۸. دکمه فشاری (Push Button)
+// ۶. دکمه فشاری (Push Button)
 // ==========================================
 PushButton::PushButton() {
     (new Terminal(this))->setPos(-30, 0);
@@ -276,7 +250,6 @@ void PushButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
     painter->drawEllipse(6, -2, 4, 4);
     painter->drawLine(10, 0, 30, 0);
 
-    // === بخش جدید: نمایش نوع کلید ===
     painter->setFont(QFont("Consolas", 7, QFont::Bold));
     painter->setPen(Qt::darkBlue);
     painter->drawText(QRectF(-35, -35, 70, 15), Qt::AlignCenter, type);
@@ -284,8 +257,19 @@ void PushButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
 
 void PushButton::process() {}
 
+QMap<QString, QString> PushButton::getProperties() const {
+    QMap<QString, QString> props;
+    props["Type"] = type;
+    return props;
+}
+
+void PushButton::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Type")) type = props["Type"];
+}
+
+
 // ==========================================
-// ۹. دیود نورانی (LED)
+// ۷. دیود نورانی (LED)
 // ==========================================
 LED::LED() {
     (new Terminal(this))->setPos(-30, 0);
@@ -307,7 +291,6 @@ void LED::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidg
     painter->drawPolygon(triangle);
     painter->drawLine(10, -10, 10, 10);
 
-    // فلش‌های نورانی
     painter->drawLine(0, -12, 10, -22);
     painter->drawLine(10, -22, 5, -22);
     painter->drawLine(10, -22, 10, -17);
@@ -315,7 +298,6 @@ void LED::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidg
     painter->drawLine(18, -18, 13, -18);
     painter->drawLine(18, -18, 18, -13);
 
-    // === بخش جدید: نمایش رنگ ال‌ای‌دی ===
     painter->setFont(QFont("Consolas", 8, QFont::Bold));
     painter->setPen(Qt::darkBlue);
     painter->drawText(QRectF(-35, -35, 70, 15), Qt::AlignCenter, color);
@@ -323,8 +305,19 @@ void LED::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidg
 
 void LED::process() {}
 
+QMap<QString, QString> LED::getProperties() const {
+    QMap<QString, QString> props;
+    props["Color"] = color;
+    return props;
+}
+
+void LED::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Color")) color = props["Color"];
+}
+
+
 // ==========================================
-// ۱۰. سون‌سگمنت (7-Segment)
+// ۸. سون‌سگمنت (7-Segment)
 // ==========================================
 SevenSegment::SevenSegment() {}
 
@@ -348,10 +341,122 @@ void SevenSegment::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
     painter->drawLine(-10, 0, 10, 0);
     painter->drawEllipse(15, 20, 3, 3);
 
-    // === بخش جدید: نمایش رنگ سون سگمنت ===
     painter->setFont(QFont("Consolas", 7, QFont::Bold));
     painter->setPen(Qt::darkBlue);
     painter->drawText(QRectF(-25, -45, 50, 15), Qt::AlignCenter, color);
 }
 
 void SevenSegment::process() {}
+
+QMap<QString, QString> SevenSegment::getProperties() const {
+    QMap<QString, QString> props;
+    props["Color"] = color;
+    return props;
+}
+
+void SevenSegment::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Color")) color = props["Color"];
+}
+
+
+// ============================================================================
+// ۹. پیاده‌سازی Ground (زمین)
+// ============================================================================
+Ground::Ground() {
+    outGnd = new Terminal(this);
+    outGnd->setPos(0, -20);
+}
+QRectF Ground::boundingRect() const { return QRectF(-20, -25, 40, 45); }
+void Ground::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawLine(0, -20, 0, 0);
+    painter->drawLine(-15, 0, 15, 0);
+    painter->drawLine(-10, 5, 10, 5);
+    painter->drawLine(-5, 10, 5, 10);
+}
+void Ground::process() {
+    outGnd->setVoltage(0.0);
+}
+
+
+// ============================================================================
+// ۱۰. پیاده‌سازی DC Voltage Source (هوشمند)
+// ============================================================================
+DCVoltageSource::DCVoltageSource() {
+    outPos = new Terminal(this);
+    outPos->setPos(0, -20);
+}
+QRectF DCVoltageSource::boundingRect() const { return QRectF(-20, -25, 40, 50); }
+void DCVoltageSource::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawLine(0, -20, 0, -10);
+    painter->drawEllipse(-10, -10, 20, 20);
+    painter->drawLine(-5, 0, 5, 0);
+    painter->drawLine(0, -5, 0, 5);
+
+    painter->setFont(QFont("Consolas", 8));
+    painter->drawText(QRectF(-20, 15, 40, 15), Qt::AlignCenter, voltage);
+}
+void DCVoltageSource::process() {
+    double v = voltage.replace("V", "").toDouble();
+    outPos->setVoltage(v);
+}
+QMap<QString, QString> DCVoltageSource::getProperties() const {
+    QMap<QString, QString> props;
+    props["Voltage"] = voltage;
+    return props;
+}
+void DCVoltageSource::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Voltage")) voltage = props["Voltage"];
+}
+
+
+// ============================================================================
+// ۱۱. پیاده‌سازی Clock Generator
+// ============================================================================
+ClockGenerator::ClockGenerator() {
+    outClk = new Terminal(this);
+    outClk->setPos(25, 0);
+}
+QRectF ClockGenerator::boundingRect() const { return QRectF(-25, -25, 55, 65); }
+void ClockGenerator::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawRect(-20, -20, 40, 40);
+    painter->drawLine(20, 0, 25, 0);
+
+    painter->drawLine(-10, 10, -5, 10);
+    painter->drawLine(-5, 10, -5, -10);
+    painter->drawLine(-5, -10, 5, -10);
+    painter->drawLine(5, -10, 5, 10);
+    painter->drawLine(5, 10, 10, 10);
+
+    painter->setFont(QFont("Consolas", 7));
+    painter->drawText(QRectF(-25, 25, 50, 15), Qt::AlignCenter, frequency);
+}
+void ClockGenerator::process() {
+    double v = currentState ? amplitude.replace("V", "").toDouble() : 0.0;
+    outClk->setVoltage(v);
+}
+void ClockGenerator::toggleClock() {
+    currentState = !currentState;
+    update();
+}
+QMap<QString, QString> ClockGenerator::getProperties() const {
+    QMap<QString, QString> props;
+    props["Frequency"] = frequency;
+    props["Amplitude"] = amplitude;
+    return props;
+}
+void ClockGenerator::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Frequency")) frequency = props["Frequency"];
+    if (props.contains("Amplitude")) amplitude = props["Amplitude"];
+}

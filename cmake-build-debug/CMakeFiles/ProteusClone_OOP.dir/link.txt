@@ -1,3 +1,0 @@
-"C:\Program Files\JetBrains\CLion 2022.2\bin\cmake\win\bin\cmake.exe" -E rm -f CMakeFiles\ProteusClone_OOP.dir/objects.a
-C:\Qt\Tools\mingw1310_64\bin\ar.exe qc CMakeFiles\ProteusClone_OOP.dir/objects.a @CMakeFiles\ProteusClone_OOP.dir\objects1.rsp
-C:\Qt\Tools\mingw1310_64\bin\g++.exe -g -Wl,--whole-archive CMakeFiles\ProteusClone_OOP.dir/objects.a -Wl,--no-whole-archive -o ProteusClone_OOP.exe -Wl,--out-implib,libProteusClone_OOP.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\ProteusClone_OOP.dir\linklibs.rsp

@@ -1,132 +1,63 @@
 #pragma once
 #include "../core/element.h"
+#include <QString>
+
+// پیش‌تعریف کلاس ترمینال
+class Terminal;
 
 // ==========================================
-// کلاس مقاومت (Resistor)
+// ۱. مقاومت (Resistor)
 // ==========================================
 class Resistor : public Element {
 private:
     QString resistance = "10k";
-    QString tolerance = "5%";
-
 public:
     Resistor();
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void process() override;
-
     QString getComponentName() const override { return "Resistor"; }
 
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["Resistance (Ohm)"] = resistance;
-        props["Tolerance"] = tolerance;
-        return props;
-    }
-
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Resistance (Ohm)")) resistance = props["Resistance (Ohm)"];
-        if (props.contains("Tolerance")) tolerance = props["Tolerance"];
-    }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
 };
 
 // ==========================================
-// کلاس خازن (Capacitor)
+// ۲. خازن (Capacitor)
 // ==========================================
 class Capacitor : public Element {
 private:
-    QString capacitance = "100uF";
-    QString maxVoltage = "16V";
-
+    QString capacitance = "10uF";
 public:
     Capacitor();
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void process() override;
-
     QString getComponentName() const override { return "Capacitor"; }
 
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["Capacitance"] = capacitance;
-        props["Max Voltage"] = maxVoltage;
-        return props;
-    }
-
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Capacitance")) capacitance = props["Capacitance"];
-        if (props.contains("Max Voltage")) maxVoltage = props["Max Voltage"];
-    }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
 };
 
 // ==========================================
-// کلاس منبع ولتاژ مستقیم (DC Voltage Source)
-// ==========================================
-class DCVoltageSource : public Element {
-private:
-    QString voltage = "5V";
-
-public:
-    DCVoltageSource();
-    QRectF boundingRect() const override;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
-    void process() override;
-
-    QString getComponentName() const override { return "DC Battery"; }
-
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["Voltage (V)"] = voltage;
-        return props;
-    }
-
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Voltage (V)")) voltage = props["Voltage (V)"];
-    }
-};
-
-// ==========================================
-// کلاس زمین (Ground)
-// ==========================================
-class Ground : public Element {
-public:
-    Ground();
-    QRectF boundingRect() const override;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
-    void process() override;
-
-    QString getComponentName() const override { return "Ground (GND)"; }
-    // زمین معمولاً تنظیماتی ندارد، بنابراین توابع Properties را بازنویسی نمی‌کنیم
-};
-
-// ==========================================
-// کلاس سلف (Inductor)
+// ۳. سلف (Inductor)
 // ==========================================
 class Inductor : public Element {
 private:
     QString inductance = "1mH";
-
 public:
     Inductor();
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void process() override;
-
     QString getComponentName() const override { return "Inductor"; }
 
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["Inductance"] = inductance;
-        return props;
-    }
-
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Inductance")) inductance = props["Inductance"];
-    }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
 };
 
 // ==========================================
-// پالس کلاک (Pulse Generator)
+// ۴. پالس کلاک (Pulse Generator)
 // ==========================================
 class PulseGenerator : public Element {
 private:
@@ -134,137 +65,134 @@ private:
     QString currentMockVoltage = "0.0V"; // ولتاژ فعلی
     QString amplitude = "5V";
     QString frequency = "1kHz";
-    QString dutyCycle = "50%";
-
 public:
     PulseGenerator();
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void process() override;
+    QString getComponentName() const override { return "Pulse Generator"; }
 
-    QString getComponentName() const override { return "Clock / Pulse"; }
-
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["Amplitude (V)"] = amplitude;
-        props["Frequency (Hz)"] = frequency;
-        props["Duty Cycle (%)"] = dutyCycle;
-        return props;
-    }
-
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Amplitude (V)")) amplitude = props["Amplitude (V)"];
-        if (props.contains("Frequency (Hz)")) frequency = props["Frequency (Hz)"];
-        if (props.contains("Duty Cycle (%)")) dutyCycle = props["Duty Cycle (%)"];
-    }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
 };
 
 // ==========================================
-// کلید قطع و وصل (Switch)
+// ۵. کلید قطع و وصل (Switch)
 // ==========================================
 class Switch : public Element {
 private:
-    QString initialState = "Open"; // Open or Closed
-
+    QString initialState = "Open";
 public:
     Switch();
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void process() override;
+    QString getComponentName() const override { return "Switch"; }
 
-    QString getComponentName() const override { return "SPST Switch"; }
-
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["Initial State"] = initialState;
-        return props;
-    }
-
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Initial State")) initialState = props["Initial State"];
-    }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
 };
 
 // ==========================================
-// دکمه فشاری (Push Button)
+// ۶. دکمه فشاری (Push Button)
 // ==========================================
 class PushButton : public Element {
 private:
-    QString type = "Normally Open";
-
+    QString type = "NO"; // Normally Open
 public:
     PushButton();
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void process() override;
-
     QString getComponentName() const override { return "Push Button"; }
 
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["Button Type"] = type;
-        return props;
-    }
-
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Button Type")) type = props["Button Type"];
-    }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
 };
 
 // ==========================================
-// دیود نورانی (LED)
+// ۷. دیود نورانی (LED)
 // ==========================================
 class LED : public Element {
 private:
     QString color = "Red";
-    QString forwardVoltage = "2.2V";
-
 public:
     LED();
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void process() override;
-
     QString getComponentName() const override { return "LED"; }
 
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["Color"] = color;
-        props["Forward Voltage"] = forwardVoltage;
-        return props;
-    }
-
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Color")) color = props["Color"];
-        if (props.contains("Forward Voltage")) forwardVoltage = props["Forward Voltage"];
-    }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
 };
 
 // ==========================================
-// سون‌سگمنت (7-Segment Display)
+// ۸. سون‌سگمنت (7-Segment)
 // ==========================================
 class SevenSegment : public Element {
 private:
     QString color = "Red";
-    QString type = "Common Cathode";
-
 public:
     SevenSegment();
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void process() override;
-
     QString getComponentName() const override { return "7-Segment Display"; }
 
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["LED Color"] = color;
-        props["Configuration"] = type;
-        return props;
-    }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
 
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("LED Color")) color = props["LED Color"];
-        if (props.contains("Configuration")) type = props["Configuration"];
-    }
+// ==========================================
+// ۹. منبع تغذیه زمین (Ground / GND)
+// ==========================================
+class Ground : public Element {
+private:
+    Terminal *outGnd; // پایه‌ی خروجی زمین
+public:
+    Ground();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Ground (GND)"; }
+};
+
+// ==========================================
+// ۱۰. منبع ولتاژ مستقیم (DC Voltage Source)
+// ==========================================
+class DCVoltageSource : public Element {
+private:
+    QString voltage = "5V";
+    Terminal *outPos; // پایه‌ی خروجی مثبت
+public:
+    DCVoltageSource();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "DC Voltage Source"; }
+
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+
+// ==========================================
+// ۱۱. تولیدکننده کلاک (Clock Generator)
+// ==========================================
+class ClockGenerator : public Element {
+private:
+    QString frequency = "1Hz";
+    QString amplitude = "5V";
+    Terminal *outClk; // پایه‌ی خروجی کلاک
+    bool currentState = false; // وضعیت خاموش/روشن بودن کلاک
+public:
+    ClockGenerator();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    void toggleClock(); // متدی برای موتور شبیه‌ساز جهت تغییر لبه کلاک
+    QString getComponentName() const override { return "Clock Generator"; }
+
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
 };
