@@ -1,4 +1,0 @@
-C:/Users/ADMIN/Desktop/6th_Semester/Objective_Programming/ProteusClone_OOP/cmake-build-debug/CMakeFiles/ProteusClone_OOP.dir
-C:/Users/ADMIN/Desktop/6th_Semester/Objective_Programming/ProteusClone_OOP/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/ADMIN/Desktop/6th_Semester/Objective_Programming/ProteusClone_OOP/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-C:/Users/ADMIN/Desktop/6th_Semester/Objective_Programming/ProteusClone_OOP/cmake-build-debug/CMakeFiles/ProteusClone_OOP_autogen.dir
