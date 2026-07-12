@@ -1,7 +1,10 @@
 #include "terminal.h"
+#include "wire.h"
 #include <QPainter>
 #include <QCursor>
 #include <QGraphicsSceneHoverEvent>
+#include <QToolTip>
+#include "../canvas/circuit_scene.h"
 #include <QGraphicsSceneMouseEvent>
 #include <QDebug>
 #include <qmath.h>
@@ -10,6 +13,17 @@ Terminal::Terminal(QGraphicsItem *parent) : QGraphicsItem(parent), isHovered(fal
     setAcceptHoverEvents(true);
     setFlag(ItemIgnoresTransformations, false);
     resetState(); // مقداردهی اولیه متغیرهای الکتریکی
+}
+
+Terminal::~Terminal() {
+    // قبل از اینکه ترمینال از بین برود، به تمام سیم‌های متصل می‌گوید ارتباط را قطع کنند
+    for (Wire *wire : connectedWires) {
+        if (wire) {
+            wire->disconnectTerminal(this);
+        }
+    }
+    // در نهایت لیست خودش را پاک می‌کند
+    connectedWires.clear();
 }
 
 QRectF Terminal::boundingRect() const {
@@ -57,19 +71,26 @@ QList<Wire*> Terminal::getConnectedWires() const {
     return connectedWires;
 }
 
+// ==========================================
+// رویدادهای Hover (ورود، حرکت و خروج موس)
+// ==========================================
+
 void Terminal::hoverEnterEvent(QGraphicsSceneHoverEvent *event) {
     isHovered = true;
     setCursor(Qt::CrossCursor);
-    update();
+    update(); // روشن شدن نقطه آبی
 }
 
 void Terminal::hoverLeaveEvent(QGraphicsSceneHoverEvent *event) {
-    isHovered = false;
+    isHovered = false; // خاموش شدن نقطه آبی
     setCursor(Qt::ArrowCursor);
     update();
+    QGraphicsItem::hoverLeaveEvent(event);
 }
 
 void Terminal::mousePressEvent(QGraphicsSceneMouseEvent *event) {
+    // فعلاً فقط رویداد را ثبت می‌کنیم. منطق رسم سیم را در مراحل بعدی اینجا اضافه خواهیم کرد
+    event->accept();
     QGraphicsItem::mousePressEvent(event);
 }
 

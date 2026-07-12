@@ -25,6 +25,9 @@ CircuitScene::CircuitScene(QObject *parent)
 
     // تنظیم ابعاد بی‌نهایت برای بوم (از مختصات -5000 تا +5000)
     setSceneRect(-5000, -5000, 10000, 10000);
+    voltageProbe = new ProbeItem();
+    addItem(voltageProbe);
+    isProbeEnabled = false;
 }
 
 void CircuitScene::drawBackground(QPainter *painter, const QRectF &rect) {

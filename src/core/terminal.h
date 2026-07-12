@@ -1,6 +1,7 @@
 #pragma once
 #include <QGraphicsItem>
 #include <QList>
+#include <QString> // اضافه شده برای رفع خطای متغیر هم‌گروهی شما
 
 class Wire;
 
@@ -8,6 +9,7 @@ class Wire;
 class Terminal : public QGraphicsItem {
 public:
     explicit Terminal(QGraphicsItem *parent = nullptr);
+    ~Terminal() override; // مخرب اضافه شده از سمت هم‌گروهی
 
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
@@ -29,9 +31,14 @@ public:
 
     void resetState();               // پاک کردن وضعیت در ابتدای هر سیکل پردازش
 
+    // متغیر رابط کاربری (مربوط به کدهای هم‌گروهی)
+    QString voltageLevel = "Undefined";
+
 protected:
     void hoverEnterEvent(QGraphicsSceneHoverEvent *event) override;
     void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
+
+    // رویداد کلیک برای شروع سیم‌کشی
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 
 private:

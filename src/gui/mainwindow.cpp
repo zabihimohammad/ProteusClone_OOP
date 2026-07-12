@@ -13,8 +13,13 @@
 #include <QDrag>
 #include <QMimeData>
 #include <QMouseEvent>
-#include <QPainter> // این کتابخانه را به بالای فایل اضافه کنید
-
+#include <QPainter>
+#include "../core/simulation_engine.h"
+#include <QTimer>
+#include <QCursor>
+#include "../core/wire.h"
+#include "../core/terminal.h"
+#include "../core/probe_item.h"
 // ====================================================
 // کلاس موقت تست با قابلیت نمایش تصویر گرافیکی حین Drag
 // ====================================================
@@ -27,98 +32,103 @@ protected:
         QDrag *drag = new QDrag(this);
         QMimeData *mimeData = new QMimeData;
 
-        // ۱. قرار دادن نام قطعه در پاکت نامه (برای بوم)
         mimeData->setText(this->text());
         drag->setMimeData(mimeData);
 
-        // ==========================================
-        // بخش جدید: ساخت شبح گرافیکی برای زیر موس
-        // ==========================================
-
-        // الف) یک بوم نقاشی کوچک (Pixmap) موقت می‌سازیم
         QPixmap pixmap(80, 40);
-        pixmap.fill(Qt::transparent); // پس‌زمینه را شفاف می‌کنیم
+        pixmap.fill(Qt::transparent);
 
-        // ب) نقاشی کردن شکل قطعه روی این تصویر
         QPainter painter(&pixmap);
-        painter.setRenderHint(QPainter::Antialiasing); // نرم کردن لبه‌ها
+        painter.setRenderHint(QPainter::Antialiasing);
 
-        // کشیدن یک مستطیل نیمه‌شفاف (شبح قطعه)
-        painter.setBrush(QColor(0, 51, 102, 180)); // رنگ آبی با شفافیت
+        painter.setBrush(QColor(0, 51, 102, 180));
         painter.setPen(QPen(Qt::white, 2));
-        painter.drawRoundedRect(2, 2, 76, 36, 5, 5); // مستطیل گوشه‌گرد
+        painter.drawRoundedRect(2, 2, 76, 36, 5, 5);
 
-        // نوشتن نام قطعه وسط آن
         painter.drawText(pixmap.rect(), Qt::AlignCenter, this->text());
         painter.end();
 
-        // ج) چسباندن این نقاشی به نشانگر موس
         drag->setPixmap(pixmap);
-
-        // د) تنظیم نقطه ثقل (HotSpot): می‌خواهیم موس دقیقاً وسط قطعه باشد
         drag->setHotSpot(QPoint(pixmap.width() / 2, pixmap.height() / 2));
-
-        // ==========================================
-
-        // پرتاب کردن پاکت به سمت بوم!
         drag->exec(Qt::CopyAction);
     }
 };
+
+// ====================================================
+// تابع سازنده (هنگام باز شدن برنامه اجرا می‌شود)
+// ====================================================
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
-    // ۱. تنظیم ویژگی‌های ظاهری پنجره اصلی نرم‌افزار
+    // ۱. تنظیم ویژگی‌های ظاهری پنجره
     setWindowTitle("Proteus Clone - OOP Project");
     resize(1024, 768);
 
-    // ۲. ساخت بوم طراحی و متصل کردن آن به دوربین نمایش‌دهنده
+    // ۲. ساخت بوم طراحی و دوربین
     scene = new CircuitScene(this);
     view = new CircuitView(this);
     view->setScene(scene);
     setCentralWidget(view);
-    //موقت برای تست
+
+    // ۳. دکمه‌های موقت تست
     TestDragButton *testBtn1 = new TestDragButton("MCU", this);
-    testBtn1->setGeometry(10, 10, 100, 40); // قرار دادن دکمه در بالا-سمت چپ
+    testBtn1->setGeometry(10, 10, 100, 40);
 
     TestDragButton *testBtn2 = new TestDragButton("RESISTOR", this);
     testBtn2->setGeometry(10, 60, 100, 40);
-    // =========================================================
-    // بخش جدید: چیدن ویترین قطعات روی صفحه شطرنجی
-    // =========================================================
 
-    // ۱. مقاومت (مرکز صفحه)
+    // =========================================================
+    // 🛠️ دکمه فعال/غیرفعال کردن پروب ولتاژ
+    // =========================================================
+    QPushButton *probeButton = new QPushButton("🔍 Probe: OFF", this);
+    probeButton->setCheckable(true);
+    probeButton->setGeometry(10, 110, 120, 30); // پایین‌تر از دکمه‌های تست قرار گرفت
+
+    connect(probeButton, &QPushButton::toggled, this, [=](bool checked) {
+        scene->isProbeEnabled = checked; // نام متغیر به scene تغییر کرد
+
+        if (checked) {
+            probeButton->setText("🔍 Probe: ON");
+            probeButton->setStyleSheet("background-color: #a8f0c6; font-weight: bold; border-radius: 5px;");
+        } else {
+            probeButton->setText("🔍 Probe: OFF");
+            probeButton->setStyleSheet("");
+
+            if (scene->voltageProbe) {
+                scene->voltageProbe->hide();
+            }
+        }
+    });
+
+    // =========================================================
+    // چیدن قطعات روی صفحه شطرنجی
+    // =========================================================
     Resistor *r1 = new Resistor();
     r1->setPos(0, 0);
     scene->addItem(r1);
 
-    // ۲. خازن (سمت راست مقاومت)
     Capacitor *c1 = new Capacitor();
     c1->setPos(100, 0);
     scene->addItem(c1);
 
-    // ۳. منبع تغذیه یا باتری (سمت چپ مقاومت)
     DCVoltageSource *v1 = new DCVoltageSource();
     v1->setPos(-100, 0);
     scene->addItem(v1);
 
-    // ۴. زمین یا GND (دقیقاً زیر منبع تغذیه)
     Ground *gnd1 = new Ground();
     gnd1->setPos(-100, 80);
     scene->addItem(gnd1);
 
-    // ۵. سلف (دقیقاً زیر مقاومت)
     Inductor *l1 = new Inductor();
     l1->setPos(0, 80);
     scene->addItem(l1);
 
-    // ۶. گیت منطقی AND (سمت راست خازن)
     AndGate *and1 = new AndGate();
     and1->setPos(220, 0);
     scene->addItem(and1);
 
-    // ۷. تراشه مرکزی پردازنده (در بخش بالایی مدار)
     MCUChip *mcu1 = new MCUChip();
     mcu1->setPos(0, -150);
     scene->addItem(mcu1);
-    // --- ردیف قطعات تعاملی ---
+
     PulseGenerator *pulse = new PulseGenerator();
     pulse->setPos(-200, -100);
     scene->addItem(pulse);
@@ -139,7 +149,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     seg1->setPos(200, -100);
     scene->addItem(seg1);
 
-    // --- ردیف گیت‌های منطقی پیشرفته ---
     OrGate *or1 = new OrGate();
     or1->setPos(-200, 150);
     scene->addItem(or1);
@@ -159,7 +168,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     DFlipFlop *dff1 = new DFlipFlop();
     dff1->setPos(250, 150);
     scene->addItem(dff1);
-    // --- قطعات جانبی پیشرفته ---
+
     MemoryChip *ram = new MemoryChip();
     ram->setPos(-350, 0);
     scene->addItem(ram);
@@ -179,8 +188,56 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     DAC_Chip *dac = new DAC_Chip();
     dac->setPos(350, 100);
     scene->addItem(dac);
+    // =========================================================
+    // ⚙️ راه‌اندازی قلب تپنده شبیه‌ساز (Simulation Engine)
+    // =========================================================
+
+    SimulationEngine *engine = new SimulationEngine(scene, this);
+
+    QTimer *simTimer = new QTimer(this);
+    connect(simTimer, &QTimer::timeout, this, [=]() {
+
+        // ۱. اجرای محاسبات ریاضی مدار
+        engine->stepSimulation();
+
+        // ۲. سیستم رهگیری ایمن (Safe Tracking)
+        // شرط جدید: فقط اگر پنجره برنامه فعال است و موس داخل بوم است، پروب را آپدیت کن
+        if (isActiveWindow() && view->underMouse() && scene->isProbeEnabled && scene->voltageProbe) {
+
+            QPoint globalPos = QCursor::pos();
+            QPoint viewPos = view->mapFromGlobal(globalPos);
+            QPointF scenePos = view->mapToScene(viewPos);
+
+            QList<QGraphicsItem*> items = scene->items(scenePos);
+            bool found = false;
+
+            for (QGraphicsItem* item : items) {
+                if (Wire* wire = dynamic_cast<Wire*>(item)) {
+                    scene->voltageProbe->updateProbe(wire->voltageLevel, scenePos);
+                    found = true;
+                    break;
+                }
+                else if (Terminal* term = dynamic_cast<Terminal*>(item)) {
+                    scene->voltageProbe->updateProbe(term->voltageLevel, scenePos);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) scene->voltageProbe->hide();
+
+        } else if (scene->voltageProbe) {
+            // اگر موس از برنامه خارج شد، فوراً پروب را مخفی کن تا کرش نکند
+            scene->voltageProbe->hide();
+        }
+    });
+
+    simTimer->start(100);
 }
 
+// ====================================================
+// تابع مخرب (هنگام بسته شدن برنامه اجرا می‌شود)
+// ====================================================
 MainWindow::~MainWindow() {
-    // به دلیل استفاده از this، مدیریت حافظه خودکار توسط Qt انجام می‌شود
+    // کاملاً خالی می‌ماند (Qt خودش حافظه‌ها را پاک می‌کند)
 }

@@ -2,6 +2,10 @@
 #include "terminal.h"
 #include <QPainter>
 #include "auto_router.h" // برای دسترسی به هوش مصنوعی
+#include <QToolTip>
+#include <QGraphicsSceneHoverEvent>
+#include "probe_item.h"
+#include "../canvas/circuit_scene.h"
 Wire::Wire(Terminal *startTerm, QPointF startPos) {
     startTerminal = startTerm;
     endTerminal = nullptr;
@@ -12,6 +16,7 @@ Wire::Wire(Terminal *startTerm, QPointF startPos) {
     setZValue(-1);
     // اضافه کردن این خط: اجازه انتخاب شدن با موس
     setFlag(QGraphicsItem::ItemIsSelectable);
+    setAcceptHoverEvents(true);
 }
 
 void Wire::setEndPoint(QPointF endPos) {
@@ -59,6 +64,7 @@ QRectF Wire::boundingRect() const {
     return QRectF(minX, minY, maxX - minX, maxY - minY).adjusted(-5, -5, 5, 5);
 }
 
+
 void Wire::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(isSelected() ? Qt::red : Qt::blue, 2);
     painter->setPen(pen);
@@ -105,4 +111,14 @@ Wire::~Wire() {
     // وقتی کاربر سیم را با کلید Delete پاک می‌کند، سیم باید نام خودش را از لیست پایه‌ها خط بزند
     if (startTerminal) startTerminal->removeWire(this);
     if (endTerminal) endTerminal->removeWire(this);
+}
+void Wire::disconnectTerminal(Terminal *term) {
+    // اگر ترمینالی که دارد نابود می‌شود پایه شروع من است، آن را فراموش کن
+    if (startTerminal == term) {
+        startTerminal = nullptr;
+    }
+    // اگر پایه انتهایی من است، آن را فراموش کن
+    if (endTerminal == term) {
+        endTerminal = nullptr;
+    }
 }
