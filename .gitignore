@@ -1,5 +1,9 @@
 # Qt / C++ ignore files
 build/
+build-*/
+cmake-build-*/
+.idea/
+*.extracted.txt
 *.user
 .DS_Store
 *.pro.user

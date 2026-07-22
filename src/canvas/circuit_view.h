@@ -1,23 +1,42 @@
 #pragma once
-#include <QGraphicsView>
-#include <QWheelEvent>
-#include <QMouseEvent>
 
-class CircuitView : public QGraphicsView {
+#include <QGraphicsView>
+
+class CircuitView final : public QGraphicsView
+{
     Q_OBJECT
+
 public:
     explicit CircuitView(QWidget *parent = nullptr);
 
-protected:
-    // بازنویسی رویداد چرخاندن غلتک موس (اسکرول) برای ایجاد قابلیت Zoom In / Zoom Out
-    void wheelEvent(QWheelEvent *event) override;
+public slots:
+    void zoomIn();
+    void zoomOut();
+    void resetZoom();
+    void fitCanvas();
 
-    // بازنویسی رویدادهای کلیک موس برای قابلیت جابجایی صفحه (Panning)
+signals:
+    void zoomChanged(int percent);
+    void cursorPositionChanged(QPointF scenePosition);
+
+protected:
+    void wheelEvent(QWheelEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
+    void paintEvent(QPaintEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
 private:
-    bool isPanning;       // پرچمی که نشان می‌دهد آیا در حال کشیدن صفحه هستیم یا خیر
-    QPoint lastMousePos;  // ذخیره آخرین مختصات موس برای محاسبه میزان جابجایی
+    void setZoom(qreal zoom);
+    QRectF navigatorRect() const;
+    QRectF navigatorCanvasRect() const;
+    QRectF navigatorToggleRect() const;
+    void navigateFromNavigator(const QPointF &position);
+
+    bool m_isPanning = false;
+    bool m_isNavigating = false;
+    bool m_navigatorCollapsed = false;
+    bool m_initialFitDone = false;
+    QPoint m_lastMousePos;
 };

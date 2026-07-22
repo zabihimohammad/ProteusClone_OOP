@@ -21,6 +21,10 @@ set(PROJECT_SOURCES
         src/main.cpp
         src/gui/mainwindow.cpp
         src/gui/mainwindow.h
+        src/ui/startdialog.cpp
+        src/ui/startdialog.h
+        src/ui/componentlibrary.cpp
+        src/ui/componentlibrary.h
         src/canvas/circuit_scene.cpp
         src/canvas/circuit_scene.h
         src/canvas/circuit_view.cpp
@@ -59,3 +63,12 @@ set(PROJECT_SOURCES
 
 add_executable(ProteusClone_OOP WIN32 ${PROJECT_SOURCES})
 target_link_libraries(ProteusClone_OOP PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+
+if (WIN32)
+    find_program(WINDEPLOYQT_EXECUTABLE windeployqt
+            HINTS "${Qt${QT_VERSION_MAJOR}_DIR}/../../../bin")
+    if (WINDEPLOYQT_EXECUTABLE)
+        add_custom_command(TARGET ProteusClone_OOP POST_BUILD
+                COMMAND "${WINDEPLOYQT_EXECUTABLE}" --no-translations "$<TARGET_FILE:ProteusClone_OOP>")
+    endif()
+endif()

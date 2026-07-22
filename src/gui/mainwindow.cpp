@@ -1,243 +1,275 @@
 #include "mainwindow.h"
 
-// هدرهای مربوط به بخش بوم گرافیکی و دوربین
 #include "../canvas/circuit_scene.h"
 #include "../canvas/circuit_view.h"
-
-// هدرهای مربوط به کتابخانه تمام قطعاتی که تا الان ساخته‌ایم
-#include "../components/basic_components.h"
-#include "../components/logic_gates.h"
-#include "../components/mcu.h"
-#include "../components/peripherals.h"
-#include <QPushButton>
-#include <QDrag>
-#include <QMimeData>
-#include <QMouseEvent>
-#include <QPainter>
-#include "../core/simulation_engine.h"
-#include <QTimer>
-#include <QCursor>
-#include "../core/wire.h"
-#include "../core/terminal.h"
 #include "../core/probe_item.h"
-// ====================================================
-// کلاس موقت تست با قابلیت نمایش تصویر گرافیکی حین Drag
-// ====================================================
-class TestDragButton : public QPushButton {
-public:
-    TestDragButton(QString text, QWidget *parent = nullptr) : QPushButton(text, parent) {}
+#include "../core/simulation_engine.h"
+#include "../core/terminal.h"
+#include "../core/wire.h"
+#include "../io/file_manager.h"
+#include "../ui/componentlibrary.h"
 
-protected:
-    void mouseMoveEvent(QMouseEvent *event) override {
-        QDrag *drag = new QDrag(this);
-        QMimeData *mimeData = new QMimeData;
+#include <QCheckBox>
+#include <QComboBox>
+#include <QCursor>
+#include <QFileDialog>
+#include <QFile>
+#include <QFileInfo>
+#include <QFrame>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QSaveFile>
+#include <QStatusBar>
+#include <QTimer>
+#include <QVBoxLayout>
+#include <QtMath>
 
-        mimeData->setText(this->text());
-        drag->setMimeData(mimeData);
+MainWindow::MainWindow(const QSize &canvasSize, const QString &projectPath, QWidget *parent)
+    : QMainWindow(parent), m_canvasSize(canvasSize), m_projectPath(projectPath)
+{
+    resize(1280, 780);
+    setMinimumSize(900, 600);
+    const QString title = projectPath.isEmpty() ? tr("Untitled") : QFileInfo(projectPath).completeBaseName();
+    setWindowTitle(title + tr(" — Circuit Studio"));
+    buildInterface();
+    applyTheme();
+    configureSimulation();
+}
 
-        QPixmap pixmap(80, 40);
-        pixmap.fill(Qt::transparent);
-
-        QPainter painter(&pixmap);
-        painter.setRenderHint(QPainter::Antialiasing);
-
-        painter.setBrush(QColor(0, 51, 102, 180));
-        painter.setPen(QPen(Qt::white, 2));
-        painter.drawRoundedRect(2, 2, 76, 36, 5, 5);
-
-        painter.drawText(pixmap.rect(), Qt::AlignCenter, this->text());
-        painter.end();
-
-        drag->setPixmap(pixmap);
-        drag->setHotSpot(QPoint(pixmap.width() / 2, pixmap.height() / 2));
-        drag->exec(Qt::CopyAction);
-    }
-};
-
-// ====================================================
-// تابع سازنده (هنگام باز شدن برنامه اجرا می‌شود)
-// ====================================================
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
-    // ۱. تنظیم ویژگی‌های ظاهری پنجره
-    setWindowTitle("Proteus Clone - OOP Project");
-    resize(1024, 768);
-
-    // ۲. ساخت بوم طراحی و دوربین
+void MainWindow::buildInterface()
+{
     scene = new CircuitScene(this);
-    view = new CircuitView(this);
+    scene->setCanvasSize(m_canvasSize);
+    view = new CircuitView;
     view->setScene(scene);
-    setCentralWidget(view);
 
-    // ۳. دکمه‌های موقت تست
-    TestDragButton *testBtn1 = new TestDragButton("MCU", this);
-    testBtn1->setGeometry(10, 10, 100, 40);
+    if (!m_projectPath.isEmpty() && QFileInfo::exists(m_projectPath)) {
+        FileManager::loadCircuit(m_projectPath, scene);
+        scene->voltageProbe = new ProbeItem();
+        scene->addItem(scene->voltageProbe);
+        scene->voltageProbe->hide();
+    }
 
-    TestDragButton *testBtn2 = new TestDragButton("RESISTOR", this);
-    testBtn2->setGeometry(10, 60, 100, 40);
+    auto *root = new QWidget;
+    auto *rootLayout = new QVBoxLayout(root);
+    rootLayout->setContentsMargins(14, 10, 14, 12);
+    rootLayout->setSpacing(10);
 
-    // =========================================================
-    // 🛠️ دکمه فعال/غیرفعال کردن پروب ولتاژ
-    // =========================================================
-    QPushButton *probeButton = new QPushButton("🔍 Probe: OFF", this);
-    probeButton->setCheckable(true);
-    probeButton->setGeometry(10, 110, 120, 30); // پایین‌تر از دکمه‌های تست قرار گرفت
+    auto *top = new QFrame;
+    top->setObjectName("topBar");
+    auto *topLayout = new QHBoxLayout(top);
+    topLayout->setContentsMargins(14, 9, 14, 9);
+    auto *brand = new QLabel(tr("◉  Circuit Studio"));
+    brand->setObjectName("brand");
+    auto *project = new QLabel(QFileInfo(m_projectPath).completeBaseName());
+    if (project->text().isEmpty()) project->setText(tr("Untitled circuit"));
+    project->setObjectName("projectName");
+    auto *save = new QPushButton(tr("Save"));
+    auto *undo = new QPushButton(tr("↶"));
+    auto *redo = new QPushButton(tr("↷"));
+    auto *run = new QPushButton(tr("▶  Run"));
+    run->setCheckable(true);
+    run->setObjectName("primaryButton");
+    topLayout->addWidget(brand);
+    topLayout->addSpacing(12);
+    topLayout->addWidget(project);
+    topLayout->addStretch();
+    topLayout->addWidget(save);
+    topLayout->addWidget(undo);
+    topLayout->addWidget(redo);
+    topLayout->addSpacing(8);
+    topLayout->addWidget(run);
 
-    connect(probeButton, &QPushButton::toggled, this, [=](bool checked) {
-        scene->isProbeEnabled = checked; // نام متغیر به scene تغییر کرد
+    auto *content = new QWidget;
+    auto *contentLayout = new QHBoxLayout(content);
+    contentLayout->setContentsMargins(0, 0, 0, 0);
+    contentLayout->setSpacing(10);
+    auto *library = new ComponentLibrary;
 
-        if (checked) {
-            probeButton->setText("🔍 Probe: ON");
-            probeButton->setStyleSheet("background-color: #a8f0c6; font-weight: bold; border-radius: 5px;");
+    auto *workspace = new QFrame;
+    workspace->setObjectName("workspace");
+    auto *workspaceLayout = new QVBoxLayout(workspace);
+    workspaceLayout->setContentsMargins(0, 0, 0, 0);
+    workspaceLayout->setSpacing(0);
+    auto *tools = new QFrame;
+    tools->setObjectName("canvasTools");
+    auto *toolsLayout = new QHBoxLayout(tools);
+    toolsLayout->setContentsMargins(12, 8, 12, 8);
+    auto *select = new QPushButton(tr("⌁  Select"));
+    select->setObjectName("selectedTool");
+    auto *wire = new QPushButton(tr("⌁  Wire"));
+    auto *probe = new QPushButton(tr("Probe"));
+    probe->setCheckable(true);
+    auto *zoomOut = new QPushButton(tr("−"));
+    auto *zoomIn = new QPushButton(tr("+"));
+    auto *reset = new QPushButton(tr("Fit"));
+    auto *gridSize = new QComboBox;
+    gridSize->addItems({tr("Grid 10"), tr("Grid 20"), tr("Grid 40")});
+    gridSize->setCurrentIndex(1);
+    auto *snap = new QCheckBox(tr("Snap"));
+    snap->setChecked(true);
+    toolsLayout->addWidget(select);
+    toolsLayout->addWidget(wire);
+    toolsLayout->addWidget(probe);
+    toolsLayout->addStretch();
+    toolsLayout->addWidget(gridSize);
+    toolsLayout->addWidget(snap);
+    toolsLayout->addSpacing(8);
+    toolsLayout->addWidget(zoomOut);
+    toolsLayout->addWidget(reset);
+    toolsLayout->addWidget(zoomIn);
+
+    workspaceLayout->addWidget(tools);
+    workspaceLayout->addWidget(view, 1);
+    contentLayout->addWidget(library);
+    contentLayout->addWidget(workspace, 1);
+    rootLayout->addWidget(top);
+    rootLayout->addWidget(content, 1);
+    setCentralWidget(root);
+
+    m_coordinates = new QLabel(tr("X 0   Y 0"));
+    m_zoomLabel = new QLabel(tr("Zoom 100%"));
+    statusBar()->addWidget(new QLabel(tr("● Ready")));
+    statusBar()->addPermanentWidget(m_coordinates);
+    statusBar()->addPermanentWidget(m_zoomLabel);
+
+    connect(save, &QPushButton::clicked, this, &MainWindow::saveProject);
+    connect(undo, &QPushButton::clicked, this, [this] { FileManager::undo(scene); });
+    connect(redo, &QPushButton::clicked, this, [this] { FileManager::redo(scene); });
+    connect(zoomIn, &QPushButton::clicked, view, &CircuitView::zoomIn);
+    connect(zoomOut, &QPushButton::clicked, view, &CircuitView::zoomOut);
+    connect(reset, &QPushButton::clicked, view, &CircuitView::fitCanvas);
+    connect(snap, &QCheckBox::toggled, scene, &CircuitScene::setSnapEnabled);
+    connect(gridSize, qOverload<int>(&QComboBox::currentIndexChanged), this, [scene = scene, gridSize] {
+        scene->setGridSize(gridSize->currentText().section(' ', 1).toInt());
+    });
+    connect(probe, &QPushButton::toggled, this, [this](bool checked) {
+        scene->isProbeEnabled = checked;
+        if (!checked && scene->voltageProbe) scene->voltageProbe->hide();
+    });
+    connect(run, &QPushButton::toggled, this, [this, run](bool running) {
+        if (running) {
+            m_simulationTimer->start(100);
+            run->setText(tr("Ⅱ  Pause"));
         } else {
-            probeButton->setText("🔍 Probe: OFF");
-            probeButton->setStyleSheet("");
-
-            if (scene->voltageProbe) {
-                scene->voltageProbe->hide();
-            }
+            m_simulationTimer->stop();
+            run->setText(tr("▶  Run"));
         }
     });
+    connect(view, &CircuitView::cursorPositionChanged, this, [this](const QPointF &point) {
+        m_coordinates->setText(tr("X %1   Y %2").arg(qRound(point.x())).arg(qRound(point.y())));
+    });
+    connect(view, &CircuitView::zoomChanged, this, [this](int percent) {
+        m_zoomLabel->setText(tr("Zoom %1%").arg(percent));
+    });
+    connect(library, &ComponentLibrary::componentActivated, this, [this](const QString &id) {
+        scene->addComponent(id, view->mapToScene(view->viewport()->rect().center()));
+        statusBar()->showMessage(tr("Component added to the canvas"), 2500);
+    });
+    QTimer::singleShot(0, view, &CircuitView::fitCanvas);
+}
 
-    // =========================================================
-    // چیدن قطعات روی صفحه شطرنجی
-    // =========================================================
-    Resistor *r1 = new Resistor();
-    r1->setPos(0, 0);
-    scene->addItem(r1);
-
-    Capacitor *c1 = new Capacitor();
-    c1->setPos(100, 0);
-    scene->addItem(c1);
-
-    DCVoltageSource *v1 = new DCVoltageSource();
-    v1->setPos(-100, 0);
-    scene->addItem(v1);
-
-    Ground *gnd1 = new Ground();
-    gnd1->setPos(-100, 80);
-    scene->addItem(gnd1);
-
-    Inductor *l1 = new Inductor();
-    l1->setPos(0, 80);
-    scene->addItem(l1);
-
-    AndGate *and1 = new AndGate();
-    and1->setPos(220, 0);
-    scene->addItem(and1);
-
-    MCUChip *mcu1 = new MCUChip();
-    mcu1->setPos(0, -150);
-    scene->addItem(mcu1);
-
-    PulseGenerator *pulse = new PulseGenerator();
-    pulse->setPos(-200, -100);
-    scene->addItem(pulse);
-
-    Switch *sw1 = new Switch();
-    sw1->setPos(-100, -100);
-    scene->addItem(sw1);
-
-    PushButton *pb1 = new PushButton();
-    pb1->setPos(0, -100);
-    scene->addItem(pb1);
-
-    LED *led1 = new LED();
-    led1->setPos(100, -100);
-    scene->addItem(led1);
-
-    SevenSegment *seg1 = new SevenSegment();
-    seg1->setPos(200, -100);
-    scene->addItem(seg1);
-
-    OrGate *or1 = new OrGate();
-    or1->setPos(-200, 150);
-    scene->addItem(or1);
-
-    NotGate *not1 = new NotGate();
-    not1->setPos(-100, 150);
-    scene->addItem(not1);
-
-    XorGate *xor1 = new XorGate();
-    xor1->setPos(0, 150);
-    scene->addItem(xor1);
-
-    NandGate *nand1 = new NandGate();
-    nand1->setPos(100, 150);
-    scene->addItem(nand1);
-
-    DFlipFlop *dff1 = new DFlipFlop();
-    dff1->setPos(250, 150);
-    scene->addItem(dff1);
-
-    MemoryChip *ram = new MemoryChip();
-    ram->setPos(-350, 0);
-    scene->addItem(ram);
-
-    LCD16x2 *lcd = new LCD16x2();
-    lcd->setPos(-350, -150);
-    scene->addItem(lcd);
-
-    Keypad *kp = new Keypad();
-    kp->setPos(-350, 150);
-    scene->addItem(kp);
-
-    ADC_Chip *adc = new ADC_Chip();
-    adc->setPos(350, -100);
-    scene->addItem(adc);
-
-    DAC_Chip *dac = new DAC_Chip();
-    dac->setPos(350, 100);
-    scene->addItem(dac);
-    // =========================================================
-    // ⚙️ راه‌اندازی قلب تپنده شبیه‌ساز (Simulation Engine)
-    // =========================================================
-
-    SimulationEngine *engine = new SimulationEngine(scene, this);
-
-    QTimer *simTimer = new QTimer(this);
-    connect(simTimer, &QTimer::timeout, this, [=]() {
-
-        // ۱. اجرای محاسبات ریاضی مدار
-        engine->stepSimulation();
-
-        // ۲. سیستم رهگیری ایمن (Safe Tracking)
-        // شرط جدید: فقط اگر پنجره برنامه فعال است و موس داخل بوم است، پروب را آپدیت کن
+void MainWindow::configureSimulation()
+{
+    m_engine = new SimulationEngine(scene, this);
+    m_simulationTimer = new QTimer(this);
+    connect(m_simulationTimer, &QTimer::timeout, this, [this] {
+        m_engine->stepSimulation();
         if (isActiveWindow() && view->underMouse() && scene->isProbeEnabled && scene->voltageProbe) {
-
-            QPoint globalPos = QCursor::pos();
-            QPoint viewPos = view->mapFromGlobal(globalPos);
-            QPointF scenePos = view->mapToScene(viewPos);
-
-            QList<QGraphicsItem*> items = scene->items(scenePos);
+            const QPoint viewPos = view->mapFromGlobal(QCursor::pos());
+            const QPointF scenePos = view->mapToScene(viewPos);
             bool found = false;
-
-            for (QGraphicsItem* item : items) {
-                if (Wire* wire = dynamic_cast<Wire*>(item)) {
+            for (QGraphicsItem *item : scene->items(scenePos)) {
+                if (auto *wire = dynamic_cast<Wire *>(item)) {
                     scene->voltageProbe->updateProbe(wire->voltageLevel, scenePos);
                     found = true;
                     break;
                 }
-                else if (Terminal* term = dynamic_cast<Terminal*>(item)) {
-                    scene->voltageProbe->updateProbe(term->voltageLevel, scenePos);
+                if (auto *terminal = dynamic_cast<Terminal *>(item)) {
+                    scene->voltageProbe->updateProbe(terminal->voltageLevel, scenePos);
                     found = true;
                     break;
                 }
             }
-
             if (!found) scene->voltageProbe->hide();
-
         } else if (scene->voltageProbe) {
-            // اگر موس از برنامه خارج شد، فوراً پروب را مخفی کن تا کرش نکند
             scene->voltageProbe->hide();
         }
     });
-
-    simTimer->start(100);
 }
 
-// ====================================================
-// تابع مخرب (هنگام بسته شدن برنامه اجرا می‌شود)
-// ====================================================
-MainWindow::~MainWindow() {
-    // کاملاً خالی می‌ماند (Qt خودش حافظه‌ها را پاک می‌کند)
+void MainWindow::saveProject()
+{
+    if (m_projectPath.isEmpty()) {
+        m_projectPath = QFileDialog::getSaveFileName(
+            this, tr("Save circuit"), {}, tr("Circuit projects (*.circuit.json *.json)"));
+    }
+    if (m_projectPath.isEmpty()) return;
+    if (!FileManager::saveCircuit(m_projectPath, scene)) {
+        QMessageBox::critical(this, tr("Save failed"), tr("The project could not be saved."));
+        return;
+    }
+
+    QFile source(m_projectPath);
+    if (source.open(QIODevice::ReadOnly)) {
+        QJsonObject root = QJsonDocument::fromJson(source.readAll()).object();
+        source.close();
+        root["name"] = QFileInfo(m_projectPath).completeBaseName().remove(".circuit");
+        root["canvas"] = QJsonObject{{"width", m_canvasSize.width()},
+                                     {"height", m_canvasSize.height()}};
+        QSaveFile target(m_projectPath);
+        if (target.open(QIODevice::WriteOnly)) {
+            target.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
+            target.commit();
+        }
+    }
+    statusBar()->showMessage(tr("Project saved"), 2500);
+}
+
+void MainWindow::applyTheme()
+{
+    setStyleSheet(R"(
+        QMainWindow, QWidget { background: #EEF1F5; color: #1D2530; }
+        QLabel, QCheckBox { color: #354152; }
+        QFrame#topBar, QFrame#libraryPanel, QFrame#workspace {
+            background: #FFFFFF; border: 1px solid #DDE2E8; border-radius: 15px;
+        }
+        QFrame#workspace { border-radius: 14px; }
+        QFrame#canvasTools { background: #FFFFFF; border: none; border-bottom: 1px solid #E6E9ED; }
+        QLabel#brand { font-size: 17px; font-weight: 700; color: #1473E6; }
+        QLabel#projectName { color: #7A8491; }
+        QLabel#panelTitle { font-size: 18px; font-weight: 700; }
+        QLabel#sectionTitle { font-size: 12px; font-weight: 700; color: #667180; }
+        QLabel#symbolPreview { font-family: Consolas; font-size: 23px; color: #1473E6; min-height: 42px; }
+        QLabel#previewTitle { font-weight: 700; }
+        QLabel#emptyState { color: #8C96A3; padding: 18px; }
+        QFrame#previewCard { background: #F5F8FC; border: 1px solid #E1E7EF; border-radius: 12px; }
+        QLineEdit, QComboBox {
+            color: #1D2530; background: #F3F5F8; border: 1px solid transparent;
+            border-radius: 10px; padding: 8px 11px; selection-background-color: #1473E6;
+        }
+        QLineEdit:focus, QComboBox:focus { border-color: #1473E6; background: white; }
+        QTreeWidget, QListWidget { border: none; background: transparent; outline: none; }
+        QTreeWidget::item { padding: 6px; border-radius: 7px; }
+        QTreeWidget::item:selected { background: #E8F2FF; color: #0A66D3; }
+        QPushButton {
+            color: #253143; background: #F1F3F6; border: none; border-radius: 9px;
+            padding: 8px 12px; font-weight: 600;
+        }
+        QPushButton:hover { background: #E5E9EF; }
+        QPushButton#primaryButton { background: #1473E6; color: white; padding-left: 16px; padding-right: 16px; }
+        QPushButton#selectedTool { background: #E8F2FF; color: #0A66D3; }
+        QWidget#activeRow { background: #F5F8FC; border-radius: 8px; }
+        QPushButton#removeComponent {
+            color: #D64545; background: #FCEDEE; border: none; border-radius: 7px;
+            padding: 0; font-size: 17px; font-weight: 700;
+        }
+        QPushButton#removeComponent:hover { color: white; background: #D64545; }
+        QStatusBar { background: #FFFFFF; border-top: 1px solid #DDE2E8; }
+        QStatusBar QLabel { background: transparent; padding: 2px 10px; color: #667180; }
+    )");
 }

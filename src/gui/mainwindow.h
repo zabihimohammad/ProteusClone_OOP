@@ -1,19 +1,35 @@
 #pragma once
-#include <QMainWindow>
 
-// برای افزایش سرعت کامپایل و جلوگیری از تداخل هدرها، کلاس‌های گرافیکی را Forward Declare می‌کنیم
+#include <QMainWindow>
+#include <QSize>
+
 class CircuitScene;
 class CircuitView;
+class QLabel;
+class QTimer;
+class SimulationEngine;
 
-class MainWindow : public QMainWindow {
+class MainWindow final : public QMainWindow
+{
     Q_OBJECT
+
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    explicit MainWindow(const QSize &canvasSize = QSize(1600, 1000),
+                        const QString &projectPath = {}, QWidget *parent = nullptr);
+    ~MainWindow() override = default;
 
 private:
-    // تعریف پوینترها (نشانی‌ها) به بوم طراحی و دوربین نمایش آن
-    // این متغیرها در طول اجرای برنامه، دسترسی ما را به صفحه شطرنجی حفظ می‌کنند
-    CircuitScene *scene;
-    CircuitView *view;
+    void buildInterface();
+    void applyTheme();
+    void configureSimulation();
+    void saveProject();
+
+    CircuitScene *scene = nullptr;
+    CircuitView *view = nullptr;
+    SimulationEngine *m_engine = nullptr;
+    QTimer *m_simulationTimer = nullptr;
+    QLabel *m_coordinates = nullptr;
+    QLabel *m_zoomLabel = nullptr;
+    QSize m_canvasSize;
+    QString m_projectPath;
 };

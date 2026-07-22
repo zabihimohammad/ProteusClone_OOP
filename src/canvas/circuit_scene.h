@@ -1,40 +1,51 @@
 #pragma once
+
 #include <QGraphicsScene>
 #include <QGraphicsSceneDragDropEvent>
 #include <QGraphicsSceneMouseEvent>
 #include <QKeyEvent>
 #include <QMimeData>
-#include "../core/terminal.h"
+
 #include "../core/probe_item.h"
-// Forward declarations
+#include "../core/terminal.h"
+
 class Wire;
 
-class CircuitScene : public QGraphicsScene {
-Q_OBJECT
+class CircuitScene : public QGraphicsScene
+{
+    Q_OBJECT
+
 public:
     explicit CircuitScene(QObject *parent = nullptr);
-    ProbeItem *voltageProbe;
-    bool isProbeEnabled = false;
-protected:
-    // تابع رسم پس‌زمینه شطرنجی
-    void drawBackground(QPainter *painter, const QRectF &rect) override;
 
-    // توابع رهگیری موس (برای سیم‌کشی تعاملی و ثبت تاریخچه)
+    ProbeItem *voltageProbe = nullptr;
+    bool isProbeEnabled = false;
+
+    int gridSpacing() const { return m_gridSize; }
+    bool snapEnabled() const { return m_snapEnabled; }
+    QRectF canvasRect() const { return m_canvasRect; }
+
+public slots:
+    void setGridSize(int size);
+    void setSnapEnabled(bool enabled) { m_snapEnabled = enabled; }
+    void setCanvasSize(const QSizeF &size);
+    QGraphicsItem *addComponent(const QString &componentType, const QPointF &position);
+
+protected:
+    void drawBackground(QPainter *painter, const QRectF &rect) override;
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
-    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override; // <-- این خط اضافه شد
-
-    // تابع رهگیری کیبورد (برای حذف ایمن قطعات و میانبرهای Undo/Redo/Save)
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
-
-    // توابع سیستم Drag & Drop (دریافت قطعات از منوی UI)
     void dragEnterEvent(QGraphicsSceneDragDropEvent *event) override;
     void dragMoveEvent(QGraphicsSceneDragDropEvent *event) override;
     void dropEvent(QGraphicsSceneDragDropEvent *event) override;
 
 private:
-    int gridSize;            // فاصله بین نقطه‌های شطرنجی
-    bool isWiring;           // آیا کاربر در حال سیم‌کشی است؟
-    Wire *tempWire;          // سیمی که در حال کشیده شدن است
-    Terminal *startTerminal; // پایه‌ای که سیم از آن شروع شده
+    int m_gridSize = 20;
+    bool m_snapEnabled = true;
+    QRectF m_canvasRect{-800, -500, 1600, 1000};
+    bool isWiring = false;
+    Wire *tempWire = nullptr;
+    Terminal *startTerminal = nullptr;
 };
