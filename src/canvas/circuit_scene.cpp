@@ -246,37 +246,8 @@ void CircuitScene::dragMoveEvent(QGraphicsSceneDragDropEvent *event) {
 
 void CircuitScene::dropEvent(QGraphicsSceneDragDropEvent *event) {
     if (event->mimeData()->hasText()) {
+        // قطعه را دقیقاً در محلی که موس رها شده با استفاده از سیستم Snap می‌سازد
         addComponent(event->mimeData()->text(), event->scenePos());
-        event->acceptProposedAction();
-        return;
-    }
-    if (event->mimeData()->hasText()) {
-        QString componentType = event->mimeData()->text();
-        QPointF dropPosition = event->scenePos();
-
-        // چسباندن خودکار قطعه به خطوط شبکه (Snap to Grid) برای تمیزی مدار
-        dropPosition.setX(qRound(dropPosition.x() / m_gridSize) * m_gridSize);
-        dropPosition.setY(qRound(dropPosition.y() / m_gridSize) * m_gridSize);
-
-        QGraphicsItem *newItem = nullptr;
-
-        // کارخانه تولید قطعات
-        if (componentType == "MCU") newItem = new MCUChip();
-        else if (componentType == "RESISTOR") newItem = new Resistor();
-        else if (componentType == "CAPACITOR") newItem = new Capacitor();
-        else if (componentType == "AND_GATE") newItem = new AndGate();
-        else if (componentType == "OR_GATE") newItem = new OrGate();
-        else if (componentType == "LED") newItem = new LED();
-
-        // اگر قطعه با موفقیت ساخته شد
-        if (newItem != nullptr) {
-            newItem->setPos(dropPosition);
-            addItem(newItem);
-
-            // ثبت وضعیت در تاریخچه
-            FileManager::recordState(this);
-        }
-
         event->acceptProposedAction();
     } else {
         event->ignore();

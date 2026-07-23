@@ -6,6 +6,7 @@
 #include <QGraphicsSceneHoverEvent>
 #include "probe_item.h"
 #include "../canvas/circuit_scene.h"
+#include <QPainterPath>
 Wire::Wire(Terminal *startTerm, QPointF startPos) {
     startTerminal = startTerm;
     endTerminal = nullptr;
@@ -121,4 +122,35 @@ void Wire::disconnectTerminal(Terminal *term) {
     if (endTerminal == term) {
         endTerminal = nullptr;
     }
+}
+// ==========================================================
+// محاسبه دقیق خطوط برخورد سیم با موس (جلوگیری از باگ کادر بزرگ)
+// ==========================================================
+QPainterPath Wire::shape() const {
+    QPainterPath path;
+    if (points.size() < 2) return path;
+
+    // رسم مسیر دقیق سیم برای موتور برخوردی (Collision Engine)
+    if (points.size() <= 3) {
+        for (int i = 0; i < points.size() - 1; ++i) {
+            QPointF pA = points[i];
+            QPointF pB = points[i+1];
+            qreal midX = (pA.x() + pB.x()) / 2.0;
+
+            if (i == 0) path.moveTo(pA);
+            path.lineTo(QPointF(midX, pA.y()));
+            path.lineTo(QPointF(midX, pB.y()));
+            path.lineTo(pB);
+        }
+    } else {
+        path.moveTo(points[0]);
+        for (int i = 1; i < points.size(); ++i) {
+            path.lineTo(points[i]);
+        }
+    }
+
+    // ایجاد یک ضخامت مجازی ۱۰ پیکسلی تا موس کاربر به راحتی سیم را پیدا کند
+    QPainterPathStroker stroker;
+    stroker.setWidth(10);
+    return stroker.createStroke(path);
 }

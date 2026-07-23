@@ -162,6 +162,25 @@ void MainWindow::buildInterface()
     });
     connect(view, &CircuitView::cursorPositionChanged, this, [this](const QPointF &point) {
         m_coordinates->setText(tr("X %1   Y %2").arg(qRound(point.x())).arg(qRound(point.y())));
+
+        // === منطق آپدیت آنی پروب هنگام حرکت موس (مستقل از اجرای شبیه‌ساز) ===
+        if (scene->isProbeEnabled && scene->voltageProbe) {
+            bool found = false;
+            // بررسی المان‌هایی که دقیقا زیر نشانگر موس هستند
+            for (QGraphicsItem *item : scene->items(point)) {
+                if (auto *wire = dynamic_cast<Wire*>(item)) {
+                    scene->voltageProbe->updateProbe(wire->voltageLevel, point);
+                    found = true;
+                    break;
+                }
+                if (auto *terminal = dynamic_cast<Terminal*>(item)) {
+                    scene->voltageProbe->updateProbe(terminal->voltageLevel, point);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) scene->voltageProbe->hide();
+        }
     });
     connect(view, &CircuitView::zoomChanged, this, [this](int percent) {
         m_zoomLabel->setText(tr("Zoom %1%").arg(percent));

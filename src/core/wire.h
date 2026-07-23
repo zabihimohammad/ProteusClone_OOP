@@ -8,6 +8,7 @@ class Terminal;
 
 class Wire : public QGraphicsItem {
 public:
+    QPainterPath shape() const override;
     Wire(Terminal *startTerm, QPointF startPos);
 
     void setEndPoint(QPointF endPos);

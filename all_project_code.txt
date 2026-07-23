@@ -1,0 +1,4864 @@
+
+============================================================
+FILE: src\main.cpp
+============================================================
+
+#include <QApplication>
+#include "gui/mainwindow.h"
+#include "ui/startdialog.h"
+
+int main(int argc, char *argv[]) {
+    QApplication a(argc, argv);
+    QApplication::setApplicationName("Circuit Studio");
+    QApplication::setOrganizationName("OOP Core");
+    QApplication::setFont(QFont("Segoe UI", 10));
+
+    StartDialog start;
+    if (start.exec() != QDialog::Accepted) return 0;
+
+    MainWindow w(start.canvasSize(), start.projectFilePath());
+    if (!start.projectName().isEmpty())
+        w.setWindowTitle(start.projectName() + " — Circuit Studio");
+    w.show();
+    return a.exec();
+}
+
+
+============================================================
+FILE: src\canvas\circuit_scene.cpp
+============================================================
+
+#include "circuit_scene.h"
+#include <QGraphicsSceneMouseEvent>
+#include <QGraphicsSceneDragDropEvent>
+#include <QMimeData> // اضافه شده برای پشتیبانی از Drag & Drop
+#include <QPainter>
+#include <QPen>
+#include <QColor>
+#include <QKeyEvent>
+#include <QDebug>
+
+#include "../core/terminal.h"
+#include "../core/wire.h"
+#include "../core/auto_router.h"
+#include "../core/element.h"
+#include "../components/mcu.h"
+#include "../components/basic_components.h"
+#include "../components/logic_gates.h"
+#include "../components/peripherals.h"
+#include "../io/file_manager.h"
+
+CircuitScene::CircuitScene(QObject *parent)
+        : QGraphicsScene(parent), isWiring(false), tempWire(nullptr), startTerminal(nullptr) {
+
+    setCanvasSize(m_canvasRect.size());
+    voltageProbe = new ProbeItem();
+    addItem(voltageProbe);
+    isProbeEnabled = false;
+}
+
+void CircuitScene::setGridSize(int size) {
+    m_gridSize = qBound(8, size, 64);
+    invalidate(sceneRect(), QGraphicsScene::BackgroundLayer);
+}
+
+void CircuitScene::setCanvasSize(const QSizeF &size) {
+    if (size.width() < 1 || size.height() < 1) return;
+    m_canvasRect = QRectF(-size.width() / 2.0, -size.height() / 2.0,
+                         size.width(), size.height());
+    const qreal margin = qMax(size.width(), size.height()) * 2.0;
+    setSceneRect(m_canvasRect.adjusted(-margin, -margin, margin, margin));
+    invalidate(sceneRect(), QGraphicsScene::BackgroundLayer);
+}
+
+void CircuitScene::drawBackground(QPainter *painter, const QRectF &rect) {
+    // پر کردن پس‌زمینه با رنگ ملایم
+    painter->fillRect(rect, QColor("#E9EDF2"));
+    painter->fillRect(m_canvasRect, QColor("#FBFCFD"));
+
+    // تنظیم قلم برای نقاط گرید
+    QPen pen;
+    pen.setColor(QColor(199, 207, 218, 180));
+    pen.setWidth(1);
+    painter->setPen(pen);
+
+    // بهینه‌سازی رسم ناحیه قابل دید
+    int left = int(rect.left()) - (int(rect.left()) % m_gridSize);
+    int top = int(rect.top()) - (int(rect.top()) % m_gridSize);
+
+    // رسم نقاط روی بوم
+    for (int x = left; x < rect.right(); x += m_gridSize) {
+        for (int y = top; y < rect.bottom(); y += m_gridSize) {
+            painter->drawPoint(x, y);
+        }
+    }
+    painter->setPen(QPen(QColor("#1473E6"), 2));
+    painter->setBrush(Qt::NoBrush);
+    painter->drawRect(m_canvasRect);
+}
+
+// ==========================================
+// رویدادهای موس (سیم‌کشی و جابجایی)
+// ==========================================
+void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
+    if (event->button() == Qt::LeftButton) {
+        QGraphicsItem *item = itemAt(event->scenePos(), QTransform());
+        Terminal *clickedTerminal = dynamic_cast<Terminal*>(item);
+
+        if (clickedTerminal) {
+            if (!isWiring) {
+                // شروع سیم‌کشی
+                isWiring = true;
+                startTerminal = clickedTerminal;
+
+                QPointF startPos = clickedTerminal->sceneBoundingRect().center();
+                tempWire = new Wire(startTerminal, startPos);
+                addItem(tempWire);
+                return;
+            } else {
+                // --- پایان سیم‌کشی (وصل شدن به پایه دوم) ---
+                if (clickedTerminal != startTerminal) {
+                    QPointF startP = startTerminal->sceneBoundingRect().center();
+                    QPointF endP = clickedTerminal->sceneBoundingRect().center();
+
+                    // فراخوانی مسیریاب خودکار هوشمند
+                    QVector<QPointF> smartPath = AutoRouter::findPath(this, startP, endP, startTerminal, clickedTerminal, tempWire);
+
+                    tempWire->setFullRoute(smartPath);
+                    tempWire->confirmConnection(clickedTerminal);
+
+                    isWiring = false;
+                    tempWire = nullptr;
+                    startTerminal = nullptr;
+
+                    // ثبت در تاریخچه برای کارکردن Undo بعد از سیم‌کشی
+                    FileManager::recordState(this);
+                    return;
+                }
+            }
+        } else if (isWiring) {
+            // لغو سیم‌کشی با کلیک روی فضای خالی
+            if (tempWire) {
+                removeItem(tempWire);
+                delete tempWire;
+            }
+            isWiring = false;
+            tempWire = nullptr;
+            startTerminal = nullptr;
+            event->accept();
+            return;
+        }
+    }
+    QGraphicsScene::mousePressEvent(event);
+}
+
+void CircuitScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
+    if (isWiring && tempWire) {
+        tempWire->setEndPoint(event->scenePos());
+    }
+    QGraphicsScene::mouseMoveEvent(event);
+}
+
+void CircuitScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
+    QGraphicsScene::mouseReleaseEvent(event);
+
+    // اگر قطعه‌ای در حال جابجایی (Drag) بوده و حالا رها شده، یک عکس برای Undo بگیریم
+    if (!isWiring && selectedItems().count() > 0) {
+        FileManager::recordState(this);
+    }
+}
+
+// ==========================================
+// رویداد فشردن کلیدهای کیبورد (میانبرها و حذف)
+// ==========================================
+void CircuitScene::keyPressEvent(QKeyEvent *event) {
+    // --- 1. سیستم پاک کردن قطعات (Delete) ---
+    if (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace) {
+        bool somethingDeleted = false;
+        for (QGraphicsItem *item : selectedItems()) {
+            removeItem(item);
+            delete item;
+            somethingDeleted = true;
+        }
+        // اگر چیزی پاک شد، وضعیت جدید را برای Undo ثبت کن
+        if (somethingDeleted) {
+            FileManager::recordState(this);
+            qDebug() << "[CircuitScene] Items deleted and state recorded.";
+        }
+        return;
+    }
+
+    // --- 2. میانبرهای ترکیبی با Control ---
+    if (event->modifiers() & Qt::ControlModifier) {
+        // 💾 سیستم Save
+        if (event->key() == Qt::Key_S) {
+            FileManager::saveCircuit("my_circuit_test.json", this);
+            qDebug() << "[TEST] Circuit Saved to my_circuit_test.json";
+            return;
+        }
+        // 📂 سیستم Load
+        if (event->key() == Qt::Key_O) {
+            FileManager::loadCircuit("my_circuit_test.json", this);
+            qDebug() << "[TEST] Circuit Loaded!";
+            return;
+        }
+        // ↩️ سیستم Undo / Redo
+        if (event->key() == Qt::Key_Z) {
+            if (event->modifiers() & Qt::ShiftModifier) {
+                FileManager::redo(this);
+            } else {
+                FileManager::undo(this);
+            }
+            return;
+        } else if (event->key() == Qt::Key_Y) {
+            FileManager::redo(this);
+            return;
+        }
+    }
+    QGraphicsScene::keyPressEvent(event);
+}
+
+// ==========================================
+// سیستم Drag & Drop (کشیدن و رها کردن قطعات)
+// ==========================================
+QGraphicsItem *CircuitScene::addComponent(const QString &componentType, const QPointF &position) {
+    QGraphicsItem *item = nullptr;
+    if (componentType == "MCU") item = new MCUChip();
+    else if (componentType == "RESISTOR") item = new Resistor();
+    else if (componentType == "CAPACITOR") item = new Capacitor();
+    else if (componentType == "INDUCTOR") item = new Inductor();
+    else if (componentType == "DC_SOURCE") item = new DCVoltageSource();
+    else if (componentType == "GROUND") item = new Ground();
+    else if (componentType == "AND_GATE") item = new AndGate();
+    else if (componentType == "OR_GATE") item = new OrGate();
+    else if (componentType == "NOT_GATE") item = new NotGate();
+    else if (componentType == "XOR_GATE") item = new XorGate();
+    else if (componentType == "NAND_GATE") item = new NandGate();
+    else if (componentType == "D_FLIP_FLOP") item = new DFlipFlop();
+    else if (componentType == "LED") item = new LED();
+    else if (componentType == "SWITCH") item = new Switch();
+    else if (componentType == "PUSH_BUTTON") item = new PushButton();
+    else if (componentType == "SEVEN_SEGMENT") item = new SevenSegment();
+    else if (componentType == "PULSE_GENERATOR") item = new PulseGenerator();
+    else if (componentType == "MEMORY") item = new MemoryChip();
+    else if (componentType == "LCD") item = new LCD16x2();
+    else if (componentType == "KEYPAD") item = new Keypad();
+    else if (componentType == "ADC") item = new ADC_Chip();
+    else if (componentType == "DAC") item = new DAC_Chip();
+
+    if (!item) return nullptr;
+    QPointF finalPosition = position;
+    if (m_snapEnabled) {
+        finalPosition.setX(qRound(finalPosition.x() / m_gridSize) * m_gridSize);
+        finalPosition.setY(qRound(finalPosition.y() / m_gridSize) * m_gridSize);
+    }
+    item->setPos(finalPosition);
+    addItem(item);
+    FileManager::recordState(this);
+    return item;
+}
+
+void CircuitScene::dragEnterEvent(QGraphicsSceneDragDropEvent *event) {
+    if (event->mimeData()->hasText()) {
+        event->acceptProposedAction();
+    } else {
+        event->ignore();
+    }
+}
+
+void CircuitScene::dragMoveEvent(QGraphicsSceneDragDropEvent *event) {
+    if (event->mimeData()->hasText()) {
+        event->acceptProposedAction();
+    } else {
+        event->ignore();
+    }
+}
+
+void CircuitScene::dropEvent(QGraphicsSceneDragDropEvent *event) {
+    if (event->mimeData()->hasText()) {
+        addComponent(event->mimeData()->text(), event->scenePos());
+        event->acceptProposedAction();
+        return;
+    }
+    if (event->mimeData()->hasText()) {
+        QString componentType = event->mimeData()->text();
+        QPointF dropPosition = event->scenePos();
+
+        // چسباندن خودکار قطعه به خطوط شبکه (Snap to Grid) برای تمیزی مدار
+        dropPosition.setX(qRound(dropPosition.x() / m_gridSize) * m_gridSize);
+        dropPosition.setY(qRound(dropPosition.y() / m_gridSize) * m_gridSize);
+
+        QGraphicsItem *newItem = nullptr;
+
+        // کارخانه تولید قطعات
+        if (componentType == "MCU") newItem = new MCUChip();
+        else if (componentType == "RESISTOR") newItem = new Resistor();
+        else if (componentType == "CAPACITOR") newItem = new Capacitor();
+        else if (componentType == "AND_GATE") newItem = new AndGate();
+        else if (componentType == "OR_GATE") newItem = new OrGate();
+        else if (componentType == "LED") newItem = new LED();
+
+        // اگر قطعه با موفقیت ساخته شد
+        if (newItem != nullptr) {
+            newItem->setPos(dropPosition);
+            addItem(newItem);
+
+            // ثبت وضعیت در تاریخچه
+            FileManager::recordState(this);
+        }
+
+        event->acceptProposedAction();
+    } else {
+        event->ignore();
+    }
+}
+
+
+============================================================
+FILE: src\canvas\circuit_scene.h
+============================================================
+
+#pragma once
+
+#include <QGraphicsScene>
+#include <QGraphicsSceneDragDropEvent>
+#include <QGraphicsSceneMouseEvent>
+#include <QKeyEvent>
+#include <QMimeData>
+
+#include "../core/probe_item.h"
+#include "../core/terminal.h"
+
+class Wire;
+
+class CircuitScene : public QGraphicsScene
+{
+    Q_OBJECT
+
+public:
+    explicit CircuitScene(QObject *parent = nullptr);
+
+    ProbeItem *voltageProbe = nullptr;
+    bool isProbeEnabled = false;
+
+    int gridSpacing() const { return m_gridSize; }
+    bool snapEnabled() const { return m_snapEnabled; }
+    QRectF canvasRect() const { return m_canvasRect; }
+
+public slots:
+    void setGridSize(int size);
+    void setSnapEnabled(bool enabled) { m_snapEnabled = enabled; }
+    void setCanvasSize(const QSizeF &size);
+    QGraphicsItem *addComponent(const QString &componentType, const QPointF &position);
+
+protected:
+    void drawBackground(QPainter *painter, const QRectF &rect) override;
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
+    void dragEnterEvent(QGraphicsSceneDragDropEvent *event) override;
+    void dragMoveEvent(QGraphicsSceneDragDropEvent *event) override;
+    void dropEvent(QGraphicsSceneDragDropEvent *event) override;
+
+private:
+    int m_gridSize = 20;
+    bool m_snapEnabled = true;
+    QRectF m_canvasRect{-800, -500, 1600, 1000};
+    bool isWiring = false;
+    Wire *tempWire = nullptr;
+    Terminal *startTerminal = nullptr;
+};
+
+
+============================================================
+FILE: src\canvas\circuit_view.cpp
+============================================================
+
+#include "circuit_view.h"
+
+#include "circuit_scene.h"
+
+#include <QMouseEvent>
+#include <QPainter>
+#include <QResizeEvent>
+#include <QScrollBar>
+#include <QWheelEvent>
+
+namespace {
+constexpr qreal kMinimumZoom = 0.10;
+constexpr qreal kMaximumZoom = 4.0;
+}
+
+CircuitView::CircuitView(QWidget *parent) : QGraphicsView(parent)
+{
+    setRenderHint(QPainter::Antialiasing);
+    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+    setResizeAnchor(QGraphicsView::AnchorViewCenter);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setAcceptDrops(true);
+    setMouseTracking(true);
+    setFrameShape(QFrame::NoFrame);
+    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+}
+
+void CircuitView::setZoom(qreal zoom)
+{
+    zoom = qBound(kMinimumZoom, zoom, kMaximumZoom);
+    const qreal current = transform().m11();
+    if (qFuzzyIsNull(current)) return;
+    scale(zoom / current, zoom / current);
+    emit zoomChanged(qRound(zoom * 100));
+    viewport()->update();
+}
+
+void CircuitView::zoomIn() { setZoom(transform().m11() * 1.15); }
+void CircuitView::zoomOut() { setZoom(transform().m11() / 1.15); }
+void CircuitView::resetZoom() { setZoom(1.0); }
+
+void CircuitView::fitCanvas()
+{
+    auto *circuitScene = qobject_cast<CircuitScene *>(scene());
+    if (!circuitScene) return;
+    fitInView(circuitScene->canvasRect().adjusted(-50, -50, 50, 50), Qt::KeepAspectRatio);
+    const qreal fittedZoom = qBound(kMinimumZoom, transform().m11(), kMaximumZoom);
+    if (!qFuzzyCompare(fittedZoom, transform().m11())) setZoom(fittedZoom);
+    centerOn(circuitScene->canvasRect().center());
+    m_initialFitDone = true;
+    emit zoomChanged(qRound(transform().m11() * 100));
+}
+
+void CircuitView::wheelEvent(QWheelEvent *event)
+{
+    setZoom(transform().m11() * (event->angleDelta().y() > 0 ? 1.15 : 1.0 / 1.15));
+    event->accept();
+}
+
+void CircuitView::mousePressEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton && navigatorToggleRect().contains(event->pos())) {
+        m_navigatorCollapsed = !m_navigatorCollapsed;
+        viewport()->update();
+        event->accept();
+        return;
+    }
+    if (!m_navigatorCollapsed && event->button() == Qt::LeftButton &&
+        navigatorCanvasRect().contains(event->pos())) {
+        m_isNavigating = true;
+        navigateFromNavigator(event->pos());
+        setCursor(Qt::PointingHandCursor);
+        event->accept();
+        return;
+    }
+    if (event->button() == Qt::MiddleButton ||
+        (event->button() == Qt::LeftButton && (event->modifiers() & Qt::ShiftModifier))) {
+        m_isPanning = true;
+        m_lastMousePos = event->pos();
+        setCursor(Qt::ClosedHandCursor);
+        event->accept();
+        return;
+    }
+    QGraphicsView::mousePressEvent(event);
+}
+
+void CircuitView::mouseMoveEvent(QMouseEvent *event)
+{
+    if (m_isNavigating) {
+        navigateFromNavigator(event->pos());
+    } else if (m_isPanning) {
+        const QPoint delta = event->pos() - m_lastMousePos;
+        horizontalScrollBar()->setValue(horizontalScrollBar()->value() - delta.x());
+        verticalScrollBar()->setValue(verticalScrollBar()->value() - delta.y());
+        m_lastMousePos = event->pos();
+        viewport()->update();
+    } else {
+        QGraphicsView::mouseMoveEvent(event);
+    }
+    emit cursorPositionChanged(mapToScene(event->pos()));
+}
+
+void CircuitView::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (m_isNavigating && event->button() == Qt::LeftButton) {
+        m_isNavigating = false;
+        setCursor(Qt::ArrowCursor);
+        event->accept();
+        return;
+    }
+    if (m_isPanning && (event->button() == Qt::MiddleButton || event->button() == Qt::LeftButton)) {
+        m_isPanning = false;
+        setCursor(Qt::ArrowCursor);
+        event->accept();
+        return;
+    }
+    QGraphicsView::mouseReleaseEvent(event);
+}
+
+QRectF CircuitView::navigatorRect() const
+{
+    if (m_navigatorCollapsed)
+        return {viewport()->width() - 58.0, viewport()->height() - 58.0, 42.0, 42.0};
+    return {viewport()->width() - 198.0, viewport()->height() - 142.0, 182.0, 126.0};
+}
+
+QRectF CircuitView::navigatorToggleRect() const
+{
+    if (m_navigatorCollapsed) return navigatorRect();
+    const QRectF nav = navigatorRect();
+    return {nav.right() - 31.0, nav.top() + 6.0, 23.0, 23.0};
+}
+
+QRectF CircuitView::navigatorCanvasRect() const
+{
+    auto *circuitScene = qobject_cast<CircuitScene *>(scene());
+    if (!circuitScene) return {};
+    const QRectF area = navigatorRect().adjusted(11, 31, -11, -11);
+    const QRectF canvas = circuitScene->canvasRect();
+    const qreal mapScale = qMin(area.width() / canvas.width(), area.height() / canvas.height());
+    const QSizeF size = canvas.size() * mapScale;
+    return {area.center().x() - size.width() / 2.0,
+            area.center().y() - size.height() / 2.0,
+            size.width(), size.height()};
+}
+
+void CircuitView::navigateFromNavigator(const QPointF &position)
+{
+    auto *circuitScene = qobject_cast<CircuitScene *>(scene());
+    if (!circuitScene) return;
+    const QRectF map = navigatorCanvasRect();
+    const QRectF canvas = circuitScene->canvasRect();
+    const QPointF point(qBound(map.left(), position.x(), map.right()),
+                        qBound(map.top(), position.y(), map.bottom()));
+    const qreal x = (point.x() - map.left()) / map.width();
+    const qreal y = (point.y() - map.top()) / map.height();
+    centerOn(canvas.left() + x * canvas.width(), canvas.top() + y * canvas.height());
+    viewport()->update();
+}
+
+void CircuitView::paintEvent(QPaintEvent *event)
+{
+    QGraphicsView::paintEvent(event);
+    QPainter painter(viewport());
+    painter.setRenderHint(QPainter::Antialiasing);
+    const QRectF nav = navigatorRect();
+    painter.setPen(QPen(QColor("#D7DEE7"), 1));
+    painter.setBrush(QColor(255, 255, 255, 242));
+    painter.drawRoundedRect(nav, 12, 12);
+    if (m_navigatorCollapsed) {
+        painter.setPen(QColor("#1473E6"));
+        QFont font = painter.font();
+        font.setPointSize(17);
+        font.setBold(true);
+        painter.setFont(font);
+        painter.drawText(nav, Qt::AlignCenter, QString::fromUtf8("⌖"));
+        return;
+    }
+
+    QFont titleFont = painter.font();
+    titleFont.setBold(true);
+    painter.setFont(titleFont);
+    painter.setPen(QColor("#354152"));
+    painter.drawText(nav.adjusted(11, 7, -11, -nav.height() + 28),
+                     Qt::AlignLeft | Qt::AlignVCenter, tr("Navigator"));
+    painter.setPen(QColor("#667180"));
+    painter.setBrush(QColor("#F0F3F7"));
+    painter.drawRoundedRect(navigatorToggleRect(), 6, 6);
+    painter.drawText(navigatorToggleRect(), Qt::AlignCenter, QString::fromUtf8("−"));
+
+    auto *circuitScene = qobject_cast<CircuitScene *>(scene());
+    if (!circuitScene) return;
+    const QRectF map = navigatorCanvasRect();
+    painter.setPen(QPen(QColor("#9AA6B5"), 1));
+    painter.setBrush(QColor("#F5F7FA"));
+    painter.drawRect(map);
+
+    const QRectF canvas = circuitScene->canvasRect();
+    const QRectF visible = mapToScene(viewport()->rect()).boundingRect().intersected(canvas);
+    if (!visible.isEmpty()) {
+        const qreal mapScale = map.width() / canvas.width();
+        QRectF viewportRect(map.left() + (visible.left() - canvas.left()) * mapScale,
+                            map.top() + (visible.top() - canvas.top()) * mapScale,
+                            visible.width() * mapScale, visible.height() * mapScale);
+        painter.setPen(QPen(QColor("#1473E6"), 1.5));
+        painter.setBrush(QColor(20, 115, 230, 45));
+        painter.drawRect(viewportRect.intersected(map));
+    }
+}
+
+void CircuitView::resizeEvent(QResizeEvent *event)
+{
+    QGraphicsView::resizeEvent(event);
+    if (!m_initialFitDone) fitCanvas();
+}
+
+
+============================================================
+FILE: src\canvas\circuit_view.h
+============================================================
+
+#pragma once
+
+#include <QGraphicsView>
+
+class CircuitView final : public QGraphicsView
+{
+    Q_OBJECT
+
+public:
+    explicit CircuitView(QWidget *parent = nullptr);
+
+public slots:
+    void zoomIn();
+    void zoomOut();
+    void resetZoom();
+    void fitCanvas();
+
+signals:
+    void zoomChanged(int percent);
+    void cursorPositionChanged(QPointF scenePosition);
+
+protected:
+    void wheelEvent(QWheelEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void paintEvent(QPaintEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
+
+private:
+    void setZoom(qreal zoom);
+    QRectF navigatorRect() const;
+    QRectF navigatorCanvasRect() const;
+    QRectF navigatorToggleRect() const;
+    void navigateFromNavigator(const QPointF &position);
+
+    bool m_isPanning = false;
+    bool m_isNavigating = false;
+    bool m_navigatorCollapsed = false;
+    bool m_initialFitDone = false;
+    QPoint m_lastMousePos;
+};
+
+
+============================================================
+FILE: src\components\basic_components.cpp
+============================================================
+
+#include "basic_components.h"
+#include <QPainter>
+#include <QPainterPath>
+#include <QFont>
+#include "../core/terminal.h"
+
+// ==========================================
+// ۱. پیاده‌سازی کلاس مقاومت (Resistor)
+// ==========================================
+Resistor::Resistor() {
+    (new Terminal(this))->setPos(-30, 0);
+    (new Terminal(this))->setPos(30, 0);
+}
+
+QRectF Resistor::boundingRect() const { return QRectF(-35, -25, 70, 50); }
+
+void Resistor::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawLine(-30, 0, -20, 0);
+    painter->drawLine(-20, 0, -15, -10);
+    painter->drawLine(-15, -10, -5, 10);
+    painter->drawLine(-5, 10, 5, -10);
+    painter->drawLine(5, -10, 15, 10);
+    painter->drawLine(15, 10, 20, 0);
+    painter->drawLine(20, 0, 30, 0);
+
+    painter->setFont(QFont("Consolas", 8, QFont::Bold));
+    painter->setPen(Qt::darkBlue);
+    painter->drawText(QRectF(-35, -25, 70, 15), Qt::AlignCenter, resistance);
+}
+
+void Resistor::process() {}
+
+QMap<QString, QString> Resistor::getProperties() const {
+    QMap<QString, QString> props;
+    props["Resistance"] = resistance;
+    return props;
+}
+
+void Resistor::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Resistance")) resistance = props["Resistance"];
+}
+
+
+// ==========================================
+// ۲. پیاده‌سازی کلاس خازن (Capacitor)
+// ==========================================
+Capacitor::Capacitor() {
+    (new Terminal(this))->setPos(-30, 0);
+    (new Terminal(this))->setPos(30, 0);
+}
+
+QRectF Capacitor::boundingRect() const { return QRectF(-35, -30, 70, 60); }
+
+void Capacitor::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawLine(-30, 0, -5, 0);
+    painter->drawLine(5, 0, 30, 0);
+    painter->drawLine(-5, -15, -5, 15);
+    painter->drawLine(5, -15, 5, 15);
+
+    painter->setFont(QFont("Consolas", 8, QFont::Bold));
+    painter->setPen(Qt::darkBlue);
+    painter->drawText(QRectF(-35, -30, 70, 15), Qt::AlignCenter, capacitance);
+}
+
+void Capacitor::process() {}
+
+QMap<QString, QString> Capacitor::getProperties() const {
+    QMap<QString, QString> props;
+    props["Capacitance"] = capacitance;
+    return props;
+}
+
+void Capacitor::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Capacitance")) capacitance = props["Capacitance"];
+}
+
+
+// ==========================================
+// ۳. پیاده‌سازی سلف (Inductor)
+// ==========================================
+Inductor::Inductor() {
+    (new Terminal(this))->setPos(-30, 0);
+    (new Terminal(this))->setPos(30, 0);
+}
+
+QRectF Inductor::boundingRect() const { return QRectF(-35, -25, 70, 50); }
+
+void Inductor::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawLine(-30, 0, -20, 0);
+    painter->drawArc(-20, -10, 13, 20, 0, 180 * 16);
+    painter->drawArc(-7, -10, 13, 20, 0, 180 * 16);
+    painter->drawArc(6, -10, 13, 20, 0, 180 * 16);
+    painter->drawLine(19, 0, 30, 0);
+
+    painter->setFont(QFont("Consolas", 8, QFont::Bold));
+    painter->setPen(Qt::darkBlue);
+    painter->drawText(QRectF(-35, -25, 70, 15), Qt::AlignCenter, inductance);
+}
+
+void Inductor::process() {}
+
+QMap<QString, QString> Inductor::getProperties() const {
+    QMap<QString, QString> props;
+    props["Inductance"] = inductance;
+    return props;
+}
+
+void Inductor::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Inductance")) inductance = props["Inductance"];
+}
+
+
+// ==========================================
+// ۴. پیاده‌سازی پالس کلاک (Pulse Generator)
+// ==========================================
+PulseGenerator::PulseGenerator() {
+    (new Terminal(this))->setPos(30, 0);
+}
+
+QRectF PulseGenerator::boundingRect() const { return QRectF(-25, -35, 55, 60); }
+
+void PulseGenerator::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawEllipse(-20, -20, 40, 40);
+    painter->drawLine(-10, 10, -10, -10);
+    painter->drawLine(-10, -10, 0, -10);
+    painter->drawLine(0, -10, 0, 10);
+    painter->drawLine(0, 10, 10, 10);
+    painter->drawLine(20, 0, 30, 0);
+
+    // نمایش فرکانس روی قطعه
+    painter->setFont(QFont("Consolas", 7, QFont::Bold));
+    painter->setPen(Qt::darkBlue);
+    painter->drawText(QRectF(-25, -35, 50, 15), Qt::AlignCenter, frequency);
+}
+
+// 🛠️ بخش اصلاح شده: موتور شبیه‌ساز هر 0.1 ثانیه این تابع را صدا می‌زند
+void PulseGenerator::process() {
+    tickCount++;
+    if (tickCount >= 10) { // هر 1 ثانیه (10 تا 100 میلی‌ثانیه)
+        tickCount = 0;
+
+        // تغییر وضعیت (Toggle)
+        if (currentMockVoltage == "0.0V") {
+            currentMockVoltage = "5.0V";
+        } else {
+            currentMockVoltage = "0.0V";
+        }
+    }
+
+    // تزریق ولتاژ به ترمینال خروجی
+    for (QGraphicsItem *child : childItems()) {
+        Terminal *term = dynamic_cast<Terminal*>(child);
+        if (term) {
+            term->voltageLevel = currentMockVoltage;
+        }
+    }
+}
+
+QMap<QString, QString> PulseGenerator::getProperties() const {
+    QMap<QString, QString> props;
+    props["Frequency"] = frequency;
+    return props;
+}
+
+void PulseGenerator::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Frequency")) frequency = props["Frequency"];
+}
+
+
+// ==========================================
+// ۵. کلید قطع و وصل (Switch)
+// ==========================================
+Switch::Switch() {
+    (new Terminal(this))->setPos(-30, 0);
+    (new Terminal(this))->setPos(30, 0);
+}
+
+QRectF Switch::boundingRect() const { return QRectF(-35, -30, 70, 60); }
+
+void Switch::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawLine(-30, 0, -15, 0);
+    painter->drawEllipse(-15, -2, 4, 4);
+
+    if (initialState == "Closed") {
+        painter->drawLine(-13, -2, 11, -2);
+    } else {
+        painter->drawLine(-13, -2, 10, -15);
+    }
+
+    painter->drawEllipse(11, -2, 4, 4);
+    painter->drawLine(15, 0, 30, 0);
+
+    painter->setFont(QFont("Consolas", 8, QFont::Bold));
+    painter->setPen(Qt::darkBlue);
+    painter->drawText(QRectF(-35, -30, 70, 15), Qt::AlignCenter, initialState);
+}
+
+void Switch::process() {}
+
+QMap<QString, QString> Switch::getProperties() const {
+    QMap<QString, QString> props;
+    props["Initial State"] = initialState;
+    return props;
+}
+
+void Switch::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Initial State")) initialState = props["Initial State"];
+}
+
+
+// ==========================================
+// ۶. دکمه فشاری (Push Button)
+// ==========================================
+PushButton::PushButton() {
+    (new Terminal(this))->setPos(-30, 0);
+    (new Terminal(this))->setPos(30, 0);
+}
+
+QRectF PushButton::boundingRect() const { return QRectF(-35, -35, 70, 60); }
+
+void PushButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawLine(-30, 0, -10, 0);
+    painter->drawEllipse(-10, -2, 4, 4);
+    painter->drawLine(-15, -15, 15, -15);
+    painter->drawLine(0, -15, 0, -25);
+    painter->drawEllipse(6, -2, 4, 4);
+    painter->drawLine(10, 0, 30, 0);
+
+    painter->setFont(QFont("Consolas", 7, QFont::Bold));
+    painter->setPen(Qt::darkBlue);
+    painter->drawText(QRectF(-35, -35, 70, 15), Qt::AlignCenter, type);
+}
+
+void PushButton::process() {}
+
+QMap<QString, QString> PushButton::getProperties() const {
+    QMap<QString, QString> props;
+    props["Type"] = type;
+    return props;
+}
+
+void PushButton::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Type")) type = props["Type"];
+}
+
+
+// ==========================================
+// ۷. دیود نورانی (LED)
+// ==========================================
+LED::LED() {
+    (new Terminal(this))->setPos(-30, 0);
+    (new Terminal(this))->setPos(30, 0);
+}
+
+QRectF LED::boundingRect() const { return QRectF(-35, -35, 70, 65); }
+
+void LED::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawLine(-30, 0, -10, 0);
+    painter->drawLine(10, 0, 30, 0);
+
+    QPolygonF triangle;
+    triangle << QPointF(-10, -10) << QPointF(-10, 10) << QPointF(10, 0);
+    painter->drawPolygon(triangle);
+    painter->drawLine(10, -10, 10, 10);
+
+    painter->drawLine(0, -12, 10, -22);
+    painter->drawLine(10, -22, 5, -22);
+    painter->drawLine(10, -22, 10, -17);
+    painter->drawLine(8, -8, 18, -18);
+    painter->drawLine(18, -18, 13, -18);
+    painter->drawLine(18, -18, 18, -13);
+
+    painter->setFont(QFont("Consolas", 8, QFont::Bold));
+    painter->setPen(Qt::darkBlue);
+    painter->drawText(QRectF(-35, -35, 70, 15), Qt::AlignCenter, color);
+}
+
+void LED::process() {}
+
+QMap<QString, QString> LED::getProperties() const {
+    QMap<QString, QString> props;
+    props["Color"] = color;
+    return props;
+}
+
+void LED::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Color")) color = props["Color"];
+}
+
+
+// ==========================================
+// ۸. سون‌سگمنت (7-Segment)
+// ==========================================
+SevenSegment::SevenSegment() {}
+
+QRectF SevenSegment::boundingRect() const { return QRectF(-25, -45, 50, 90); }
+
+void SevenSegment::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawRect(-20, -30, 40, 60);
+
+    QPen segPen(QColor(220, 220, 220), 4);
+    painter->setPen(segPen);
+    painter->drawLine(-10, -20, 10, -20);
+    painter->drawLine(15, -15, 15, -5);
+    painter->drawLine(15, 5, 15, 15);
+    painter->drawLine(-10, 20, 10, 20);
+    painter->drawLine(-15, 5, -15, 15);
+    painter->drawLine(-15, -15, -15, -5);
+    painter->drawLine(-10, 0, 10, 0);
+    painter->drawEllipse(15, 20, 3, 3);
+
+    painter->setFont(QFont("Consolas", 7, QFont::Bold));
+    painter->setPen(Qt::darkBlue);
+    painter->drawText(QRectF(-25, -45, 50, 15), Qt::AlignCenter, color);
+}
+
+void SevenSegment::process() {}
+
+QMap<QString, QString> SevenSegment::getProperties() const {
+    QMap<QString, QString> props;
+    props["Color"] = color;
+    return props;
+}
+
+void SevenSegment::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Color")) color = props["Color"];
+}
+
+
+// ============================================================================
+// ۹. پیاده‌سازی Ground (زمین)
+// ============================================================================
+Ground::Ground() {
+    outGnd = new Terminal(this);
+    outGnd->setPos(0, -20);
+}
+QRectF Ground::boundingRect() const { return QRectF(-20, -25, 40, 45); }
+void Ground::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawLine(0, -20, 0, 0);
+    painter->drawLine(-15, 0, 15, 0);
+    painter->drawLine(-10, 5, 10, 5);
+    painter->drawLine(-5, 10, 5, 10);
+}
+void Ground::process() {
+    outGnd->setVoltage(0.0);
+}
+
+
+// ============================================================================
+// ۱۰. پیاده‌سازی DC Voltage Source (هوشمند)
+// ============================================================================
+DCVoltageSource::DCVoltageSource() {
+    outPos = new Terminal(this);
+    outPos->setPos(0, -20);
+}
+QRectF DCVoltageSource::boundingRect() const { return QRectF(-20, -25, 40, 50); }
+void DCVoltageSource::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawLine(0, -20, 0, -10);
+    painter->drawEllipse(-10, -10, 20, 20);
+    painter->drawLine(-5, 0, 5, 0);
+    painter->drawLine(0, -5, 0, 5);
+
+    painter->setFont(QFont("Consolas", 8));
+    painter->drawText(QRectF(-20, 15, 40, 15), Qt::AlignCenter, voltage);
+}
+void DCVoltageSource::process() {
+    double v = voltage.replace("V", "").toDouble();
+    outPos->setVoltage(v);
+}
+QMap<QString, QString> DCVoltageSource::getProperties() const {
+    QMap<QString, QString> props;
+    props["Voltage"] = voltage;
+    return props;
+}
+void DCVoltageSource::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Voltage")) voltage = props["Voltage"];
+}
+
+
+// ============================================================================
+// ۱۱. پیاده‌سازی Clock Generator
+// ============================================================================
+ClockGenerator::ClockGenerator() {
+    outClk = new Terminal(this);
+    outClk->setPos(25, 0);
+}
+QRectF ClockGenerator::boundingRect() const { return QRectF(-25, -25, 55, 65); }
+void ClockGenerator::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawRect(-20, -20, 40, 40);
+    painter->drawLine(20, 0, 25, 0);
+
+    painter->drawLine(-10, 10, -5, 10);
+    painter->drawLine(-5, 10, -5, -10);
+    painter->drawLine(-5, -10, 5, -10);
+    painter->drawLine(5, -10, 5, 10);
+    painter->drawLine(5, 10, 10, 10);
+
+    painter->setFont(QFont("Consolas", 7));
+    painter->drawText(QRectF(-25, 25, 50, 15), Qt::AlignCenter, frequency);
+}
+void ClockGenerator::process() {
+    double v = currentState ? amplitude.replace("V", "").toDouble() : 0.0;
+    outClk->setVoltage(v);
+}
+void ClockGenerator::toggleClock() {
+    currentState = !currentState;
+    update();
+}
+QMap<QString, QString> ClockGenerator::getProperties() const {
+    QMap<QString, QString> props;
+    props["Frequency"] = frequency;
+    props["Amplitude"] = amplitude;
+    return props;
+}
+void ClockGenerator::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Frequency")) frequency = props["Frequency"];
+    if (props.contains("Amplitude")) amplitude = props["Amplitude"];
+}
+
+============================================================
+FILE: src\components\basic_components.h
+============================================================
+
+#pragma once
+#include "../core/element.h"
+#include <QString>
+
+// پیش‌تعریف کلاس ترمینال
+class Terminal;
+
+// ==========================================
+// ۱. مقاومت (Resistor)
+// ==========================================
+class Resistor : public Element {
+private:
+    QString resistance = "10k";
+public:
+    Resistor();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Resistor"; }
+
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+
+// ==========================================
+// ۲. خازن (Capacitor)
+// ==========================================
+class Capacitor : public Element {
+private:
+    QString capacitance = "10uF";
+public:
+    Capacitor();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Capacitor"; }
+
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+
+// ==========================================
+// ۳. سلف (Inductor)
+// ==========================================
+class Inductor : public Element {
+private:
+    QString inductance = "1mH";
+public:
+    Inductor();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Inductor"; }
+
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+
+// ==========================================
+// ۴. پالس کلاک (Pulse Generator)
+// ==========================================
+class PulseGenerator : public Element {
+private:
+    int tickCount = 0; // شمارنده زمان
+    QString currentMockVoltage = "0.0V"; // ولتاژ فعلی
+    QString amplitude = "5V";
+    QString frequency = "1kHz";
+public:
+    PulseGenerator();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Pulse Generator"; }
+
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+
+// ==========================================
+// ۵. کلید قطع و وصل (Switch)
+// ==========================================
+class Switch : public Element {
+private:
+    QString initialState = "Open";
+public:
+    Switch();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Switch"; }
+
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+
+// ==========================================
+// ۶. دکمه فشاری (Push Button)
+// ==========================================
+class PushButton : public Element {
+private:
+    QString type = "NO"; // Normally Open
+public:
+    PushButton();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Push Button"; }
+
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+
+// ==========================================
+// ۷. دیود نورانی (LED)
+// ==========================================
+class LED : public Element {
+private:
+    QString color = "Red";
+public:
+    LED();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "LED"; }
+
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+
+// ==========================================
+// ۸. سون‌سگمنت (7-Segment)
+// ==========================================
+class SevenSegment : public Element {
+private:
+    QString color = "Red";
+public:
+    SevenSegment();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "7-Segment Display"; }
+
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+
+// ==========================================
+// ۹. منبع تغذیه زمین (Ground / GND)
+// ==========================================
+class Ground : public Element {
+private:
+    Terminal *outGnd; // پایه‌ی خروجی زمین
+public:
+    Ground();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Ground (GND)"; }
+};
+
+// ==========================================
+// ۱۰. منبع ولتاژ مستقیم (DC Voltage Source)
+// ==========================================
+class DCVoltageSource : public Element {
+private:
+    QString voltage = "5V";
+    Terminal *outPos; // پایه‌ی خروجی مثبت
+public:
+    DCVoltageSource();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "DC Voltage Source"; }
+
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+
+// ==========================================
+// ۱۱. تولیدکننده کلاک (Clock Generator)
+// ==========================================
+class ClockGenerator : public Element {
+private:
+    QString frequency = "1Hz";
+    QString amplitude = "5V";
+    Terminal *outClk; // پایه‌ی خروجی کلاک
+    bool currentState = false; // وضعیت خاموش/روشن بودن کلاک
+public:
+    ClockGenerator();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    void toggleClock(); // متدی برای موتور شبیه‌ساز جهت تغییر لبه کلاک
+    QString getComponentName() const override { return "Clock Generator"; }
+
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+
+============================================================
+FILE: src\components\component_base.h
+============================================================
+
+#pragma once
+#include <QGraphicsItem>
+#include "../core/terminal.h"
+#include "../core/wire.h"
+
+// تمام قطعات شما در آینده باید از این کلاس ارث ببرند
+class ComponentBase : public QGraphicsItem {
+public:
+    ComponentBase() {
+        setFlag(QGraphicsItem::ItemSendsGeometryChanges);
+    }
+
+protected:
+    QVariant itemChange(GraphicsItemChange change, const QVariant &value) override {
+        if (change == ItemPositionHasChanged) {
+            // پیدا کردن تمام ترمینال‌های فرزند و آپدیت سیم‌های آن‌ها
+            for (QGraphicsItem *child : childItems()) {
+                Terminal *term = dynamic_cast<Terminal*>(child);
+                if (term) {
+                    for (Wire *wire : term->getConnectedWires()) {
+                        wire->updateRoute();
+                    }
+                }
+            }
+        }
+        return QGraphicsItem::itemChange(change, value);
+    }
+};
+
+============================================================
+FILE: src\components\logic_gates.cpp
+============================================================
+
+#include "logic_gates.h"
+#include <QPainter>
+#include <QPainterPath>
+#include <QFont>
+#include <QDebug>
+
+// ============================================================================
+// پیاده‌سازی گیت AND
+// ============================================================================
+AndGate::AndGate() {
+    inA = new Terminal(this); inA->setPos(-30, -10);
+    inB = new Terminal(this); inB->setPos(-30, 10);
+    outY = new Terminal(this); outY->setPos(30, 0);
+}
+
+QRectF AndGate::boundingRect() const { return QRectF(-35, -25, 70, 65); }
+
+void AndGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawLine(-30, -10, -15, -10);
+    painter->drawLine(-30, 10, -15, 10);
+    painter->drawLine(20, 0, 30, 0);
+
+    painter->setBrush(QColor(240, 240, 240));
+    QPainterPath path;
+    path.moveTo(-15, -20);
+    path.lineTo(0, -20);
+    path.arcTo(QRectF(-20, -20, 40, 40), 90, -180);
+    path.lineTo(-15, 20);
+    path.closeSubpath();
+    painter->drawPath(path);
+
+    painter->setFont(QFont("Consolas", 6));
+    painter->setPen(Qt::darkGray);
+    painter->drawText(QRectF(-30, 25, 60, 15), Qt::AlignCenter, propagationDelay);
+}
+
+void AndGate::process() {
+    if (inA->getConnectedWires().isEmpty() || inB->getConnectedWires().isEmpty()) {
+        qWarning() << "DRC Warning: Floating input detected on AND Gate!";
+        return;
+    }
+    // گیت‌های دیجیتال وضعیت فلوتینگ/نامشخص بودن را به این صورت بررسی می‌کنند
+    bool stateA = (inA->getConnectedWires().first()->boundingRect().width() > 0); // منطق پیش‌فرض شما
+    bool stateB = (inB->getConnectedWires().first()->boundingRect().width() > 0);
+
+    bool result = stateA && stateB;
+    double vMax = highVoltage.replace("V", "").toDouble();
+    // در گام بعدی با توسعه موتور شبیه‌ساز، ولتاژهای حقیقی را به ترمینال‌ها پاس می‌دهیم
+}
+
+QMap<QString, QString> AndGate::getProperties() const {
+    QMap<QString, QString> props;
+    props["Propagation Delay"] = propagationDelay;
+    props["Logic HIGH (V)"] = highVoltage;
+    return props;
+}
+
+void AndGate::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
+    if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
+}
+
+// ============================================================================
+// پیاده‌سازی گیت OR
+// ============================================================================
+OrGate::OrGate() {
+    inA = new Terminal(this); inA->setPos(-30, -10);
+    inB = new Terminal(this); inB->setPos(-30, 10);
+    outY = new Terminal(this); outY->setPos(30, 0);
+}
+
+QRectF OrGate::boundingRect() const { return QRectF(-35, -25, 70, 65); }
+
+void OrGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawLine(-30, -10, -10, -10);
+    painter->drawLine(-30, 10, -10, 10);
+    painter->drawLine(18, 0, 30, 0);
+
+    painter->setBrush(QColor(240, 240, 240));
+    QPainterPath path;
+    path.moveTo(-15, -20);
+    path.quadTo(QPointF(-5, -20), QPointF(18, 0));
+    path.quadTo(QPointF(-5, 20), QPointF(-15, 20));
+    path.quadTo(QPointF(-5, 0), QPointF(-15, -20));
+    painter->drawPath(path);
+
+    painter->setFont(QFont("Consolas", 6));
+    painter->setPen(Qt::darkGray);
+    painter->drawText(QRectF(-30, 25, 60, 15), Qt::AlignCenter, propagationDelay);
+}
+
+void OrGate::process() {
+    if (inA->getConnectedWires().isEmpty() || inB->getConnectedWires().isEmpty()) {
+        qWarning() << "DRC Warning: Floating input detected on OR Gate!";
+        return;
+    }
+}
+
+QMap<QString, QString> OrGate::getProperties() const {
+    QMap<QString, QString> props;
+    props["Propagation Delay"] = propagationDelay;
+    props["Logic HIGH (V)"] = highVoltage;
+    return props;
+}
+
+void OrGate::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
+    if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
+}
+
+// ============================================================================
+// پیاده‌سازی گیت NOT
+// ============================================================================
+NotGate::NotGate() {
+    inA = new Terminal(this); inA->setPos(-25, 0);
+    outY = new Terminal(this); outY->setPos(25, 0);
+}
+
+QRectF NotGate::boundingRect() const { return QRectF(-30, -25, 60, 65); }
+
+void NotGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawLine(-25, 0, -15, 0);
+    painter->drawLine(15, 0, 25, 0);
+
+    painter->setBrush(QColor(240, 240, 240));
+    QPainterPath path;
+    path.moveTo(-15, -15);
+    path.lineTo(7, 0);
+    path.lineTo(-15, 15);
+    path.closeSubpath();
+    painter->drawPath(path);
+    painter->drawEllipse(7, -4, 8, 8); // دایره نات خروجی
+
+    painter->setFont(QFont("Consolas", 6));
+    painter->setPen(Qt::darkGray);
+    painter->drawText(QRectF(-25, 25, 50, 15), Qt::AlignCenter, propagationDelay);
+}
+
+void NotGate::process() {
+    if (inA->getConnectedWires().isEmpty()) {
+        qWarning() << "DRC Warning: Floating input detected on NOT Gate!";
+        return;
+    }
+}
+
+QMap<QString, QString> NotGate::getProperties() const {
+    QMap<QString, QString> props;
+    props["Propagation Delay"] = propagationDelay;
+    props["Logic HIGH (V)"] = highVoltage;
+    return props;
+}
+
+void NotGate::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
+    if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
+}
+
+// ============================================================================
+// پیاده‌سازی گیت XOR
+// ============================================================================
+XorGate::XorGate() {
+    inA = new Terminal(this); inA->setPos(-35, -10);
+    inB = new Terminal(this); inB->setPos(-35, 10);
+    outY = new Terminal(this); outY->setPos(35, 0);
+}
+
+QRectF XorGate::boundingRect() const { return QRectF(-40, -25, 80, 65); }
+
+void XorGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawLine(-35, -10, -12, -10);
+    painter->drawLine(-35, 10, -12, 10);
+    painter->drawLine(23, 0, 35, 0);
+
+    // کمان پشت گیت XOR
+    QPainterPath backArc;
+    backArc.moveTo(-22, -20);
+    backArc.quadTo(QPointF(-12, 0), QPointF(-22, 20));
+    painter->drawPath(backArc);
+
+    painter->setBrush(QColor(240, 240, 240));
+    QPainterPath path;
+    path.moveTo(-17, -20);
+    path.quadTo(QPointF(-7, -20), QPointF(23, 0));
+    path.quadTo(QPointF(-7, 20), QPointF(-17, 20));
+    path.quadTo(QPointF(-7, 0), QPointF(-17, -20));
+    painter->drawPath(path);
+
+    painter->setFont(QFont("Consolas", 6));
+    painter->setPen(Qt::darkGray);
+    painter->drawText(QRectF(-35, 25, 70, 15), Qt::AlignCenter, propagationDelay);
+}
+
+void XorGate::process() {
+    if (inA->getConnectedWires().isEmpty() || inB->getConnectedWires().isEmpty()) {
+        qWarning() << "DRC Warning: Floating input detected on XOR Gate!";
+        return;
+    }
+}
+
+QMap<QString, QString> XorGate::getProperties() const {
+    QMap<QString, QString> props;
+    props["Propagation Delay"] = propagationDelay;
+    props["Logic HIGH (V)"] = highVoltage;
+    return props;
+}
+
+void XorGate::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
+    if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
+}
+
+// ============================================================================
+// پیاده‌سازی گیت NAND
+// ============================================================================
+NandGate::NandGate() {
+    inA = new Terminal(this); inA->setPos(-35, -10);
+    inB = new Terminal(this); inB->setPos(-35, 10);
+    outY = new Terminal(this); outY->setPos(35, 0);
+}
+
+QRectF NandGate::boundingRect() const { return QRectF(-40, -25, 80, 65); }
+
+void NandGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawLine(-35, -10, -20, -10);
+    painter->drawLine(-35, 10, -20, 10);
+    painter->drawLine(25, 0, 35, 0);
+
+    painter->setBrush(QColor(240, 240, 240));
+    QPainterPath path;
+    path.moveTo(-20, -20);
+    path.lineTo(-5, -20);
+    path.arcTo(QRectF(-25, -20, 40, 40), 90, -180);
+    path.lineTo(-20, 20);
+    path.closeSubpath();
+    painter->drawPath(path);
+    painter->drawEllipse(15, -4, 8, 8); // حبّاب نات خروجی NAND
+
+    painter->setFont(QFont("Consolas", 6));
+    painter->setPen(Qt::darkGray);
+    painter->drawText(QRectF(-35, 25, 70, 15), Qt::AlignCenter, propagationDelay);
+}
+
+void NandGate::process() {
+    if (inA->getConnectedWires().isEmpty() || inB->getConnectedWires().isEmpty()) {
+        qWarning() << "DRC Warning: Floating input detected on NAND Gate!";
+        return;
+    }
+}
+
+QMap<QString, QString> NandGate::getProperties() const {
+    QMap<QString, QString> props;
+    props["Propagation Delay"] = propagationDelay;
+    props["Logic HIGH (V)"] = highVoltage;
+    return props;
+}
+
+void NandGate::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
+    if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
+}
+
+// ============================================================================
+// پیاده‌سازی فلیپ‌فلاپ D
+// ============================================================================
+DFlipFlop::DFlipFlop() {
+    inD = new Terminal(this); inD->setPos(-40, -15);
+    clk = new Terminal(this); clk->setPos(-40, 15);
+    outQ = new Terminal(this); outQ->setPos(40, -15);
+    outQBar = new Terminal(this); outQBar->setPos(40, 15);
+}
+
+QRectF DFlipFlop::boundingRect() const { return QRectF(-45, -50, 90, 100); }
+
+void DFlipFlop::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    painter->drawRect(-30, -35, 60, 70);
+
+    // سیم‌های اتصالی پایه‌ها
+    painter->drawLine(-40, -15, -30, -15);
+    painter->drawLine(-40, 15, -30, 15);
+    painter->drawLine(30, -15, 40, -15);
+    painter->drawLine(30, 15, 40, 15);
+
+    // لیبل‌های داخلی پایه‌ها
+    painter->setFont(QFont("Consolas", 8, QFont::Bold));
+    painter->drawText(QRectF(-25, -23, 20, 15), Qt::AlignLeft, "D");
+    painter->drawText(QRectF(10, -23, 20, 15), Qt::AlignRight, "Q");
+    painter->drawText(QRectF(5, 7, 25, 15), Qt::AlignRight, "Q'");
+
+    // رسم نماد کلاک (مثلث لبه)
+    painter->drawLine(-30, 7, -23, 15);
+    painter->drawLine(-23, 15, -30, 23);
+
+    painter->setFont(QFont("Consolas", 6));
+    painter->setPen(Qt::darkGray);
+    painter->drawText(QRectF(-40, 40, 80, 15), Qt::AlignCenter, propagationDelay);
+}
+
+void DFlipFlop::process() {
+    if (inD->getConnectedWires().isEmpty() || clk->getConnectedWires().isEmpty()) {
+        qWarning() << "DRC Warning: Floating input detected on D-FlipFlop!";
+        return;
+    }
+    // منطق تشخیص لبه بالارونده کلاک (Sequential Logic) در استپ بعدی شبیه‌ساز فعال خواهد شد
+}
+
+QMap<QString, QString> DFlipFlop::getProperties() const {
+    QMap<QString, QString> props;
+    props["Propagation Delay"] = propagationDelay;
+    props["Initial Q State (0/1)"] = initialQState;
+    return props;
+}
+
+void DFlipFlop::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
+    if (props.contains("Initial Q State (0/1)")) initialQState = props["Initial Q State (0/1)"];
+}
+
+============================================================
+FILE: src\components\logic_gates.h
+============================================================
+
+#pragma once
+#include "../core/element.h"
+#include "../core/terminal.h"
+
+// ==========================================
+// گیت AND (دو ورودی)
+// ==========================================
+class AndGate : public Element {
+private:
+    QString propagationDelay = "10ns";
+    QString highVoltage = "5V";
+
+    Terminal *inA;
+    Terminal *inB;
+    Terminal *outY;
+
+public:
+    AndGate();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+
+    QString getComponentName() const override { return "AND Gate"; }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+
+// ==========================================
+// گیت OR (دو ورودی)
+// ==========================================
+class OrGate : public Element {
+private:
+    QString propagationDelay = "10ns";
+    QString highVoltage = "5V";
+
+    Terminal *inA;
+    Terminal *inB;
+    Terminal *outY;
+
+public:
+    OrGate();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+
+    QString getComponentName() const override { return "OR Gate"; }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+
+// ==========================================
+// گیت NOT (وارون‌گر)
+// ==========================================
+class NotGate : public Element {
+private:
+    QString propagationDelay = "5ns";
+    QString highVoltage = "5V";
+
+    Terminal *inA;
+    Terminal *outY;
+
+public:
+    NotGate();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+
+    QString getComponentName() const override { return "NOT Gate"; }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+
+// ==========================================
+// گیت XOR (دو ورودی)
+// ==========================================
+class XorGate : public Element {
+private:
+    QString propagationDelay = "12ns";
+    QString highVoltage = "5V";
+
+    Terminal *inA;
+    Terminal *inB;
+    Terminal *outY;
+
+public:
+    XorGate();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+
+    QString getComponentName() const override { return "XOR Gate"; }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+
+// ==========================================
+// گیت NAND (دو ورودی)
+// ==========================================
+class NandGate : public Element {
+private:
+    QString propagationDelay = "10ns";
+    QString highVoltage = "5V";
+
+    Terminal *inA;
+    Terminal *inB;
+    Terminal *outY;
+
+public:
+    NandGate();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+
+    QString getComponentName() const override { return "NAND Gate"; }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+
+// ==========================================
+// فلیپ‌فلاپ لبه‌بالارونده D (D-FlipFlop)
+// ==========================================
+class DFlipFlop : public Element {
+private:
+    QString propagationDelay = "15ns";
+    QString initialQState = "0";
+
+    Terminal *inD;
+    Terminal *clk;
+    Terminal *outQ;
+    Terminal *outQBar;
+
+    bool lastClockState = false; // ذخیره وضعیت قبلی کلاک برای تشخیص لبه بالارونده
+    bool currentInternalQ = false;
+
+public:
+    DFlipFlop();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+
+    QString getComponentName() const override { return "D-Type Flip-Flop"; }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+
+============================================================
+FILE: src\components\mcu.cpp
+============================================================
+
+#include "mcu.h"
+#include <QPainter>
+#include <QFont> // برای تنظیم فونت نوشته‌ها
+#include "../core/terminal.h"
+
+// ==========================================
+// سازنده (Constructor) میکروکنترلر
+// ==========================================
+MCUChip::MCUChip() {
+    // ایجاد پایه‌ها (پین‌ها) در ۴ طرف میکروکنترلر (شبیه پکیج‌های QFP یا DIP)
+    for (int i = -20; i <= 20; i += 20) {
+        (new Terminal(this))->setPos(-50, i); // پایه‌های سمت چپ
+        (new Terminal(this))->setPos(50, i);  // پایه‌های سمت راست
+        (new Terminal(this))->setPos(i, -50); // پایه‌های بالا
+        (new Terminal(this))->setPos(i, 50);  // پایه‌های پایین
+    }
+}
+
+// ==========================================
+// تعیین محدوده کلیک و رسم قطعه
+// ==========================================
+QRectF MCUChip::boundingRect() const {
+    return QRectF(-60, -60, 120, 120);
+}
+
+void MCUChip::process() {
+    // منطق اجرای کدهای هگز در موتور شبیه‌ساز (مرحله بک‌اند)
+}
+
+// ==========================================
+// رسم گرافیکی میکروکنترلر روی بوم
+// ==========================================
+void MCUChip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    // ۱. رسم بدنه اصلی IC
+    painter->setBrush(QColor(40, 40, 40)); // رنگ خاکستری تیره (شبیه پلاستیک IC)
+    painter->drawRect(-40, -40, 80, 80);
+
+    // ۲. رسم نقطه راهنمای پایه شماره 1 (بالا سمت چپ)
+    painter->setBrush(Qt::white);
+    painter->drawEllipse(-30, -30, 5, 5);
+
+    // ۳. رسم پایه‌های فلزی (Pins)
+    painter->setPen(pen);
+    for (int i = -20; i <= 20; i += 20) {
+        painter->drawLine(-50, i, -40, i); // پایه‌های چپ
+        painter->drawLine(40, i, 50, i);   // پایه‌های راست
+        painter->drawLine(i, -50, i, -40); // پایه‌های بالا
+        painter->drawLine(i, 40, i, 50);   // پایه‌های پایین
+    }
+
+    // ==========================================
+    // ۴. نمایش اطلاعات داینامیک روی بدنه تراشه
+    // ==========================================
+
+    // چاپ نام تراشه
+    painter->setPen(Qt::white);
+    painter->setFont(QFont("Consolas", 10, QFont::Bold));
+    painter->drawText(QRectF(-40, -30, 80, 20), Qt::AlignCenter, "MCU");
+
+    // چاپ فرکانس کاری
+    painter->setFont(QFont("Consolas", 7));
+    painter->setPen(QColor(200, 200, 200)); // خاکستری روشن
+    painter->drawText(QRectF(-40, -10, 80, 20), Qt::AlignCenter, clockFrequency);
+
+    // بررسی وضعیت فایل هگز و نمایش آن با رنگ مناسب
+    QString hexStatusText;
+    if (hexFilePath == "Not Loaded" || hexFilePath.isEmpty()) {
+        painter->setPen(QColor(255, 100, 100)); // رنگ قرمز (هشدار: کد ندارد)
+        hexStatusText = "NO HEX";
+    } else {
+        painter->setPen(QColor(100, 255, 100)); // رنگ سبز (آماده اجرا)
+        hexStatusText = "HEX OK";
+    }
+    painter->drawText(QRectF(-40, 10, 80, 20), Qt::AlignCenter, hexStatusText);
+}
+
+============================================================
+FILE: src\components\mcu.h
+============================================================
+
+#pragma once
+#include "../core/element.h"
+#include "../core/terminal.h"
+
+class MCUChip : public Element {
+private:
+    QString hexFilePath = "Not Loaded";
+    QString clockFrequency = "8MHz";
+
+public:
+    MCUChip();
+
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+
+    QString getComponentName() const override {
+        return "Microcontroller (MCU)";
+    }
+
+    QMap<QString, QString> getProperties() const override {
+        QMap<QString, QString> props;
+        props["Hex File Path"] = hexFilePath;
+        props["Clock Frequency"] = clockFrequency;
+        return props;
+    }
+
+    void setProperties(const QMap<QString, QString>& props) override {
+        if (props.contains("Hex File Path")) hexFilePath = props["Hex File Path"];
+        if (props.contains("Clock Frequency")) clockFrequency = props["Clock Frequency"];
+    }
+};
+
+============================================================
+FILE: src\components\peripherals.cpp
+============================================================
+
+#include "peripherals.h"
+#include <QPainter>
+#include <QFont> // برای تنظیم فونت نوشته‌های داینامیک
+#include "../core/terminal.h"
+#include "../core/wire.h"
+
+// ==========================================
+// ۱. حافظه خارجی (RAM/EEPROM)
+// ==========================================
+MemoryChip::MemoryChip() {
+    // ایجاد پایه‌های آدرس و داده با حلقه
+    for (int i = -40; i <= 40; i += 10) {
+        (new Terminal(this))->setPos(-50, i); // خطوط آدرس (چپ)
+        (new Terminal(this))->setPos(50, i);  // خطوط داده (راست)
+    }
+}
+
+QRectF MemoryChip::boundingRect() const {
+    // افزایش ارتفاع کادر برای جا دادن حجم حافظه و نام فایل هگز
+    return QRectF(-60, -75, 120, 150);
+}
+
+void MemoryChip::process() {}
+
+void MemoryChip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    // رسم بدنه آی‌سی
+    painter->setBrush(QColor(50, 50, 50));
+    painter->drawRect(-40, -50, 80, 100);
+
+    // چاپ نام تراشه
+    painter->setPen(Qt::white);
+    painter->drawText(QRectF(-40, -50, 80, 100), Qt::AlignCenter, "RAM\nEEPROM");
+
+    // رسم خطوط اتصال پایه‌ها
+    painter->setPen(pen);
+    for (int i = -40; i <= 40; i += 10) {
+        painter->drawLine(-50, i, -40, i); // Address lines
+        painter->drawLine(40, i, 50, i);   // Data lines
+    }
+
+    // === نمایش داینامیک ظرفیت حافظه و وضعیت فریمور ===
+    painter->setFont(QFont("Consolas", 8, QFont::Bold));
+
+    // چاپ ظرفیت حافظه در بالای تراشه
+    painter->setPen(Qt::darkBlue);
+    painter->drawText(QRectF(-60, -70, 120, 15), Qt::AlignCenter, memorySize);
+
+    // چاپ وضعیت فایل هگز در پایین تراشه
+    if (initialHexPath == "Not Loaded" || initialHexPath.isEmpty()) {
+        painter->setPen(Qt::red);
+        painter->drawText(QRectF(-60, 55, 120, 15), Qt::AlignCenter, "NO HEX");
+    } else {
+        painter->setPen(QColor(0, 150, 0)); // سبز تیره
+        painter->drawText(QRectF(-60, 55, 120, 15), Qt::AlignCenter, "HEX OK");
+    }
+}
+
+// ==========================================
+// ۲. نمایشگر کاراکتری (LCD 16x2)
+// ==========================================
+LCD16x2::LCD16x2() {
+    int startX = -55;
+    for(int i = 0; i < 14; i++) {
+        (new Terminal(this))->setPos(startX + (i * 8), -35);
+    }
+}
+
+QRectF LCD16x2::boundingRect() const {
+    return QRectF(-70, -55, 140, 90);
+}
+
+void LCD16x2::process() {}
+
+void LCD16x2::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    // قاب دور LCD (سبز تیره)
+    painter->setBrush(QColor(34, 139, 34));
+    painter->drawRect(-60, -25, 120, 50);
+
+    // صفحه نمایشگر (سبز روشن)
+    painter->setBrush(QColor(152, 251, 152));
+    painter->drawRect(-50, -15, 100, 30);
+
+    // پایه‌های اتصال (بالای LCD)
+    int startX = -55;
+    for(int i=0; i<14; i++) {
+        painter->drawLine(startX + (i*8), -25, startX + (i*8), -35);
+    }
+
+    // === نمایش داینامیک پروتکل ارتباطی ===
+    painter->setFont(QFont("Consolas", 7, QFont::Bold));
+    painter->setPen(Qt::darkBlue);
+    QString infoText = busMode;
+    if (busMode == "I2C") infoText += " (" + i2cAddress + ")";
+    painter->drawText(QRectF(-70, 30, 140, 15), Qt::AlignCenter, infoText);
+}
+
+// ==========================================
+// ۳. صفحه کلید ماتریسی (Keypad 4x4)
+// ==========================================
+Keypad::Keypad() {
+    for(int i = 0; i < 4; i++) {
+        (new Terminal(this))->setPos(-30 + (i * 20), 45);
+    }
+}
+
+QRectF Keypad::boundingRect() const {
+    return QRectF(-45, -50, 90, 120);
+}
+
+void Keypad::process() {}
+
+void Keypad::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    // بدنه کیپد
+    painter->setBrush(QColor(200, 200, 200));
+    painter->drawRect(-35, -45, 70, 75);
+
+    // رسم دکمه‌های 4x4
+    painter->setBrush(Qt::white);
+    for(int row = -40; row < 25; row += 16) {
+        for(int col = -30; col < 30; col += 15) {
+            painter->drawRect(col, row, 12, 12);
+        }
+    }
+
+    // رسم خطوط پایه‌ها
+    for(int i = -30; i <= 30; i += 20) {
+        painter->drawLine(i, 30, i, 45);
+    }
+
+    // === نمایش داینامیک زمان دی‌بانس (Debounce) ===
+    painter->setFont(QFont("Consolas", 7, QFont::Bold));
+    painter->setPen(Qt::darkBlue);
+    painter->drawText(QRectF(-45, 55, 90, 15), Qt::AlignCenter, "DB: " + debounceTimeMs);
+}
+
+// ==========================================
+// ۴. مبدل آنالوگ به دیجیتال (ADC)
+// ==========================================
+ADC_Chip::ADC_Chip() {
+    (new Terminal(this))->setPos(-40, 0); // Vin
+    for(int i = -20; i <= 20; i += 10) {
+        (new Terminal(this))->setPos(40, i); // Digital Out
+    }
+}
+
+QRectF ADC_Chip::boundingRect() const {
+    return QRectF(-65, -55, 120, 110);
+}
+
+void ADC_Chip::process() {}
+
+void ADC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    // بدنه مبدل
+    painter->setBrush(QColor(70, 130, 180));
+    painter->drawRect(-30, -30, 60, 60);
+    painter->setPen(Qt::white);
+    painter->drawText(QRectF(-30, -30, 60, 60), Qt::AlignCenter, "ADC");
+
+    // پایه ورودی آنالوگ
+    painter->setPen(pen);
+    painter->drawLine(-40, 0, -30, 0);
+    painter->drawText(-55, 5, "Vin");
+
+    // پایه‌های خروجی دیجیتال
+    for(int i = -20; i <= 20; i += 10) {
+        painter->drawLine(30, i, 40, i);
+    }
+
+    // === نمایش داینامیک رزولوشن و ولتاژ مرجع ===
+    painter->setFont(QFont("Consolas", 7, QFont::Bold));
+    painter->setPen(Qt::darkBlue);
+    painter->drawText(QRectF(-65, -50, 120, 15), Qt::AlignCenter, resolutionBits);
+    painter->drawText(QRectF(-65, 35, 120, 15), Qt::AlignCenter, "Vref: " + referenceVoltage);
+}
+
+// ==========================================
+// ۵. مبدل دیجیتال به آنالوگ (DAC)
+// ==========================================
+DAC_Chip::DAC_Chip() {
+    (new Terminal(this))->setPos(40, 0); // Vout
+    for(int i = -20; i <= 20; i += 10) {
+        (new Terminal(this))->setPos(-40, i); // Digital In
+    }
+}
+
+QRectF DAC_Chip::boundingRect() const {
+    return QRectF(-65, -55, 120, 110);
+}
+
+void DAC_Chip::process() {}
+
+void DAC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+
+    // بدنه مبدل
+    painter->setBrush(QColor(210, 105, 30));
+    painter->drawRect(-30, -30, 60, 60);
+    painter->setPen(Qt::white);
+    painter->drawText(QRectF(-30, -30, 60, 60), Qt::AlignCenter, "DAC");
+
+    // پایه خروجی آنالوگ
+    painter->setPen(pen);
+    painter->drawLine(30, 0, 40, 0);
+    painter->drawText(45, 5, "Vout");
+
+    // پایه‌های ورودی دیجیتال
+    for(int i = -20; i <= 20; i += 10) {
+        painter->drawLine(-40, i, -30, i);
+    }
+
+    // === نمایش داینامیک رزولوشن و ولتاژ خروجی ===
+    painter->setFont(QFont("Consolas", 7, QFont::Bold));
+    painter->setPen(Qt::darkBlue);
+    painter->drawText(QRectF(-65, -50, 120, 15), Qt::AlignCenter, resolutionBits);
+    painter->drawText(QRectF(-65, 35, 120, 15), Qt::AlignCenter, "Max: " + maxOutputVoltage);
+}
+
+============================================================
+FILE: src\components\peripherals.h
+============================================================
+
+#pragma once
+#include "../core/element.h"
+
+// ==========================================
+// حافظه خارجی (RAM / EEPROM)
+// ==========================================
+class MemoryChip : public Element {
+private:
+    QString memorySize = "64 KB";
+    QString initialHexPath = "Not Loaded";
+
+public:
+    MemoryChip();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+
+    QString getComponentName() const override { return "External Memory Chip"; }
+
+    QMap<QString, QString> getProperties() const override {
+        QMap<QString, QString> props;
+        props["Memory Size"] = memorySize;
+        props["Storage Firmware (.hex)"] = initialHexPath;
+        return props;
+    }
+
+    void setProperties(const QMap<QString, QString>& props) override {
+        if (props.contains("Memory Size")) memorySize = props["Memory Size"];
+        if (props.contains("Storage Firmware (.hex)")) initialHexPath = props["Storage Firmware (.hex)"];
+    }
+};
+
+// ==========================================
+// نمایشگر کاراکتری (LCD 16x2)
+// ==========================================
+class LCD16x2 : public Element {
+private:
+    QString busMode = "4-Bit Parallel";
+    QString i2cAddress = "0x27";
+
+public:
+    LCD16x2();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+
+    QString getComponentName() const override { return "LCD 16x2 Display"; }
+
+    QMap<QString, QString> getProperties() const override {
+        QMap<QString, QString> props;
+        props["Bus Interface Mode"] = busMode;
+        props["I2C Address (If Used)"] = i2cAddress;
+        return props;
+    }
+
+    void setProperties(const QMap<QString, QString>& props) override {
+        if (props.contains("Bus Interface Mode")) busMode = props["Bus Interface Mode"];
+        if (props.contains("I2C Address (If Used)")) i2cAddress = props["I2C Address (If Used)"];
+    }
+};
+
+// ==========================================
+// صفحه کلید ماتریسی (Keypad 4x4)
+// ==========================================
+class Keypad : public Element {
+private:
+    QString debounceTimeMs = "20ms";
+
+public:
+    Keypad();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+
+    QString getComponentName() const override { return "Matrix Keypad 4x4"; }
+
+    QMap<QString, QString> getProperties() const override {
+        QMap<QString, QString> props;
+        props["Debounce Delay"] = debounceTimeMs;
+        return props;
+    }
+
+    void setProperties(const QMap<QString, QString>& props) override {
+        if (props.contains("Debounce Delay")) debounceTimeMs = props["Debounce Delay"];
+    }
+};
+
+// ==========================================
+// مبدل آنالوگ به دیجیتال (ADC)
+// ==========================================
+class ADC_Chip : public Element {
+private:
+    QString resolutionBits = "10-Bit";
+    QString referenceVoltage = "5.0V";
+
+public:
+    ADC_Chip();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+
+    QString getComponentName() const override { return "Analog to Digital Converter (ADC)"; }
+
+    QMap<QString, QString> getProperties() const override {
+        QMap<QString, QString> props;
+        props["Resolution (Bits)"] = resolutionBits;
+        props["VREF Voltage (V)"] = referenceVoltage;
+        return props;
+    }
+
+    void setProperties(const QMap<QString, QString>& props) override {
+        if (props.contains("Resolution (Bits)")) resolutionBits = props["Resolution (Bits)"];
+        if (props.contains("VREF Voltage (V)")) referenceVoltage = props["VREF Voltage (V)"];
+    }
+};
+
+// ==========================================
+// مبدل دیجیتال به آنالوگ (DAC)
+// ==========================================
+class DAC_Chip : public Element {
+private:
+    QString resolutionBits = "8-Bit";
+    QString maxOutputVoltage = "5.0V";
+
+public:
+    DAC_Chip();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+
+    QString getComponentName() const override { return "Digital to Analog Converter (DAC)"; }
+
+    QMap<QString, QString> getProperties() const override {
+        QMap<QString, QString> props;
+        props["Resolution (Bits)"] = resolutionBits;
+        props["Full-Scale VOUT"] = maxOutputVoltage;
+        return props;
+    }
+
+    void setProperties(const QMap<QString, QString>& props) override {
+        if (props.contains("Resolution (Bits)")) resolutionBits = props["Resolution (Bits)"];
+        if (props.contains("Full-Scale VOUT")) maxOutputVoltage = props["Full-Scale VOUT"];
+    }
+};
+
+============================================================
+FILE: src\core\auto_router.cpp
+============================================================
+
+#include "auto_router.h"
+#include "terminal.h"
+#include "wire.h"
+#include <QMap>
+#include <QSet>
+#include <QGraphicsItem>
+#include <QLineF>
+#include <queue>
+#include <vector>
+#include <algorithm>
+
+QString pointToString(const QPointF &p) {
+    return QString("%1,%2").arg(p.x()).arg(p.y()); // ذخیره دقیق اعشار برای گام‌های پویا
+}
+
+struct AStarNode {
+    QPointF pos;
+    double gCost;
+    double fCost;
+    QPointF dir;
+    bool operator>(const AStarNode& other) const {
+        if (qAbs(fCost - other.fCost) < 0.1) return gCost < other.gCost;
+        return fCost > other.fCost;
+    }
+};
+
+// ==========================================
+// ۱. سیستم پیشرفته تشخیص جهت پایه
+// ==========================================
+QPointF getPinDirection(Terminal* term) {
+    if (!term || !term->parentItem()) return QPointF(20, 0);
+
+    QPointF local = term->pos();
+    QRectF bounds = term->parentItem()->boundingRect();
+
+    double distLeft   = qAbs(local.x() - bounds.left());
+    double distRight  = qAbs(local.x() - bounds.right());
+    double distTop    = qAbs(local.y() - bounds.top());
+    double distBottom = qAbs(local.y() - bounds.bottom());
+
+    double minDist = std::min({distLeft, distRight, distTop, distBottom});
+
+    if (minDist == distLeft)   return QPointF(-20, 0);
+    if (minDist == distRight)  return QPointF(20, 0);
+    if (minDist == distTop)    return QPointF(0, -20);
+    return QPointF(0, 20);
+}
+
+// ==========================================
+// ۲. هسته اصلی مسیریاب منهتن با گام‌های پویا
+// ==========================================
+QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, QPointF endPos, Terminal *startTerm, Terminal *endTerm, Wire *currentWire) {
+    double stepSize = 10.0;
+    int maxIterations = 10000;
+
+    QPointF startDir = getPinDirection(startTerm);
+    QPointF endDir = getPinDirection(endTerm);
+    QPointF startStub = startPos + startDir;
+    QPointF endStub = endPos + endDir;
+
+    if (startStub == endStub) return {startPos, startStub, endPos};
+
+    std::priority_queue<AStarNode, std::vector<AStarNode>, std::greater<AStarNode>> openSet;
+    QMap<QString, QPointF> cameFrom;
+    QMap<QString, double> gScore;
+    QSet<QString> closedSet;
+
+    // نرمال‌سازی جهت اولیه برای جلوگیری از خطاهای اعشاری
+    QPointF normStartDir(0, 0);
+    if (qAbs(startDir.x()) > 0) normStartDir.setX(startDir.x() > 0 ? 1 : -1);
+    if (qAbs(startDir.y()) > 0) normStartDir.setY(startDir.y() > 0 ? 1 : -1);
+
+    openSet.push({startStub, 0, 0, normStartDir});
+    gScore[pointToString(startStub)] = 0;
+
+    bool pathFound = false;
+    QPointF finalPoint;
+
+    int iterations = 0;
+    while (!openSet.empty() && iterations < maxIterations) {
+        AStarNode current = openSet.top();
+        openSet.pop();
+        iterations++;
+
+        QString currentStr = pointToString(current.pos);
+        if (closedSet.contains(currentStr)) continue;
+        closedSet.insert(currentStr);
+
+        // رسیدن به هدف با دقت ۱۰۰٪ (دیگر نیازی به شعاع ۵ پیکسلی نیست)
+        if (current.pos == endStub) {
+            pathFound = true;
+            finalPoint = current.pos;
+            break;
+        }
+
+        // تولید گام‌های پویا: هم گام‌های ۱۰ پیکسلی ثابت و هم گام‌های ریز برای رسیدن دقیق به هدف
+        QVector<QPointF> nextPoints = {
+                current.pos + QPointF(0, -stepSize), current.pos + QPointF(0, stepSize),
+                current.pos + QPointF(-stepSize, 0), current.pos + QPointF(stepSize, 0)
+        };
+
+        // تزریق گام‌های دقیق برای جلوگیری از زیگ‌زاگ
+        if (current.pos.x() != endStub.x() && qAbs(current.pos.x() - endStub.x()) < stepSize) {
+            nextPoints.append(QPointF(endStub.x(), current.pos.y()));
+        }
+        if (current.pos.y() != endStub.y() && qAbs(current.pos.y() - endStub.y()) < stepSize) {
+            nextPoints.append(QPointF(current.pos.x(), endStub.y()));
+        }
+
+        for (const QPointF &next : nextPoints) {
+            QPointF moveDir = next - current.pos;
+            QPointF normDir(0, 0);
+            if (qAbs(moveDir.x()) > 0) normDir.setX(moveDir.x() > 0 ? 1 : -1);
+            if (qAbs(moveDir.y()) > 0) normDir.setY(moveDir.y() > 0 ? 1 : -1);
+
+            // ممنوعیت برگشت به عقب
+            if (current.dir != QPointF(0,0) && normDir == QPointF(-current.dir.x(), -current.dir.y())) {
+                continue;
+            }
+
+            QString nextStr = pointToString(next);
+            if (closedSet.contains(nextStr)) continue;
+
+            QRectF checkRect(next.x() - 1, next.y() - 1, 2, 2);
+            QList<QGraphicsItem*> itemsAtNext = scene->items(checkRect, Qt::IntersectsItemShape);
+
+            bool hitObstacle = false;
+            double wirePenalty = 0.0;
+
+            for (QGraphicsItem *item : itemsAtNext) {
+                Wire *wireItem = dynamic_cast<Wire*>(item);
+                if (wireItem) {
+                    if (wireItem == currentWire) continue;
+
+                    // تنظیم طلایی: جریمه بسیار کم برای تقاطع (۱۵)
+                    // باعث می‌شود سیم بدون ترس از دیگران عبور کند اما همچنان موازی نیفتد
+                    wirePenalty += 15.0;
+                    continue;
+                }
+
+                if (dynamic_cast<Terminal*>(item)) continue;
+
+                QGraphicsItem *parent = item->parentItem() ? item->parentItem() : item;
+
+                // شعاع فرار از قطعه مبدا و مقصد به ۱۵ کاهش یافت تا در کنار قطعه پله نسازد
+                if (parent == startTerm->parentItem() || parent == endTerm->parentItem()) {
+                    if (QLineF(next, startStub).length() <= 15.0 || QLineF(next, endStub).length() <= 15.0) {
+                        continue;
+                    }
+                }
+
+                hitObstacle = true;
+                break;
+            }
+
+            if (hitObstacle) continue;
+
+            // جریمه چرخش ۱۰ امتیاز است تا خطوط مستقیم بمانند
+            double turnPenalty = (current.dir != QPointF(0,0) && current.dir != normDir) ? 10.0 : 0.0;
+            double stepCost = qAbs(moveDir.x()) + qAbs(moveDir.y());
+            double tentative_gScore = gScore[currentStr] + stepCost + turnPenalty + wirePenalty;
+
+            if (!gScore.contains(nextStr) || tentative_gScore < gScore[nextStr]) {
+                cameFrom[nextStr] = current.pos;
+                gScore[nextStr] = tentative_gScore;
+
+                double hScore = std::abs(next.x() - endStub.x()) + std::abs(next.y() - endStub.y());
+                hScore *= 1.001;
+
+                double fScore = tentative_gScore + hScore;
+                openSet.push({next, tentative_gScore, fScore, normDir});
+            }
+        }
+    }
+
+    // ==========================================
+    // ۳. بازسازی و فیلتر نقاط
+    // ==========================================
+    QVector<QPointF> rawPath;
+    if (pathFound) {
+        QPointF curr = finalPoint;
+        rawPath.prepend(endPos);
+        if (finalPoint != endStub) rawPath.prepend(endStub);
+
+        while (curr != startStub && cameFrom.contains(pointToString(curr))) {
+            rawPath.prepend(curr);
+            curr = cameFrom[pointToString(curr)];
+        }
+
+        rawPath.prepend(startStub);
+        rawPath.prepend(startPos);
+    } else {
+        rawPath.append(endPos);
+    }
+
+    QVector<QPointF> optimizedPath;
+    if(rawPath.size() > 2) {
+        optimizedPath.append(rawPath[0]);
+        for(int i = 1; i < rawPath.size() - 1; i++) {
+            QPointF prev = optimizedPath.last();
+            QPointF curr = rawPath[i];
+            QPointF next = rawPath[i+1];
+
+            bool sameX = (qAbs(prev.x() - curr.x()) < 1) && (qAbs(curr.x() - next.x()) < 1);
+            bool sameY = (qAbs(prev.y() - curr.y()) < 1) && (qAbs(curr.y() - next.y()) < 1);
+
+            if (!sameX && !sameY) {
+                optimizedPath.append(curr);
+            }
+        }
+        optimizedPath.append(rawPath.last());
+        return optimizedPath;
+    }
+
+    return rawPath;
+}
+
+============================================================
+FILE: src\core\auto_router.h
+============================================================
+
+#pragma once
+#include <QVector>
+#include <QPointF>
+#include <QGraphicsScene>
+
+class Terminal;
+class Wire; // پیش‌تعریف کلاس سیم
+
+class AutoRouter {
+public:
+    // اضافه شدن currentWire به انتهای تابع
+    static QVector<QPointF> findPath(QGraphicsScene *scene, QPointF startPos, QPointF endPos, Terminal *startTerm, Terminal *endTerm, Wire *currentWire);
+};
+
+============================================================
+FILE: src\core\element.cpp
+============================================================
+
+#include "element.h"
+#include <QPointF>
+#include <qmath.h> // برای استفاده از توابع گرد کردن ریاضی
+
+
+
+============================================================
+FILE: src\core\element.h
+============================================================
+
+//element.h
+#pragma once
+#include <QGraphicsItem>
+#include <QGraphicsSceneMouseEvent>
+#include <QDebug>
+#include <QMap> // اضافه شد برای سیستم داینامیک
+#include "terminal.h"
+#include "wire.h"
+#include "../gui/properties_dialog.h"
+
+// کلاس مجازی مادر که تمام قطعات از آن ارث‌بری می‌کنند
+class Element : public QGraphicsItem {
+public:
+    Element() {
+        // فلگ جدید ItemSendsGeometryChanges به موتور Qt می‌گوید که تغییرات مختصات را قبل از اعمال نهایی به ما گزارش دهد
+        setFlags(ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
+    }
+
+    virtual ~Element() = default;
+
+    // این تابع برای هم‌تیمی شماست که بعداً منطق ریاضی مدار را بنویسد
+    virtual void process() = 0;
+
+    // ==========================================
+    // توابع سیستم داینامیک تنظیمات (مخصوص ارث‌بری قطعات)
+    // ==========================================
+
+    // ۱. برگرداندن نام قطعه جهت نمایش در هدر پنجره
+    virtual QString getComponentName() const {
+        return "Component";
+    }
+
+    // ۲. ارسال لیست ویژگی‌ها و مقادیر پیش‌فرض آن‌ها به دیالوگ
+    virtual QMap<QString, QString> getProperties() const {
+        return QMap<QString, QString>(); // پیش‌فرض: بدون تنظیمات
+    }
+
+    // ۳. دریافت مقادیر جدید تایپ‌شده توسط کاربر و ذخیره آن‌ها در قطعه
+    virtual void setProperties(const QMap<QString, QString>& props) {
+        // قطعات فرزند، کدهای ذخیره‌سازی خود را اینجا می‌نویسند
+    }
+
+protected:
+    // تابعی از Qt که مختصات را هنگام کشیدن با موس، رهگیری و اصلاح می‌کند
+    QVariant itemChange(GraphicsItemChange change, const QVariant &value) override {
+        // اگر قطعه در حال جابجایی روی بوم است
+        if (change == ItemPositionHasChanged) {
+
+            // ۱. روی تمام فرزندان این قطعه (که همان ترمینال‌ها/پایه‌ها هستند) حلقه می‌زنیم
+            for (QGraphicsItem *child : childItems()) {
+
+                // ۲. بررسی می‌کنیم که آیا این فرزند واقعاً یک "ترمینال" است؟
+                Terminal *term = dynamic_cast<Terminal*>(child);
+                if (term) {
+
+                    // ۳. اگر ترمینال بود، به تمام سیم‌های متصل به آن می‌گوییم مسیرشان را دوباره محاسبه کنند
+                    for (Wire *wire : term->getConnectedWires()) {
+                        if (wire) {
+                            wire->updateRoute(); // فراخوانی مجدد الگوریتم A*
+                        }
+                    }
+                }
+            }
+        }
+
+        // در نهایت، اجازه می‌دهیم Qt کار اصلی خودش (جابجا کردن قطعه) را انجام دهد
+        return QGraphicsItem::itemChange(change, value);
+    }
+
+    // رهگیری دابل‌کلیک جهت باز کردن تنظیمات
+    void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) override {
+        // ۱. وقتی کاربر دابل‌کلیک کرد، فقط کلیک چپ را قبول کن
+        if (event->button() == Qt::LeftButton) {
+
+            // ۲. دریافت ویژگی‌های قطعه از توابع مجازی
+            QMap<QString, QString> currentProps = getProperties();
+
+            // اگر این قطعه هیچ ویژگی‌ای برای تنظیم ندارد، بی‌خیال شو
+            if (currentProps.isEmpty()) {
+                qDebug() << "No properties defined for this component.";
+                event->accept();
+                return;
+            }
+
+            // ۳. ساخت دیالوگ داینامیک با ارسال نام و ویژگی‌های قطعه
+            PropertiesDialog dialog(getComponentName(), currentProps);
+
+            // ۴. اگر کاربر تغییرات را ذخیره کرد (Save Changes)
+            if (dialog.exec() == QDialog::Accepted) {
+
+                // لیست جدید ویژگی‌ها را بگیر و به قطعه تزریق کن
+                setProperties(dialog.getUpdatedProperties());
+
+                // به بوم بگو قطعه را دوباره رسم کند (تا اگر متنی روی قطعه هست آپدیت شود)
+                update();
+
+                qDebug() << "Properties successfully updated for" << getComponentName();
+            }
+
+            // رویداد مصرف شد
+            event->accept();
+            return;
+        }
+
+        // اجرای رفتار پیش‌فرض در صورت نیاز
+        QGraphicsItem::mouseDoubleClickEvent(event);
+    }
+};
+
+============================================================
+FILE: src\core\pin.cpp
+============================================================
+
+#include "pin.h"
+
+
+============================================================
+FILE: src\core\pin.h
+============================================================
+
+#pragma once
+
+class Pin {
+};
+
+
+============================================================
+FILE: src\core\probe_item.cpp
+============================================================
+
+#include "probe_item.h"
+#include <QFont>
+
+ProbeItem::ProbeItem(QGraphicsItem *parent) : QGraphicsItem(parent) {
+    currentVoltage = "Undefined";
+    setZValue(1000);
+    hide();
+}
+
+void ProbeItem::updateProbe(const QString &voltage, const QPointF &pos) {
+    currentVoltage = voltage; // اینجا فقط متن کپی می‌شود، پس کاملاً امن است
+    setPos(pos + QPointF(15, 15));
+    show();
+    update();
+}
+
+QRectF ProbeItem::boundingRect() const {
+    return QRectF(0, 0, 80, 30);
+}
+
+void ProbeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    painter->setBrush(QColor(30, 30, 40, 230));
+    painter->setPen(QPen(QColor(100, 200, 255), 1.5));
+    painter->drawRoundedRect(boundingRect(), 6, 6);
+
+    QFont font("Consolas", 10, QFont::Bold);
+    painter->setFont(font);
+
+    if (currentVoltage == "5.0V") {
+        painter->setPen(QColor(255, 80, 80));
+    } else if (currentVoltage == "0.0V") {
+        painter->setPen(QColor(80, 150, 255));
+    } else {
+        painter->setPen(Qt::yellow);
+    }
+
+    painter->drawText(boundingRect(), Qt::AlignCenter, currentVoltage);
+}
+
+============================================================
+FILE: src\core\probe_item.h
+============================================================
+
+#pragma once
+#include <QGraphicsItem>
+#include <QString>
+#include <QPainter>
+
+class ProbeItem : public QGraphicsItem {
+public:
+    ProbeItem(QGraphicsItem *parent = nullptr);
+
+    // فقط همین یک تابع برای آپدیت پروب کافیست (ساده و امن)
+    void updateProbe(const QString &voltage, const QPointF &pos);
+
+    // توابع اجباری Qt برای رسم گرافیک اختصاصی
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+
+private:
+    // فقط یک رشته متنی ساده، بدون هیچ پوینتري (*)
+    QString currentVoltage;
+};
+
+============================================================
+FILE: src\core\simulation_engine.cpp
+============================================================
+
+#include "simulation_engine.h"
+#include "wire.h"
+#include "terminal.h"
+#include "element.h"
+
+SimulationEngine::SimulationEngine(CircuitScene *scene, QObject *parent)
+        : QObject(parent), m_scene(scene) {}
+
+void SimulationEngine::stepSimulation() {
+    if (!m_scene) return;
+
+    // ۱. اجرای منطق تمام قطعات مدار (فراخوانی توابعی که هم‌گروهی شما می‌نویسد)
+    QList<QGraphicsItem*> allItems = m_scene->items();
+    for (QGraphicsItem *item : allItems) {
+        Element *element = dynamic_cast<Element*>(item);
+        if (element) {
+            element->process(); // قطعه ورودی‌ها را بررسی کرده و ولتاژ پین خروجی‌اش را ست می‌کند
+        }
+    }
+
+    // ۲. پخش کردن ولتاژهای خروجی در طول سیم‌ها و رساندن آن‌ها به پین‌های ورودی قطعات بعدی
+    propagateVoltages();
+}
+
+void SimulationEngine::propagateVoltages() {
+    QList<QGraphicsItem*> allItems = m_scene->items();
+
+    // حرکت روی تمام سیم‌های بوم
+    for (QGraphicsItem *item : allItems) {
+        Wire *wire = dynamic_cast<Wire*>(item);
+        if (!wire) continue;
+
+        // استفاده از گترهای جدیدی که در گام اول ساختیم
+        Terminal *startTerm = wire->getStartTerminal();
+        Terminal *endTerm = wire->getEndTerminal();
+
+        QString targetVoltage = "Undefined";
+
+        // قانون انتشار ولتاژ: اگر پین ابتدا یا انتها ولتاژ معتبری داشته باشد، کل سیم آن ولتاژ را می‌گیرد
+        if (startTerm && startTerm->voltageLevel != "Undefined") {
+            targetVoltage = startTerm->voltageLevel;
+        } else if (endTerm && endTerm->voltageLevel != "Undefined") {
+            targetVoltage = endTerm->voltageLevel;
+        }
+
+        // به‌روزرسانی ولتاژ سیم
+        wire->voltageLevel = targetVoltage;
+
+        // انتقال ولتاژ به پین‌های متصل جهت یکپارچگی مدار
+        if (startTerm) startTerm->voltageLevel = targetVoltage;
+        if (endTerm) endTerm->voltageLevel = targetVoltage;
+    }
+}
+
+============================================================
+FILE: src\core\simulation_engine.h
+============================================================
+
+#pragma once
+#include <QObject>
+#include "../canvas/circuit_scene.h"
+
+class SimulationEngine : public QObject {
+Q_OBJECT
+public:
+    explicit SimulationEngine(CircuitScene *scene, QObject *parent = nullptr);
+
+    // اجرای یک گام کامل از محاسبات مدار
+    void stepSimulation();
+
+private:
+    CircuitScene *m_scene;
+    void propagateVoltages();
+};
+
+============================================================
+FILE: src\core\terminal.cpp
+============================================================
+
+#include "terminal.h"
+#include "wire.h"
+#include <QPainter>
+#include <QCursor>
+#include <QGraphicsSceneHoverEvent>
+#include <QToolTip>
+#include "../canvas/circuit_scene.h"
+#include <QGraphicsSceneMouseEvent>
+#include <QDebug>
+#include <qmath.h>
+
+Terminal::Terminal(QGraphicsItem *parent) : QGraphicsItem(parent), isHovered(false) {
+    setAcceptHoverEvents(true);
+    setFlag(ItemIgnoresTransformations, false);
+    resetState(); // مقداردهی اولیه متغیرهای الکتریکی
+}
+
+Terminal::~Terminal() {
+    // قبل از اینکه ترمینال از بین برود، به تمام سیم‌های متصل می‌گوید ارتباط را قطع کنند
+    for (Wire *wire : connectedWires) {
+        if (wire) {
+            wire->disconnectTerminal(this);
+        }
+    }
+    // در نهایت لیست خودش را پاک می‌کند
+    connectedWires.clear();
+}
+
+QRectF Terminal::boundingRect() const {
+    return QRectF(-6, -6, 12, 12);
+}
+
+void Terminal::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::NoPen);
+    QBrush brush(Qt::transparent);
+
+    // تغییر رنگ پایه در زمان قرار گرفتن موس
+    if (isHovered) {
+        pen.setStyle(Qt::SolidLine);
+        pen.setColor(QColor(0, 120, 255));
+        pen.setWidth(2);
+        brush.setColor(QColor(0, 120, 255, 100));
+        brush.setStyle(Qt::SolidPattern);
+    }
+
+    // بازخورد گرافیکی DRC: قرمز شدن پایه در صورت اتصال کوتاه یا وضعیت نامشخص
+    if (_isUndefined) {
+        pen.setStyle(Qt::SolidLine);
+        pen.setColor(Qt::red);
+        pen.setWidth(2);
+        brush.setColor(QColor(255, 0, 0, 150));
+        brush.setStyle(Qt::SolidPattern);
+    }
+
+    painter->setPen(pen);
+    painter->setBrush(brush);
+    painter->drawEllipse(-4, -4, 8, 8);
+}
+
+void Terminal::addWire(Wire *wire) {
+    if (!connectedWires.contains(wire)) {
+        connectedWires.append(wire);
+    }
+}
+
+void Terminal::removeWire(Wire *wire) {
+    connectedWires.removeAll(wire);
+}
+
+QList<Wire*> Terminal::getConnectedWires() const {
+    return connectedWires;
+}
+
+// ==========================================
+// رویدادهای Hover (ورود، حرکت و خروج موس)
+// ==========================================
+
+void Terminal::hoverEnterEvent(QGraphicsSceneHoverEvent *event) {
+    isHovered = true;
+    setCursor(Qt::CrossCursor);
+    update(); // روشن شدن نقطه آبی
+}
+
+void Terminal::hoverLeaveEvent(QGraphicsSceneHoverEvent *event) {
+    isHovered = false; // خاموش شدن نقطه آبی
+    setCursor(Qt::ArrowCursor);
+    update();
+    QGraphicsItem::hoverLeaveEvent(event);
+}
+
+void Terminal::mousePressEvent(QGraphicsSceneMouseEvent *event) {
+    // فعلاً فقط رویداد را ثبت می‌کنیم. منطق رسم سیم را در مراحل بعدی اینجا اضافه خواهیم کرد
+    event->accept();
+    QGraphicsItem::mousePressEvent(event);
+}
+
+// ============================================================================
+// پیاده‌سازی منطق الکتریکی و DRC (Design Rule Check)
+// ============================================================================
+
+void Terminal::resetState() {
+    _voltage = 0.0;
+    _isDriven = false;
+    _isUndefined = false;
+    update();
+}
+
+void Terminal::setVoltage(double v) {
+    // پیاده‌سازی بخش 11.1 (DRC): تشخیص اتصال کوتاه
+    // اگر پایه‌ای قبلاً در همین سیکل درایو شده باشد و اکنون ولتاژ متفاوتی به آن اعمال شود:
+    if (_isDriven && qAbs(_voltage - v) > 0.1) {
+        _isUndefined = true;
+        qWarning() << "DRC ERROR: Short Circuit Detected! Conflicting voltages at terminal.";
+        update(); // قرمز کردن پایه
+        return;
+    }
+
+    _voltage = v;
+    _isDriven = true;
+    _isUndefined = false;
+}
+
+void Terminal::setUndefined() {
+    _isUndefined = true;
+    update();
+}
+
+double Terminal::getVoltage() const {
+    return _voltage;
+}
+
+bool Terminal::isFloating() const {
+    // پیاده‌سازی بخش 11.2 (DRC): پایه رها شده
+    // پایه رهاست اگر هیچ سیمی به آن وصل نباشد و از داخل قطعه هم مقداردهی (درایو) نشده باشد
+    return connectedWires.isEmpty() && !_isDriven;
+}
+
+bool Terminal::getLogicState() const {
+    // وضعیت نامشخص یا فلوتینگ نمی‌تواند لاجیک درستی بدهد
+    if (_isUndefined || isFloating()) return false;
+
+    // تبدیل ولتاژ به منطق: فرض می‌کنیم در این مدار ولتاژ بالای 2.5 ولت معادل HIGH است
+    return _voltage >= 2.5;
+}
+
+bool Terminal::isUndefinedState() const {
+    return _isUndefined;
+}
+
+============================================================
+FILE: src\core\terminal.h
+============================================================
+
+#pragma once
+#include <QGraphicsItem>
+#include <QList>
+#include <QString> // اضافه شده برای رفع خطای متغیر هم‌گروهی شما
+
+class Wire;
+
+// کلاس ترمینال (پایه اتصال) که روی قطعات قرار می‌گیرد
+class Terminal : public QGraphicsItem {
+public:
+    explicit Terminal(QGraphicsItem *parent = nullptr);
+    ~Terminal() override; // مخرب اضافه شده از سمت هم‌گروهی
+
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+
+    void addWire(Wire *wire);
+    void removeWire(Wire *wire);
+    QList<Wire*> getConnectedWires() const;
+
+    // ==========================================
+    // خواص الکتریکی و منطقی (برای شبیه‌سازی و DRC)
+    // ==========================================
+    void setVoltage(double v);       // اعمال ولتاژ به پایه
+    double getVoltage() const;       // خواندن ولتاژ
+    void setUndefined();             // نامشخص کردن وضعیت (برای خطاهای فلوتینگ)
+
+    bool isFloating() const;         // بررسی رها بودن پایه
+    bool getLogicState() const;      // تبدیل ولتاژ به صفر و یک منطقی
+    bool isUndefinedState() const;   // بررسی خطای اتصال کوتاه
+
+    void resetState();               // پاک کردن وضعیت در ابتدای هر سیکل پردازش
+
+    // متغیر رابط کاربری (مربوط به کدهای هم‌گروهی)
+    QString voltageLevel = "Undefined";
+
+protected:
+    void hoverEnterEvent(QGraphicsSceneHoverEvent *event) override;
+    void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
+
+    // رویداد کلیک برای شروع سیم‌کشی
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+
+private:
+    bool isHovered;
+    QList<Wire*> connectedWires;
+
+    // متغیرهای شبیه‌سازی بک‌اند
+    double _voltage;
+    bool _isDriven;      // آیا در این سیکل ولتاژی به این پایه تزریق شده است؟
+    bool _isUndefined;   // آیا پایه دچار تناقض (مثل اتصال کوتاه) شده است؟
+};
+
+============================================================
+FILE: src\core\wire.cpp
+============================================================
+
+#include "wire.h"
+#include "terminal.h"
+#include <QPainter>
+#include "auto_router.h" // برای دسترسی به هوش مصنوعی
+#include <QToolTip>
+#include <QGraphicsSceneHoverEvent>
+#include "probe_item.h"
+#include "../canvas/circuit_scene.h"
+Wire::Wire(Terminal *startTerm, QPointF startPos) {
+    startTerminal = startTerm;
+    endTerminal = nullptr;
+
+    // نقطه شروع را دو بار به لیست اضافه می‌کنیم (دومی برای انتهای متحرک سیم است)
+    points.append(startPos);
+    points.append(startPos);
+    setZValue(-1);
+    // اضافه کردن این خط: اجازه انتخاب شدن با موس
+    setFlag(QGraphicsItem::ItemIsSelectable);
+    setAcceptHoverEvents(true);
+}
+
+void Wire::setEndPoint(QPointF endPos) {
+    if (!points.isEmpty()) {
+        points.last() = endPos; // همیشه آخرین نقطه به دنبال موس حرکت می‌کند
+        prepareGeometryChange();
+    }
+}
+
+void Wire::addWaypoint(QPointF point) {
+    if (points.size() >= 2) {
+        // نقطه جدید را درست قبل از نقطه متحرک پایانی وارد می‌کنیم
+        points.insert(points.size() - 1, point);
+    }
+}
+
+void Wire::setFullRoute(const QVector<QPointF> &route) {
+    points.clear();
+    points.append(startTerminal->sceneBoundingRect().center());
+    points.append(route);
+    prepareGeometryChange();
+}
+
+void Wire::confirmConnection(Terminal *endTerm) {
+    endTerminal = endTerm;
+    // وقتی سیم وصل شد، خودش را در حافظه پایه‌های مبدا و مقصد ثبت می‌کند
+    if (startTerminal) startTerminal->addWire(this);
+    if (endTerminal) endTerminal->addWire(this);
+}
+
+QRectF Wire::boundingRect() const {
+    // پیدا کردن کادری که تمام گره‌های سیم را در بر بگیرد
+    if (points.isEmpty()) return QRectF();
+
+    qreal minX = points[0].x(), maxX = points[0].x();
+    qreal minY = points[0].y(), maxY = points[0].y();
+
+    for (const QPointF &p : points) {
+        if (p.x() < minX) minX = p.x();
+        if (p.x() > maxX) maxX = p.x();
+        if (p.y() < minY) minY = p.y();
+        if (p.y() > maxY) maxY = p.y();
+    }
+
+    return QRectF(minX, minY, maxX - minX, maxY - minY).adjusted(-5, -5, 5, 5);
+}
+
+
+void Wire::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(isSelected() ? Qt::red : Qt::blue, 2);
+    painter->setPen(pen);
+
+    if (points.size() < 2) return;
+
+    // اگر سیم در حال کشیده شدن با موس است (نقاط کمی دارد)
+    if (points.size() <= 3) {
+        for (int i = 0; i < points.size() - 1; ++i) {
+            QPointF pA = points[i];
+            QPointF pB = points[i+1];
+            qreal midX = (pA.x() + pB.x()) / 2.0;
+
+            painter->drawLine(pA, QPointF(midX, pA.y()));
+            painter->drawLine(QPointF(midX, pA.y()), QPointF(midX, pB.y()));
+            painter->drawLine(QPointF(midX, pB.y()), pB);
+        }
+    } else {
+        // اگر سیم توسط هوش مصنوعی مسیردهی شده (صدها نقطه 10 پیکسلی دارد)
+        // خطوط مستقیماً به هم وصل می‌شوند تا زیگ‌زاگ نشود
+        for (int i = 0; i < points.size() - 1; ++i) {
+            painter->drawLine(points[i], points[i+1]);
+        }
+    }
+}
+void Wire::updateRoute() {
+    // اگر سیم هنوز کامل کشیده نشده (در دست کاربر است) نیازی به آپدیت ندارد
+    if (!startTerminal || !endTerminal || !scene()) return;
+
+    // فراخوانی مجدد هوش مصنوعی با مختصات جدید پایه‌ها
+    QVector<QPointF> newRoute = AutoRouter::findPath(
+            scene(),
+            startTerminal->scenePos(),
+            endTerminal->scenePos(),
+            startTerminal,
+            endTerminal,
+            this
+    );
+
+    // رسم مجدد مسیر
+    setFullRoute(newRoute);
+}
+Wire::~Wire() {
+    // وقتی کاربر سیم را با کلید Delete پاک می‌کند، سیم باید نام خودش را از لیست پایه‌ها خط بزند
+    if (startTerminal) startTerminal->removeWire(this);
+    if (endTerminal) endTerminal->removeWire(this);
+}
+void Wire::disconnectTerminal(Terminal *term) {
+    // اگر ترمینالی که دارد نابود می‌شود پایه شروع من است، آن را فراموش کن
+    if (startTerminal == term) {
+        startTerminal = nullptr;
+    }
+    // اگر پایه انتهایی من است، آن را فراموش کن
+    if (endTerminal == term) {
+        endTerminal = nullptr;
+    }
+}
+
+============================================================
+FILE: src\core\wire.h
+============================================================
+
+#pragma once
+#include <QGraphicsItem>
+#include <QVector>
+#include <QPointF>
+#include <QString>
+
+class Terminal;
+
+class Wire : public QGraphicsItem {
+public:
+    Wire(Terminal *startTerm, QPointF startPos);
+
+    void setEndPoint(QPointF endPos);
+    void addWaypoint(QPointF point); // برای گره‌گذاری دستی
+    void setFullRoute(const QVector<QPointF> &route); // برای مسیریاب هوشمند
+    void confirmConnection(Terminal *endTerm);
+
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+
+    // در بخش public اضافه کنید:
+    void updateRoute();
+    ~Wire() override; // مخرب برای پاک کردن تمیز از حافظه
+
+    // این متغیر بعداً توسط موتور شبیه‌ساز آپدیت می‌شود (مثلاً "5.0V" یا "0.0V")
+    QString voltageLevel = "Undefined";
+
+    // توابع کمکی برای خواندن پایه‌های متصل به سیم در سیستم ذخیره‌سازی
+    Terminal* getStartTerminal() const { return startTerminal; }
+    Terminal* getEndTerminal() const { return endTerminal; }
+
+    // قطع اتصال ترمینال (اضافه شده از سمت رابط کاربری)
+    void disconnectTerminal(Terminal *term);
+
+private:
+    Terminal *startTerminal;
+    Terminal *endTerminal;
+    QVector<QPointF> points; // جایگزین p1 و p2 شد تا بتواند چندین شکستگی را ذخیره کند
+
+protected:
+    //void hoverMoveEvent(QGraphicsSceneHoverEvent *event) override;
+    // void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
+};
+
+============================================================
+FILE: src\gui\hex_upload_dialog.cpp
+============================================================
+
+#include "hex_upload_dialog.h"
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QFileDialog>
+
+HexUploadDialog::HexUploadDialog(QWidget *parent) : QDialog(parent) {
+    setWindowTitle("Firmware Uploader (HEX)");
+    resize(400, 120);
+
+    // ساخت اجزای گرافیکی پنجره
+    label = new QLabel("Select Intel HEX File for MCU:", this);
+    pathLineEdit = new QLineEdit(this);
+    pathLineEdit->setReadOnly(true); // کاربر نتواند دستی مسیر را دستکاری کند
+
+    browseButton = new QPushButton("Browse...", this);
+    okButton = new QPushButton("Load Firmware", this);
+
+    // چیدمان افقی برای کادر متنی و دکمه Browse
+    QHBoxLayout *fileSelectionLayout = new QHBoxLayout();
+    fileSelectionLayout->addWidget(pathLineEdit);
+    fileSelectionLayout->addWidget(browseButton);
+
+    // چیدمان عمودی اصلی کل پنجره
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->addWidget(label);
+    mainLayout->addLayout(fileSelectionLayout);
+    mainLayout->addWidget(okButton);
+
+    // متصل کردن سیگنال‌ها به اسلات‌ها (مکانیزم رویدادها در Qt)
+    connect(browseButton, &QPushButton::clicked, this, &HexUploadDialog::onBrowseClicked);
+    connect(okButton, &QPushButton::clicked, this, &QDialog::accept); // بستن پنجره با موفقیت
+}
+
+void HexUploadDialog::onBrowseClicked() {
+    // باز کردن پنجره استاندارد ویندوز برای انتخاب فایل با فیلتر مخصوص .hex
+    QString filePath = QFileDialog::getOpenFileName(
+            this,
+            "Open Hex File",
+            "",
+            "Intel Hex Files (*.hex);;All Files (*.*)"
+    );
+
+    // اگر کاربر فایلی را انتخاب کرد (پنجره را کنسل نکرد)
+    if (!filePath.isEmpty()) {
+        pathLineEdit->setText(filePath);
+    }
+}
+
+QString HexUploadDialog::getSelectedFilePath() const {
+    return pathLineEdit->text();
+}
+
+============================================================
+FILE: src\gui\hex_upload_dialog.h
+============================================================
+
+#pragma once
+#include <QDialog>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QLabel>
+
+class HexUploadDialog : public QDialog {
+Q_OBJECT
+public:
+    explicit HexUploadDialog(QWidget *parent = nullptr);
+
+    // تابعی برای گرفتن مسیر فایلی که کاربر انتخاب کرده است
+    QString getSelectedFilePath() const;
+
+private slots:
+    // اسلات (تابع) اختصاصی برای مدیریت کلیک روی دکمه Browse
+    void onBrowseClicked();
+
+private:
+    QLabel *label;
+    QLineEdit *pathLineEdit;   // کادر متنی نمایش مسیر فایل
+    QPushButton *browseButton; // دکمه انتخاب فایل
+    QPushButton *okButton;     // دکمه تایید نهایی
+};
+
+============================================================
+FILE: src\gui\mainwindow.cpp
+============================================================
+
+#include "mainwindow.h"
+
+#include "../canvas/circuit_scene.h"
+#include "../canvas/circuit_view.h"
+#include "../core/probe_item.h"
+#include "../core/simulation_engine.h"
+#include "../core/terminal.h"
+#include "../core/wire.h"
+#include "../io/file_manager.h"
+#include "../ui/componentlibrary.h"
+
+#include <QCheckBox>
+#include <QComboBox>
+#include <QCursor>
+#include <QFileDialog>
+#include <QFile>
+#include <QFileInfo>
+#include <QFrame>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QSaveFile>
+#include <QStatusBar>
+#include <QTimer>
+#include <QVBoxLayout>
+#include <QtMath>
+
+MainWindow::MainWindow(const QSize &canvasSize, const QString &projectPath, QWidget *parent)
+    : QMainWindow(parent), m_canvasSize(canvasSize), m_projectPath(projectPath)
+{
+    resize(1280, 780);
+    setMinimumSize(900, 600);
+    const QString title = projectPath.isEmpty() ? tr("Untitled") : QFileInfo(projectPath).completeBaseName();
+    setWindowTitle(title + tr(" — Circuit Studio"));
+    buildInterface();
+    applyTheme();
+    configureSimulation();
+}
+
+void MainWindow::buildInterface()
+{
+    scene = new CircuitScene(this);
+    scene->setCanvasSize(m_canvasSize);
+    view = new CircuitView;
+    view->setScene(scene);
+
+    if (!m_projectPath.isEmpty() && QFileInfo::exists(m_projectPath)) {
+        FileManager::loadCircuit(m_projectPath, scene);
+        scene->voltageProbe = new ProbeItem();
+        scene->addItem(scene->voltageProbe);
+        scene->voltageProbe->hide();
+    }
+
+    auto *root = new QWidget;
+    auto *rootLayout = new QVBoxLayout(root);
+    rootLayout->setContentsMargins(14, 10, 14, 12);
+    rootLayout->setSpacing(10);
+
+    auto *top = new QFrame;
+    top->setObjectName("topBar");
+    auto *topLayout = new QHBoxLayout(top);
+    topLayout->setContentsMargins(14, 9, 14, 9);
+    auto *brand = new QLabel(tr("◉  Circuit Studio"));
+    brand->setObjectName("brand");
+    auto *project = new QLabel(QFileInfo(m_projectPath).completeBaseName());
+    if (project->text().isEmpty()) project->setText(tr("Untitled circuit"));
+    project->setObjectName("projectName");
+    auto *save = new QPushButton(tr("Save"));
+    auto *undo = new QPushButton(tr("↶"));
+    auto *redo = new QPushButton(tr("↷"));
+    auto *run = new QPushButton(tr("▶  Run"));
+    run->setCheckable(true);
+    run->setObjectName("primaryButton");
+    topLayout->addWidget(brand);
+    topLayout->addSpacing(12);
+    topLayout->addWidget(project);
+    topLayout->addStretch();
+    topLayout->addWidget(save);
+    topLayout->addWidget(undo);
+    topLayout->addWidget(redo);
+    topLayout->addSpacing(8);
+    topLayout->addWidget(run);
+
+    auto *content = new QWidget;
+    auto *contentLayout = new QHBoxLayout(content);
+    contentLayout->setContentsMargins(0, 0, 0, 0);
+    contentLayout->setSpacing(10);
+    auto *library = new ComponentLibrary;
+
+    auto *workspace = new QFrame;
+    workspace->setObjectName("workspace");
+    auto *workspaceLayout = new QVBoxLayout(workspace);
+    workspaceLayout->setContentsMargins(0, 0, 0, 0);
+    workspaceLayout->setSpacing(0);
+    auto *tools = new QFrame;
+    tools->setObjectName("canvasTools");
+    auto *toolsLayout = new QHBoxLayout(tools);
+    toolsLayout->setContentsMargins(12, 8, 12, 8);
+    auto *select = new QPushButton(tr("⌁  Select"));
+    select->setObjectName("selectedTool");
+    auto *wire = new QPushButton(tr("⌁  Wire"));
+    auto *probe = new QPushButton(tr("Probe"));
+    probe->setCheckable(true);
+    auto *zoomOut = new QPushButton(tr("−"));
+    auto *zoomIn = new QPushButton(tr("+"));
+    auto *reset = new QPushButton(tr("Fit"));
+    auto *gridSize = new QComboBox;
+    gridSize->addItems({tr("Grid 10"), tr("Grid 20"), tr("Grid 40")});
+    gridSize->setCurrentIndex(1);
+    auto *snap = new QCheckBox(tr("Snap"));
+    snap->setChecked(true);
+    toolsLayout->addWidget(select);
+    toolsLayout->addWidget(wire);
+    toolsLayout->addWidget(probe);
+    toolsLayout->addStretch();
+    toolsLayout->addWidget(gridSize);
+    toolsLayout->addWidget(snap);
+    toolsLayout->addSpacing(8);
+    toolsLayout->addWidget(zoomOut);
+    toolsLayout->addWidget(reset);
+    toolsLayout->addWidget(zoomIn);
+
+    workspaceLayout->addWidget(tools);
+    workspaceLayout->addWidget(view, 1);
+    contentLayout->addWidget(library);
+    contentLayout->addWidget(workspace, 1);
+    rootLayout->addWidget(top);
+    rootLayout->addWidget(content, 1);
+    setCentralWidget(root);
+
+    m_coordinates = new QLabel(tr("X 0   Y 0"));
+    m_zoomLabel = new QLabel(tr("Zoom 100%"));
+    statusBar()->addWidget(new QLabel(tr("● Ready")));
+    statusBar()->addPermanentWidget(m_coordinates);
+    statusBar()->addPermanentWidget(m_zoomLabel);
+
+    connect(save, &QPushButton::clicked, this, &MainWindow::saveProject);
+    connect(undo, &QPushButton::clicked, this, [this] { FileManager::undo(scene); });
+    connect(redo, &QPushButton::clicked, this, [this] { FileManager::redo(scene); });
+    connect(zoomIn, &QPushButton::clicked, view, &CircuitView::zoomIn);
+    connect(zoomOut, &QPushButton::clicked, view, &CircuitView::zoomOut);
+    connect(reset, &QPushButton::clicked, view, &CircuitView::fitCanvas);
+    connect(snap, &QCheckBox::toggled, scene, &CircuitScene::setSnapEnabled);
+    connect(gridSize, qOverload<int>(&QComboBox::currentIndexChanged), this, [scene = scene, gridSize] {
+        scene->setGridSize(gridSize->currentText().section(' ', 1).toInt());
+    });
+    connect(probe, &QPushButton::toggled, this, [this](bool checked) {
+        scene->isProbeEnabled = checked;
+        if (!checked && scene->voltageProbe) scene->voltageProbe->hide();
+    });
+    connect(run, &QPushButton::toggled, this, [this, run](bool running) {
+        if (running) {
+            m_simulationTimer->start(100);
+            run->setText(tr("Ⅱ  Pause"));
+        } else {
+            m_simulationTimer->stop();
+            run->setText(tr("▶  Run"));
+        }
+    });
+    connect(view, &CircuitView::cursorPositionChanged, this, [this](const QPointF &point) {
+        m_coordinates->setText(tr("X %1   Y %2").arg(qRound(point.x())).arg(qRound(point.y())));
+    });
+    connect(view, &CircuitView::zoomChanged, this, [this](int percent) {
+        m_zoomLabel->setText(tr("Zoom %1%").arg(percent));
+    });
+    connect(library, &ComponentLibrary::componentActivated, this, [this](const QString &id) {
+        scene->addComponent(id, view->mapToScene(view->viewport()->rect().center()));
+        statusBar()->showMessage(tr("Component added to the canvas"), 2500);
+    });
+    QTimer::singleShot(0, view, &CircuitView::fitCanvas);
+}
+
+void MainWindow::configureSimulation()
+{
+    m_engine = new SimulationEngine(scene, this);
+    m_simulationTimer = new QTimer(this);
+    connect(m_simulationTimer, &QTimer::timeout, this, [this] {
+        m_engine->stepSimulation();
+        if (isActiveWindow() && view->underMouse() && scene->isProbeEnabled && scene->voltageProbe) {
+            const QPoint viewPos = view->mapFromGlobal(QCursor::pos());
+            const QPointF scenePos = view->mapToScene(viewPos);
+            bool found = false;
+            for (QGraphicsItem *item : scene->items(scenePos)) {
+                if (auto *wire = dynamic_cast<Wire *>(item)) {
+                    scene->voltageProbe->updateProbe(wire->voltageLevel, scenePos);
+                    found = true;
+                    break;
+                }
+                if (auto *terminal = dynamic_cast<Terminal *>(item)) {
+                    scene->voltageProbe->updateProbe(terminal->voltageLevel, scenePos);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) scene->voltageProbe->hide();
+        } else if (scene->voltageProbe) {
+            scene->voltageProbe->hide();
+        }
+    });
+}
+
+void MainWindow::saveProject()
+{
+    if (m_projectPath.isEmpty()) {
+        m_projectPath = QFileDialog::getSaveFileName(
+            this, tr("Save circuit"), {}, tr("Circuit projects (*.circuit.json *.json)"));
+    }
+    if (m_projectPath.isEmpty()) return;
+    if (!FileManager::saveCircuit(m_projectPath, scene)) {
+        QMessageBox::critical(this, tr("Save failed"), tr("The project could not be saved."));
+        return;
+    }
+
+    QFile source(m_projectPath);
+    if (source.open(QIODevice::ReadOnly)) {
+        QJsonObject root = QJsonDocument::fromJson(source.readAll()).object();
+        source.close();
+        root["name"] = QFileInfo(m_projectPath).completeBaseName().remove(".circuit");
+        root["canvas"] = QJsonObject{{"width", m_canvasSize.width()},
+                                     {"height", m_canvasSize.height()}};
+        QSaveFile target(m_projectPath);
+        if (target.open(QIODevice::WriteOnly)) {
+            target.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
+            target.commit();
+        }
+    }
+    statusBar()->showMessage(tr("Project saved"), 2500);
+}
+
+void MainWindow::applyTheme()
+{
+    setStyleSheet(R"(
+        QMainWindow, QWidget { background: #EEF1F5; color: #1D2530; }
+        QLabel, QCheckBox { color: #354152; }
+        QFrame#topBar, QFrame#libraryPanel, QFrame#workspace {
+            background: #FFFFFF; border: 1px solid #DDE2E8; border-radius: 15px;
+        }
+        QFrame#workspace { border-radius: 14px; }
+        QFrame#canvasTools { background: #FFFFFF; border: none; border-bottom: 1px solid #E6E9ED; }
+        QLabel#brand { font-size: 17px; font-weight: 700; color: #1473E6; }
+        QLabel#projectName { color: #7A8491; }
+        QLabel#panelTitle { font-size: 18px; font-weight: 700; }
+        QLabel#sectionTitle { font-size: 12px; font-weight: 700; color: #667180; }
+        QLabel#symbolPreview { font-family: Consolas; font-size: 23px; color: #1473E6; min-height: 42px; }
+        QLabel#previewTitle { font-weight: 700; }
+        QLabel#emptyState { color: #8C96A3; padding: 18px; }
+        QFrame#previewCard { background: #F5F8FC; border: 1px solid #E1E7EF; border-radius: 12px; }
+        QLineEdit, QComboBox {
+            color: #1D2530; background: #F3F5F8; border: 1px solid transparent;
+            border-radius: 10px; padding: 8px 11px; selection-background-color: #1473E6;
+        }
+        QLineEdit:focus, QComboBox:focus { border-color: #1473E6; background: white; }
+        QTreeWidget, QListWidget { border: none; background: transparent; outline: none; }
+        QTreeWidget::item { padding: 6px; border-radius: 7px; }
+        QTreeWidget::item:selected { background: #E8F2FF; color: #0A66D3; }
+        QPushButton {
+            color: #253143; background: #F1F3F6; border: none; border-radius: 9px;
+            padding: 8px 12px; font-weight: 600;
+        }
+        QPushButton:hover { background: #E5E9EF; }
+        QPushButton#primaryButton { background: #1473E6; color: white; padding-left: 16px; padding-right: 16px; }
+        QPushButton#selectedTool { background: #E8F2FF; color: #0A66D3; }
+        QWidget#activeRow { background: #F5F8FC; border-radius: 8px; }
+        QPushButton#removeComponent {
+            color: #D64545; background: #FCEDEE; border: none; border-radius: 7px;
+            padding: 0; font-size: 17px; font-weight: 700;
+        }
+        QPushButton#removeComponent:hover { color: white; background: #D64545; }
+        QStatusBar { background: #FFFFFF; border-top: 1px solid #DDE2E8; }
+        QStatusBar QLabel { background: transparent; padding: 2px 10px; color: #667180; }
+    )");
+}
+
+
+============================================================
+FILE: src\gui\mainwindow.h
+============================================================
+
+#pragma once
+
+#include <QMainWindow>
+#include <QSize>
+
+class CircuitScene;
+class CircuitView;
+class QLabel;
+class QTimer;
+class SimulationEngine;
+
+class MainWindow final : public QMainWindow
+{
+    Q_OBJECT
+
+public:
+    explicit MainWindow(const QSize &canvasSize = QSize(1600, 1000),
+                        const QString &projectPath = {}, QWidget *parent = nullptr);
+    ~MainWindow() override = default;
+
+private:
+    void buildInterface();
+    void applyTheme();
+    void configureSimulation();
+    void saveProject();
+
+    CircuitScene *scene = nullptr;
+    CircuitView *view = nullptr;
+    SimulationEngine *m_engine = nullptr;
+    QTimer *m_simulationTimer = nullptr;
+    QLabel *m_coordinates = nullptr;
+    QLabel *m_zoomLabel = nullptr;
+    QSize m_canvasSize;
+    QString m_projectPath;
+};
+
+
+============================================================
+FILE: src\gui\properties_dialog.cpp
+============================================================
+
+#include "properties_dialog.h"
+
+PropertiesDialog::PropertiesDialog(const QString &title, const QMap<QString, QString> &properties, QWidget *parent)
+        : QDialog(parent)
+{
+    setupUI(title, properties);
+    applyStyles();
+}
+
+void PropertiesDialog::setupUI(const QString &title, const QMap<QString, QString> &properties) {
+    setWindowTitle(title + " Properties");
+    setMinimumWidth(350);
+
+    QLabel *titleLabel = new QLabel(title + " Settings", this);
+    titleLabel->setObjectName("titleLabel");
+
+    QLabel *subTitleLabel = new QLabel("Adjust the technical parameters below:", this);
+    subTitleLabel->setObjectName("subTitleLabel");
+
+    // ==========================================
+    // سیستم ساخت فرم داینامیک بر اساس ویژگی‌های قطعه
+    // ==========================================
+    QFormLayout *formLayout = new QFormLayout();
+
+    // حلقه زدن روی تمام ویژگی‌های ارسالی از قطعه (مثلاً مقاومت، ولتاژ و...)
+    for (auto it = properties.constBegin(); it != properties.constEnd(); ++it) {
+        QLabel *fieldLabel = new QLabel(it.key() + ":", this);
+        fieldLabel->setObjectName("fieldLabel");
+
+        QLineEdit *edit = new QLineEdit(this);
+        edit->setText(it.value()); // قرار دادن مقدار فعلی
+        edit->setObjectName("valueInput");
+
+        // 🛠️ رفع باگ گرافیکی: تضمین ارتفاع کافی برای فونت Consolas
+        edit->setMinimumHeight(35);
+
+        formLayout->addRow(fieldLabel, edit);
+        inputFields.insert(it.key(), edit); // ذخیره اشاره‌گر برای خواندن مقدار در آینده
+    }
+
+    btnSave = new QPushButton("Save Changes", this);
+    btnSave->setObjectName("btnSave");
+    btnSave->setCursor(Qt::PointingHandCursor);
+
+    btnCancel = new QPushButton("Cancel", this);
+    btnCancel->setObjectName("btnCancel");
+    btnCancel->setCursor(Qt::PointingHandCursor);
+
+    connect(btnSave, &QPushButton::clicked, this, &QDialog::accept);
+    connect(btnCancel, &QPushButton::clicked, this, &QDialog::reject);
+
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    buttonLayout->addStretch(); // هول دادن دکمه‌ها به سمت راست
+    buttonLayout->addWidget(btnCancel);
+    buttonLayout->addSpacing(10);
+    buttonLayout->addWidget(btnSave);
+
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(25, 25, 25, 25);
+    mainLayout->setSpacing(15);
+
+    mainLayout->addWidget(titleLabel);
+    mainLayout->addWidget(subTitleLabel);
+    mainLayout->addSpacing(10);
+    mainLayout->addLayout(formLayout); // اضافه کردن فرم داینامیک
+    mainLayout->addStretch();
+    mainLayout->addLayout(buttonLayout);
+}
+
+// تابع خواندن مقادیر جدید
+QMap<QString, QString> PropertiesDialog::getUpdatedProperties() const {
+    QMap<QString, QString> updatedProps;
+    for (auto it = inputFields.constBegin(); it != inputFields.constEnd(); ++it) {
+        updatedProps.insert(it.key(), it.value()->text());
+    }
+    return updatedProps;
+}
+
+void PropertiesDialog::applyStyles() {
+    QString styleSheet = R"(
+        QDialog { background-color: #1e1e2e; }
+        QLabel#titleLabel { color: #ffffff; font-size: 18px; font-weight: bold; }
+        QLabel#subTitleLabel { color: #a6accd; font-size: 12px; margin-bottom: 10px; }
+        QLabel#fieldLabel { color: #ffffff; font-size: 13px; font-weight: bold; }
+
+        /* استایل فیلدها با رفع باگ برش حروف */
+        QLineEdit#valueInput {
+            background-color: #2b2b40;
+            color: #00ffcc;
+            border: 2px solid #3a3a5a;
+            border-radius: 6px;
+            padding: 2px 10px; /* پدینگ بهینه شد */
+            font-size: 14px;
+            font-family: 'Consolas', monospace;
+        }
+        QLineEdit#valueInput:focus { border: 2px solid #00aaff; background-color: #32324a; }
+
+        QPushButton#btnSave {
+            background-color: #0077ff; color: white; border-radius: 6px; padding: 8px 15px; font-weight: bold;
+        }
+        QPushButton#btnSave:hover { background-color: #00aaff; }
+
+        QPushButton#btnCancel {
+            background-color: transparent; color: #a6accd; border: 2px solid #3a3a5a; border-radius: 6px; padding: 8px 15px; font-weight: bold;
+        }
+        QPushButton#btnCancel:hover { background-color: #3a3a5a; color: white; }
+    )";
+    this->setStyleSheet(styleSheet);
+}
+
+============================================================
+FILE: src\gui\properties_dialog.h
+============================================================
+
+#pragma once
+#include <QDialog>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QFormLayout>
+#include <QLabel>
+#include <QMap>
+
+class PropertiesDialog : public QDialog {
+Q_OBJECT
+
+public:
+    // سازنده حالا یک لیست از ویژگی‌ها (Key-Value) را دریافت می‌کند
+    explicit PropertiesDialog(const QString &title, const QMap<QString, QString> &properties, QWidget *parent = nullptr);
+
+    // برگرداندن مقادیر جدید به قطعه
+    QMap<QString, QString> getUpdatedProperties() const;
+
+private:
+    // نقشه‌ای برای ذخیره و دسترسی به تمام فیلدهای متنیِ ساخته شده
+    QMap<QString, QLineEdit*> inputFields;
+
+    QPushButton *btnSave;
+    QPushButton *btnCancel;
+
+    void setupUI(const QString &title, const QMap<QString, QString> &properties);
+    void applyStyles();
+};
+
+============================================================
+FILE: src\io\file_manager.cpp
+============================================================
+
+#include "file_manager.h"
+#include "../core/element.h"
+#include "../core/wire.h"
+#include "../core/terminal.h"
+#include "../components/basic_components.h"
+#include "../components/logic_gates.h"
+#include "../components/mcu.h"
+#include "../components/peripherals.h"
+
+#include <QFile>
+#include <QTextStream>
+#include <QDebug>
+#include <QMap>
+
+// مقداردهی اولیه متغیرهای استاتیک (تاریخچه مدار)
+QStack<QByteArray> FileManager::undoStack;
+QStack<QByteArray> FileManager::redoStack;
+QByteArray FileManager::currentState;
+
+// =========================================
+// توابع کمکی پیدا کردن شماره (Index)
+// =========================================
+static int getTerminalIndex(Element* el, Terminal* target) {
+    int index = 0;
+    for (QGraphicsItem* child : el->childItems()) {
+        if (Terminal* term = dynamic_cast<Terminal*>(child)) {
+            if (term == target) return index;
+            index++;
+        }
+    }
+    return -1;
+}
+
+static Terminal* getTerminalByIndex(Element* el, int index) {
+    int currentIndex = 0;
+    for (QGraphicsItem* child : el->childItems()) {
+        if (Terminal* term = dynamic_cast<Terminal*>(child)) {
+            if (currentIndex == index) return term;
+            currentIndex++;
+        }
+    }
+    return nullptr;
+}
+
+// =========================================
+// تابع کارخانه (Factory Pattern) - نسخه کامل
+// =========================================
+static Element* createComponent(const QString &type) {
+    if (type == "Microcontroller (MCU)") return new MCUChip();
+
+    // -- قطعات پایه --
+    if (type == "Resistor") return new Resistor();
+    if (type == "Capacitor") return new Capacitor();
+    if (type == "Inductor") return new Inductor();
+    if (type == "Pulse Generator") return new PulseGenerator();
+    if (type == "Switch") return new Switch();
+    if (type == "Push Button") return new PushButton();
+    if (type == "LED") return new LED();
+    if (type == "7-Segment Display") return new SevenSegment();
+    if (type == "Ground (GND)") return new Ground();
+    if (type == "DC Voltage Source") return new DCVoltageSource();
+    if (type == "Clock Generator") return new ClockGenerator();
+
+    // -- گیت‌های منطقی --
+    if (type == "AND Gate") return new AndGate();
+    if (type == "OR Gate") return new OrGate();
+    if (type == "NOT Gate") return new NotGate();
+    if (type == "XOR Gate") return new XorGate();
+    if (type == "NAND Gate") return new NandGate();
+    if (type == "D-Type Flip-Flop") return new DFlipFlop();
+
+    // -- پریفرال‌ها و آی‌سی‌ها --
+    if (type == "External Memory Chip") return new MemoryChip();
+    if (type == "LCD 16x2 Display") return new LCD16x2();
+    if (type == "Matrix Keypad 4x4") return new Keypad();
+    if (type == "Analog to Digital Converter (ADC)") return new ADC_Chip();
+    if (type == "Digital to Analog Converter (DAC)") return new DAC_Chip();
+
+    // اگر نام قطعه‌ای در لیست نبود، ارور را در کنسول چاپ کن تا سریع پیدایش کنیم
+    qWarning() << "[FileManager] ERROR: Unknown component type in Factory:" << type;
+    return nullptr;
+}
+// ============================================================================
+// موتور اصلی سریالایز و دی‌سریالایز (استفاده مشترک برای فایل و Undo/Redo)
+// ============================================================================
+
+QByteArray FileManager::captureSceneState(QGraphicsScene *scene) {
+    QList<Element*> elementsList;
+    for (QGraphicsItem *item : scene->items()) {
+        if (Element *el = dynamic_cast<Element*>(item)) {
+            elementsList.append(el);
+        }
+    }
+
+    QJsonObject rootObject;
+    rootObject["elements"] = serializeElements(elementsList);
+    rootObject["wires"] = serializeWires(scene, elementsList);
+
+    QJsonDocument doc(rootObject);
+    return doc.toJson(QJsonDocument::Compact); // فشرده ذخیره می‌کنیم تا رم اشغال نشود
+}
+
+void FileManager::restoreSceneState(const QByteArray &stateData, QGraphicsScene *scene) {
+    if (stateData.isEmpty()) return;
+
+    QJsonDocument doc = QJsonDocument::fromJson(stateData);
+    if (doc.isNull() || !doc.isObject()) return;
+
+    scene->clear();
+    QJsonObject rootObject = doc.object();
+    QList<Element*> loadedElements;
+
+    // بازیابی قطعات
+    QJsonArray elementsArray = rootObject["elements"].toArray();
+    for (const QJsonValue &value : elementsArray) {
+        QJsonObject elObj = value.toObject();
+        Element *newElement = createComponent(elObj["type"].toString());
+
+        if (newElement) {
+            QJsonObject posObj = elObj["position"].toObject();
+            newElement->setPos(posObj["x"].toDouble(), posObj["y"].toDouble());
+
+            QJsonObject propsObj = elObj["properties"].toObject();
+            QMap<QString, QString> props;
+            for (auto it = propsObj.constBegin(); it != propsObj.constEnd(); ++it) {
+                props[it.key()] = it.value().toString();
+            }
+            newElement->setProperties(props);
+
+            scene->addItem(newElement);
+            loadedElements.append(newElement);
+        } else {
+            loadedElements.append(nullptr);
+        }
+    }
+
+    // بازیابی سیم‌ها و مسیریابی خودکار
+    QJsonArray wiresArray = rootObject["wires"].toArray();
+    for (const QJsonValue &value : wiresArray) {
+        QJsonObject wireObj = value.toObject();
+        QJsonObject startObj = wireObj["start"].toObject();
+        QJsonObject endObj = wireObj["end"].toObject();
+
+        int startElIdx = startObj["element_index"].toInt(-1);
+        int startTermIdx = startObj["terminal_index"].toInt(-1);
+        int endElIdx = endObj["element_index"].toInt(-1);
+        int endTermIdx = endObj["terminal_index"].toInt(-1);
+
+        if (startElIdx >= 0 && endElIdx >= 0) {
+            Element *startEl = loadedElements.value(startElIdx, nullptr);
+            Element *endEl = loadedElements.value(endElIdx, nullptr);
+
+            if (startEl && endEl) {
+                Terminal *startTerm = getTerminalByIndex(startEl, startTermIdx);
+                Terminal *endTerm = getTerminalByIndex(endEl, endTermIdx);
+
+                if (startTerm && endTerm) {
+                    Wire *newWire = new Wire(startTerm, startTerm->scenePos());
+                    newWire->confirmConnection(endTerm);
+                    scene->addItem(newWire);
+                    newWire->updateRoute();
+                }
+            }
+        }
+    }
+}
+
+// =========================================
+// سیستم کنترل فایل (Save / Load)
+// =========================================
+bool FileManager::saveCircuit(const QString &filePath, QGraphicsScene *scene) {
+    if (!scene || filePath.isEmpty()) return false;
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) return false;
+
+    // تبدیل بوم به JSON ولی این بار با فرمت خوانا (Indented) برای ذخیره در هارد
+    QJsonDocument doc = QJsonDocument::fromJson(captureSceneState(scene));
+    QTextStream out(&file);
+    out << doc.toJson(QJsonDocument::Indented);
+    file.close();
+    return true;
+}
+
+bool FileManager::loadCircuit(const QString &filePath, QGraphicsScene *scene) {
+    if (!scene || filePath.isEmpty()) return false;
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return false;
+
+    QByteArray fileData = file.readAll();
+    file.close();
+
+    restoreSceneState(fileData, scene);
+
+    // پاک کردن تاریخچه به خاطر لود شدن مدار کاملاً جدید
+    undoStack.clear();
+    redoStack.clear();
+    currentState = captureSceneState(scene);
+
+    return true;
+}
+
+// =========================================
+// منطق اصلی Undo / Redo
+// =========================================
+void FileManager::recordState(QGraphicsScene *scene) {
+    if (!currentState.isEmpty()) {
+        undoStack.push(currentState);
+    }
+    currentState = captureSceneState(scene);
+    redoStack.clear(); // با انجام یک کار جدید، تاریخچه‌ی آینده پاک می‌شود
+    qDebug() << "[History] State recorded. Undo level:" << undoStack.size();
+}
+
+void FileManager::undo(QGraphicsScene *scene) {
+    if (undoStack.isEmpty()) {
+        qDebug() << "[History] Nothing to undo.";
+        return;
+    }
+    redoStack.push(currentState);
+    currentState = undoStack.pop();
+    restoreSceneState(currentState, scene);
+    qDebug() << "[History] Undo performed.";
+}
+
+void FileManager::redo(QGraphicsScene *scene) {
+    if (redoStack.isEmpty()) {
+        qDebug() << "[History] Nothing to redo.";
+        return;
+    }
+    undoStack.push(currentState);
+    currentState = redoStack.pop();
+    restoreSceneState(currentState, scene);
+    qDebug() << "[History] Redo performed.";
+}
+
+// =========================================
+// استخراج قطعات و سیم‌ها
+// =========================================
+QJsonArray FileManager::serializeElements(const QList<Element*> &elementsList) {
+    QJsonArray elementsArray;
+    for (Element *element : elementsList) {
+        QJsonObject elementObj;
+        elementObj["type"] = element->getComponentName();
+
+        QJsonObject posObj;
+        posObj["x"] = element->scenePos().x();
+        posObj["y"] = element->scenePos().y();
+        elementObj["position"] = posObj;
+
+        QJsonObject propsObj;
+        QMap<QString, QString> props = element->getProperties();
+        for (auto it = props.constBegin(); it != props.constEnd(); ++it) {
+            propsObj[it.key()] = it.value();
+        }
+        elementObj["properties"] = propsObj;
+        elementsArray.append(elementObj);
+    }
+    return elementsArray;
+}
+
+QJsonArray FileManager::serializeWires(QGraphicsScene *scene, const QList<Element*> &elementsList) {
+    QJsonArray wiresArray;
+    for (QGraphicsItem *item : scene->items()) {
+        if (Wire *wire = dynamic_cast<Wire*>(item)) {
+            Terminal *startTerm = wire->getStartTerminal();
+            Terminal *endTerm = wire->getEndTerminal();
+            if (!startTerm || !endTerm) continue;
+
+            Element *startEl = dynamic_cast<Element*>(startTerm->parentItem());
+            Element *endEl = dynamic_cast<Element*>(endTerm->parentItem());
+            if (!startEl || !endEl) continue;
+
+            int startElIndex = elementsList.indexOf(startEl);
+            int endElIndex = elementsList.indexOf(endEl);
+            if (startElIndex == -1 || endElIndex == -1) continue;
+
+            QJsonObject wireObj;
+            QJsonObject startObj, endObj;
+
+            startObj["element_index"] = startElIndex;
+            startObj["terminal_index"] = getTerminalIndex(startEl, startTerm);
+            endObj["element_index"] = endElIndex;
+            endObj["terminal_index"] = getTerminalIndex(endEl, endTerm);
+
+            wireObj["start"] = startObj;
+            wireObj["end"] = endObj;
+            wiresArray.append(wireObj);
+        }
+    }
+    return wiresArray;
+}
+
+============================================================
+FILE: src\io\file_manager.h
+============================================================
+
+#pragma once
+#include <QString>
+#include <QGraphicsScene>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QList>
+#include <QStack>
+#include <QByteArray>
+
+class Element;
+
+class FileManager {
+public:
+    // توابع ذخیره و بازیابی در فایل (بخش ۱۰.۱)
+    static bool saveCircuit(const QString &filePath, QGraphicsScene *scene);
+    static bool loadCircuit(const QString &filePath, QGraphicsScene *scene);
+
+    // ==========================================
+    // توابع سیستم پیشرفته Undo/Redo (بخش ۱۰.۲)
+    // ==========================================
+    static void recordState(QGraphicsScene *scene); // ثبت وضعیت جدید مدار
+    static void undo(QGraphicsScene *scene);        // بازگشت به عقب
+    static void redo(QGraphicsScene *scene);        // رفتن به جلو
+
+private:
+    // توابع هسته برای استخراج داده
+    static QJsonArray serializeElements(const QList<Element*> &elementsList);
+    static QJsonArray serializeWires(QGraphicsScene *scene, const QList<Element*> &elementsList);
+
+    // توابع کمکی برای تبدیل بوم به حافظه (Memory) و بالعکس
+    static QByteArray captureSceneState(QGraphicsScene *scene);
+    static void restoreSceneState(const QByteArray &stateData, QGraphicsScene *scene);
+
+    // پشته‌های حافظه برای نگهداری تاریخچه (History Stacks)
+    static QStack<QByteArray> undoStack;
+    static QStack<QByteArray> redoStack;
+    static QByteArray currentState;
+};
+
+============================================================
+FILE: src\simulation\drc_checker.h
+============================================================
+
+// Design Rule Checking (Short circuit, Floating pins)
+
+
+============================================================
+FILE: src\simulation\engine.cpp
+============================================================
+
+#include "engine.h"
+
+
+============================================================
+FILE: src\simulation\engine.h
+============================================================
+
+#pragma once
+
+class SimulationEngine {
+    // Manages Run, Pause, Stop states
+};
+
+
+============================================================
+FILE: src\ui\componentlibrary.cpp
+============================================================
+
+#include "componentlibrary.h"
+
+#include <QLabel>
+#include <QHash>
+#include <QHBoxLayout>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QPushButton>
+#include <QTreeWidget>
+#include <QVBoxLayout>
+
+ComponentLibrary::ComponentLibrary(QWidget *parent) : QFrame(parent)
+{
+    setObjectName("libraryPanel");
+    setMinimumWidth(270);
+    setMaximumWidth(340);
+
+    m_components = {
+        {"RESISTOR", "Resistor", "Analog", "Limits current flow", R"(─/\/\/─)"},
+        {"CAPACITOR", "Capacitor", "Analog", "Stores electrical charge", "─| |─"},
+        {"INDUCTOR", "Inductor", "Analog", "Stores energy in a magnetic field", "─((((─"},
+        {"DC_SOURCE", "DC Source", "Sources", "Ideal direct-voltage source", "─( + − )─"},
+        {"GROUND", "Ground", "Sources", "Circuit reference node", "  ⏚"},
+        {"AND_GATE", "AND Gate", "Digital", "Two-input logical AND", "─|AND)─"},
+        {"OR_GATE", "OR Gate", "Digital", "Two-input logical OR", "─)OR )─"},
+        {"NOT_GATE", "NOT Gate", "Digital", "Logical inverter", "─▷o─"},
+        {"XOR_GATE", "XOR Gate", "Digital", "Exclusive OR gate", "─)XOR)─"},
+        {"NAND_GATE", "NAND Gate", "Digital", "Inverted AND gate", "─|AND)o─"},
+        {"D_FLIP_FLOP", "D Flip-Flop", "Digital", "Sequential storage element", "─| D Q|─"},
+        {"LED", "LED", "Interactive", "Light-emitting diode", "─▷|─  ↗"},
+        {"SWITCH", "Switch", "Interactive", "User-controlled switch", "─o/ o─"},
+        {"PUSH_BUTTON", "Push Button", "Interactive", "Momentary user input", "─o  o─"},
+        {"SEVEN_SEGMENT", "Seven Segment", "Outputs", "Numeric display", "[ 8 ]"},
+        {"LCD", "LCD 16×2", "Outputs", "Character display", "[ LCD ]"},
+        {"PULSE_GENERATOR", "Pulse Generator", "Sources", "Digital clock source", "─▱▔▱─"},
+        {"MCU", "MCU", "Advanced", "Microcontroller component", "[ MCU ]"},
+        {"MEMORY", "Memory", "Advanced", "External memory chip", "[ RAM ]"},
+        {"KEYPAD", "Keypad", "Advanced", "Matrix keypad", "[ # ]"},
+        {"ADC", "ADC", "Converters", "Analog-to-digital converter", "[ A→D ]"},
+        {"DAC", "DAC", "Converters", "Digital-to-analog converter", "[ D→A ]"}
+    };
+
+    auto *layout = new QVBoxLayout(this);
+    layout->setContentsMargins(16, 18, 16, 16);
+    layout->setSpacing(12);
+
+    auto *title = new QLabel(tr("Components"));
+    title->setObjectName("panelTitle");
+    m_search = new QLineEdit;
+    m_search->setPlaceholderText(tr("Search name or category…"));
+    m_search->setClearButtonEnabled(true);
+
+    m_tree = new QTreeWidget;
+    m_tree->setHeaderHidden(true);
+    m_tree->setIndentation(16);
+    m_tree->setRootIsDecorated(true);
+
+    auto *preview = new QFrame;
+    preview->setObjectName("previewCard");
+    auto *previewLayout = new QVBoxLayout(preview);
+    m_symbol = new QLabel(R"(─/\/\/─)");
+    m_symbol->setObjectName("symbolPreview");
+    m_symbol->setAlignment(Qt::AlignCenter);
+    m_name = new QLabel(tr("Select a component"));
+    m_name->setObjectName("previewTitle");
+    m_description = new QLabel(tr("Its schematic preview appears here."));
+    m_description->setWordWrap(true);
+    m_description->setAlignment(Qt::AlignCenter);
+    previewLayout->addWidget(m_symbol);
+    previewLayout->addWidget(m_name, 0, Qt::AlignCenter);
+    previewLayout->addWidget(m_description);
+
+    m_empty = new QLabel(tr("No matching component"));
+    m_empty->setAlignment(Qt::AlignCenter);
+    m_empty->setObjectName("emptyState");
+    m_empty->hide();
+
+    auto *activeHeader = new QWidget;
+    auto *activeHeaderLayout = new QHBoxLayout(activeHeader);
+    activeHeaderLayout->setContentsMargins(0, 2, 0, 0);
+    auto *activeTitle = new QLabel(tr("Active components"));
+    activeTitle->setObjectName("sectionTitle");
+    activeHeaderLayout->addWidget(activeTitle);
+    activeHeaderLayout->addStretch();
+    m_active = new QListWidget;
+    m_active->setMaximumHeight(82);
+    m_active->setToolTip(tr("Components currently enabled for this project"));
+
+    layout->addWidget(title);
+    layout->addWidget(m_search);
+    layout->addWidget(m_tree, 1);
+    layout->addWidget(m_empty);
+    layout->addWidget(activeHeader);
+    layout->addWidget(m_active);
+    layout->addWidget(preview);
+
+    connect(m_search, &QLineEdit::textChanged, this, &ComponentLibrary::rebuildTree);
+    connect(m_tree, &QTreeWidget::currentItemChanged, this, &ComponentLibrary::updatePreview);
+    connect(m_tree, &QTreeWidget::itemDoubleClicked, this, [this](QTreeWidgetItem *item) {
+        if (item && item->data(0, Qt::UserRole).isValid()) {
+            if (m_active->findItems(item->text(0), Qt::MatchExactly).isEmpty()) {
+                auto *activeItem = new QListWidgetItem(item->text(0), m_active);
+                activeItem->setSizeHint(QSize(0, 34));
+                auto *row = new QWidget;
+                row->setObjectName("activeRow");
+                auto *rowLayout = new QHBoxLayout(row);
+                rowLayout->setContentsMargins(9, 2, 5, 2);
+                auto *label = new QLabel(item->text(0));
+                auto *remove = new QPushButton(QString::fromUtf8("−"));
+                remove->setObjectName("removeComponent");
+                remove->setToolTip(tr("Remove %1 from active components").arg(item->text(0)));
+                remove->setFixedSize(26, 26);
+                rowLayout->addWidget(label);
+                rowLayout->addStretch();
+                rowLayout->addWidget(remove);
+                m_active->setItemWidget(activeItem, row);
+                connect(remove, &QPushButton::clicked, this, [this, activeItem] {
+                    delete m_active->takeItem(m_active->row(activeItem));
+                });
+            }
+            const int componentIndex = item->data(0, Qt::UserRole).toInt();
+            emit componentActivated(m_components.at(componentIndex).id);
+        }
+    });
+    rebuildTree();
+}
+
+void ComponentLibrary::rebuildTree(const QString &query)
+{
+    m_tree->clear();
+    const QString needle = query.trimmed();
+    int matches = 0;
+    QHash<QString, QTreeWidgetItem *> categories;
+    for (int i = 0; i < m_components.size(); ++i) {
+        const auto &component = m_components.at(i);
+        if (!needle.isEmpty() && !component.name.contains(needle, Qt::CaseInsensitive) &&
+            !component.category.contains(needle, Qt::CaseInsensitive))
+            continue;
+
+        auto *category = categories.value(component.category, nullptr);
+        if (!category) {
+            category = new QTreeWidgetItem(m_tree, {component.category});
+            category->setFlags(category->flags() & ~Qt::ItemIsSelectable);
+            categories.insert(component.category, category);
+        }
+        auto *item = new QTreeWidgetItem(category, {component.name});
+        item->setData(0, Qt::UserRole, i);
+        ++matches;
+    }
+    m_tree->expandAll();
+    m_empty->setVisible(matches == 0);
+    m_tree->setVisible(matches != 0);
+}
+
+void ComponentLibrary::updatePreview(QTreeWidgetItem *current, QTreeWidgetItem *)
+{
+    if (!current || !current->data(0, Qt::UserRole).isValid())
+        return;
+    const auto &component = m_components.at(current->data(0, Qt::UserRole).toInt());
+    m_symbol->setText(component.symbol);
+    m_name->setText(component.name);
+    m_description->setText(component.description + "  •  " + component.category);
+}
+
+
+============================================================
+FILE: src\ui\componentlibrary.h
+============================================================
+
+#pragma once
+
+#include <QFrame>
+#include <QString>
+#include <QVector>
+
+class QLabel;
+class QLineEdit;
+class QListWidget;
+class QTreeWidget;
+class QTreeWidgetItem;
+
+struct ComponentInfo
+{
+    QString id;
+    QString name;
+    QString category;
+    QString description;
+    QString symbol;
+};
+
+class ComponentLibrary final : public QFrame
+{
+    Q_OBJECT
+
+public:
+    explicit ComponentLibrary(QWidget *parent = nullptr);
+
+signals:
+    void componentActivated(QString componentId);
+
+private slots:
+    void rebuildTree(const QString &query = {});
+    void updatePreview(QTreeWidgetItem *current, QTreeWidgetItem *previous);
+
+private:
+    QVector<ComponentInfo> m_components;
+    QLineEdit *m_search = nullptr;
+    QTreeWidget *m_tree = nullptr;
+    QLabel *m_symbol = nullptr;
+    QLabel *m_name = nullptr;
+    QLabel *m_description = nullptr;
+    QLabel *m_empty = nullptr;
+    QListWidget *m_active = nullptr;
+};
+
+
+============================================================
+FILE: src\ui\startdialog.cpp
+============================================================
+
+#include "startdialog.h"
+
+#include <QComboBox>
+#include <QDir>
+#include <QFile>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QFormLayout>
+#include <QFrame>
+#include <QHBoxLayout>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QLabel>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QRegularExpression>
+#include <QSaveFile>
+#include <QSettings>
+#include <QSpinBox>
+#include <QStandardPaths>
+#include <QVBoxLayout>
+
+namespace {
+constexpr int kRecentProjectCount = 5;
+}
+
+StartDialog::StartDialog(QWidget *parent) : QDialog(parent)
+{
+    setWindowFlags(Qt::Window | Qt::WindowMinimizeButtonHint |
+                   Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+    setWindowTitle(tr("Welcome to Circuit Studio"));
+    resize(920, 590);
+    setMinimumSize(760, 520);
+    setModal(true);
+
+    auto *layout = new QVBoxLayout(this);
+    layout->setContentsMargins(38, 30, 38, 30);
+    layout->setSpacing(18);
+
+    auto *eyebrow = new QLabel(tr("OOP CORE  /  PROTEUS CLONE"));
+    eyebrow->setObjectName("eyebrow");
+
+    auto *headingRow = new QHBoxLayout;
+    auto *headingText = new QVBoxLayout;
+    auto *title = new QLabel(tr("Design circuits, simply."));
+    title->setObjectName("welcomeTitle");
+    auto *subtitle = new QLabel(tr("Create a clean workspace or continue from an existing project."));
+    subtitle->setObjectName("subtitle");
+    headingText->addWidget(title);
+    headingText->addWidget(subtitle);
+
+    auto *open = new QPushButton(tr("Open project…"));
+    open->setObjectName("openButton");
+    auto *create = new QPushButton(tr("Create project  →"));
+    create->setObjectName("createButton");
+    auto *topActions = new QHBoxLayout;
+    topActions->setSpacing(9);
+    topActions->addWidget(open);
+    topActions->addWidget(create);
+    headingRow->addLayout(headingText, 1);
+    headingRow->addLayout(topActions);
+
+    auto *body = new QHBoxLayout;
+    body->setSpacing(16);
+
+    auto *recentCard = new QFrame;
+    recentCard->setObjectName("recentCard");
+    recentCard->setMinimumWidth(260);
+    recentCard->setMaximumWidth(320);
+    auto *recentLayout = new QVBoxLayout(recentCard);
+    recentLayout->setContentsMargins(18, 18, 18, 18);
+    auto *recentTitle = new QLabel(tr("Recent projects"));
+    recentTitle->setObjectName("cardTitle");
+    auto *recentHint = new QLabel(tr("Your five most recent workspaces"));
+    recentHint->setObjectName("cardHint");
+    m_recent = new QListWidget;
+    m_recent->setObjectName("recentProjects");
+    m_recent->setSpacing(3);
+    recentLayout->addWidget(recentTitle);
+    recentLayout->addWidget(recentHint);
+    recentLayout->addSpacing(5);
+    recentLayout->addWidget(m_recent, 1);
+
+    auto *helpCard = new QFrame;
+    helpCard->setObjectName("sideCard");
+    auto *helpLayout = new QVBoxLayout(helpCard);
+    helpLayout->setContentsMargins(16, 13, 16, 13);
+    helpLayout->setSpacing(5);
+    auto *helpTitle = new QLabel(tr("Help"));
+    helpTitle->setObjectName("sideCardTitle");
+    auto *gettingStarted = new QPushButton(tr("Getting started  →"));
+    gettingStarted->setObjectName("linkButton");
+    auto *shortcuts = new QPushButton(tr("Keyboard shortcuts  →"));
+    shortcuts->setObjectName("linkButton");
+    helpLayout->addWidget(helpTitle);
+    helpLayout->addWidget(gettingStarted);
+    helpLayout->addWidget(shortcuts);
+
+    auto *aboutCard = new QFrame;
+    aboutCard->setObjectName("sideCard");
+    auto *aboutLayout = new QVBoxLayout(aboutCard);
+    aboutLayout->setContentsMargins(16, 13, 16, 13);
+    aboutLayout->setSpacing(3);
+    auto *aboutTitle = new QLabel(tr("About"));
+    aboutTitle->setObjectName("sideCardTitle");
+    auto *aboutText = new QLabel(tr("Circuit Studio  •  v0.1\nOOP Core — Proteus Clone"));
+    aboutText->setObjectName("aboutText");
+    auto *aboutDetails = new QPushButton(tr("Project details  →"));
+    aboutDetails->setObjectName("linkButton");
+    aboutLayout->addWidget(aboutTitle);
+    aboutLayout->addWidget(aboutText);
+    aboutLayout->addWidget(aboutDetails);
+
+    auto *leftColumn = new QWidget;
+    auto *leftLayout = new QVBoxLayout(leftColumn);
+    leftLayout->setContentsMargins(0, 0, 0, 0);
+    leftLayout->setSpacing(10);
+    leftLayout->addWidget(recentCard, 1);
+    leftLayout->addWidget(helpCard);
+    leftLayout->addWidget(aboutCard);
+
+    auto *projectCard = new QFrame;
+    projectCard->setObjectName("projectCard");
+    auto *projectLayout = new QVBoxLayout(projectCard);
+    projectLayout->setContentsMargins(22, 20, 22, 20);
+    projectLayout->setSpacing(14);
+    auto *projectTitle = new QLabel(tr("New project"));
+    projectTitle->setObjectName("cardTitle");
+    auto *projectHint = new QLabel(tr("Choose a name, save location, and canvas preset."));
+    projectHint->setObjectName("cardHint");
+
+    auto *form = new QFormLayout;
+    form->setSpacing(13);
+    form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+    m_name = new QLineEdit(tr("Untitled circuit"));
+
+    m_location = new QLineEdit;
+    const QString documents = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    m_location->setText(QDir(documents).filePath("CircuitStudio"));
+    auto *locationRow = new QWidget;
+    auto *locationLayout = new QHBoxLayout(locationRow);
+    locationLayout->setContentsMargins(0, 0, 0, 0);
+    locationLayout->setSpacing(8);
+    auto *browse = new QPushButton(tr("Browse…"));
+    locationLayout->addWidget(m_location, 1);
+    locationLayout->addWidget(browse);
+
+    m_sizePreset = new QComboBox;
+    m_sizePreset->addItem(tr("Default — 1600 × 1000"), QSize(1600, 1000));
+    m_sizePreset->addItem(tr("Landscape A4 — 1600 × 1131"), QSize(1600, 1131));
+    m_sizePreset->addItem(tr("Landscape A3 — 2263 × 1600"), QSize(2263, 1600));
+    m_sizePreset->addItem(tr("Portrait A4 — 1131 × 1600"), QSize(1131, 1600));
+    m_sizePreset->addItem(tr("HD — 1920 × 1080"), QSize(1920, 1080));
+    m_sizePreset->addItem(tr("Custom"), QSize());
+
+    m_width = new QSpinBox;
+    m_height = new QSpinBox;
+    for (auto *spin : {m_width, m_height}) {
+        spin->setRange(400, 10000);
+        spin->setSingleStep(100);
+        spin->setSuffix(tr(" px"));
+    }
+    m_width->setValue(1600);
+    m_height->setValue(1000);
+    auto *dimensions = new QWidget;
+    auto *dimensionLayout = new QHBoxLayout(dimensions);
+    dimensionLayout->setContentsMargins(0, 0, 0, 0);
+    dimensionLayout->setSpacing(8);
+    dimensionLayout->addWidget(m_width);
+    dimensionLayout->addWidget(new QLabel("×"));
+    dimensionLayout->addWidget(m_height);
+
+    form->addRow(tr("Project name"), m_name);
+    form->addRow(tr("Save location"), locationRow);
+    form->addRow(tr("Canvas preset"), m_sizePreset);
+    form->addRow(tr("Canvas size"), dimensions);
+    projectLayout->addWidget(projectTitle);
+    projectLayout->addWidget(projectHint);
+    projectLayout->addSpacing(5);
+    projectLayout->addLayout(form);
+    projectLayout->addStretch();
+
+    body->addWidget(leftColumn);
+    body->addWidget(projectCard, 1);
+    layout->addWidget(eyebrow);
+    layout->addLayout(headingRow);
+    layout->addLayout(body, 1);
+
+    connect(create, &QPushButton::clicked, this, &StartDialog::createProject);
+    connect(open, &QPushButton::clicked, this, &StartDialog::openProject);
+    connect(browse, &QPushButton::clicked, this, [this] {
+        const QString directory = QFileDialog::getExistingDirectory(
+            this, tr("Choose project location"), m_location->text());
+        if (!directory.isEmpty())
+            m_location->setText(QDir::toNativeSeparators(directory));
+    });
+    connect(m_sizePreset, qOverload<int>(&QComboBox::currentIndexChanged), this, [this](int index) {
+        const QSize size = m_sizePreset->itemData(index).toSize();
+        if (size.isValid()) {
+            m_width->setValue(size.width());
+            m_height->setValue(size.height());
+        }
+    });
+    const auto selectCustomSize = [this] {
+        if (m_sizePreset->currentIndex() != m_sizePreset->count() - 1)
+            m_sizePreset->setCurrentIndex(m_sizePreset->count() - 1);
+    };
+    connect(m_width, &QSpinBox::editingFinished, this, selectCustomSize);
+    connect(m_height, &QSpinBox::editingFinished, this, selectCustomSize);
+    connect(m_recent, &QListWidget::itemDoubleClicked, this, [this](QListWidgetItem *item) {
+        const QString path = item->data(Qt::UserRole).toString();
+        if (path.isEmpty())
+            return;
+        if (!QFileInfo::exists(path)) {
+            QMessageBox::warning(this, tr("Project not found"),
+                                 tr("This project no longer exists at:\n%1").arg(path));
+            return;
+        }
+        m_projectFilePath = path;
+        m_name->setText(QFileInfo(path).completeBaseName());
+        applyProjectMetadata(path);
+        rememberProject(path);
+        accept();
+    });
+    connect(gettingStarted, &QPushButton::clicked, this, [this] {
+        QMessageBox::information(
+            this, tr("Getting started"),
+            tr("1. Enter a project name.\n"
+               "2. Choose a save location.\n"
+               "3. Select a standard canvas size or Custom.\n"
+               "4. Click Create project.\n\n"
+               "In the editor, use the component library on the left and double-click a component to activate it."));
+    });
+    connect(shortcuts, &QPushButton::clicked, this, [this] {
+        QMessageBox::information(
+            this, tr("Keyboard shortcuts"),
+            tr("Zoom in:  +\nZoom out:  −\nReset zoom:  0\n"
+               "Pan canvas:  Middle mouse drag or Shift + drag"));
+    });
+    connect(aboutDetails, &QPushButton::clicked, this, [this] {
+        QMessageBox::about(
+            this, tr("About Circuit Studio"),
+            tr("Circuit Studio v0.1\n\n"
+               "A C++ and Qt implementation of the OOP Proteus Clone project.\n\n"
+               "Team: Shahab, Mohammad Javad, Yasin\n"
+               "UI/UX and subprojects 1–2: Shahab"));
+    });
+
+    loadRecentProjects();
+
+    setStyleSheet(R"(
+        QDialog { background: #F2F5F9; color: #1D2530; }
+        QDialog QWidget { color: #1D2530; }
+        QLabel { color: #3F4A59; background: transparent; }
+        QLabel#eyebrow { color: #1473E6; font-weight: 700; letter-spacing: 1px; }
+        QLabel#welcomeTitle { color: #17202C; font-size: 30px; font-weight: 700; }
+        QLabel#subtitle, QLabel#cardHint { color: #667180; }
+        QLabel#cardTitle { color: #17202C; font-size: 17px; font-weight: 700; }
+        QLabel#sideCardTitle { color: #17202C; font-size: 14px; font-weight: 700; }
+        QLabel#aboutText { color: #667180; font-size: 11px; }
+        QFrame#recentCard, QFrame#projectCard {
+            background: white; border: 1px solid #DDE3EA; border-radius: 16px;
+        }
+        QFrame#sideCard {
+            background: white; border: 1px solid #DDE3EA; border-radius: 13px;
+        }
+        QLineEdit, QSpinBox, QComboBox {
+            color: #17202C; background: #F2F4F7; border: 1px solid transparent;
+            border-radius: 9px; padding: 8px; selection-color: white;
+            selection-background-color: #1473E6;
+        }
+        QLineEdit:focus, QSpinBox:focus, QComboBox:focus { background: white; border-color: #1473E6; }
+        QListWidget#recentProjects { background: transparent; border: none; outline: none; }
+        QListWidget#recentProjects::item { color: #253143; padding: 9px; border-radius: 9px; }
+        QListWidget#recentProjects::item:hover { background: #F0F5FB; }
+        QListWidget#recentProjects::item:selected { color: #0A66D3; background: #E8F2FF; }
+        QPushButton {
+            color: #253143; background: white; border: 1px solid #D9DFE7;
+            border-radius: 10px; padding: 10px 16px; font-weight: 600;
+        }
+        QPushButton:hover { background: #EAF2FC; }
+        QPushButton#linkButton {
+            color: #0A66D3; background: transparent; border: none; border-radius: 6px;
+            padding: 3px 0; text-align: left; font-weight: 500;
+        }
+        QPushButton#linkButton:hover { color: #084F9F; background: #F2F7FD; }
+        QPushButton#createButton { background: #1473E6; border: none; color: white; }
+        QPushButton#createButton:hover { background: #0E65CF; }
+    )");
+}
+
+void StartDialog::createProject()
+{
+    const QString name = m_name->text().trimmed();
+    const QString location = QDir::fromNativeSeparators(m_location->text().trimmed());
+    if (name.isEmpty() || location.isEmpty()) {
+        QMessageBox::warning(this, tr("Missing information"),
+                             tr("Enter both a project name and save location."));
+        return;
+    }
+
+    QDir directory;
+    if (!directory.mkpath(location)) {
+        QMessageBox::critical(this, tr("Cannot create project"),
+                              tr("The selected save location could not be created."));
+        return;
+    }
+
+    QString safeName = name;
+    safeName.replace(QRegularExpression(R"([\\/:*?"<>|])"), "_");
+    m_projectFilePath = QDir(location).filePath(safeName + ".circuit.json");
+    if (QFileInfo::exists(m_projectFilePath)) {
+        const auto answer = QMessageBox::question(
+            this, tr("Replace existing project"),
+            tr("A project with this name already exists. Replace it?"));
+        if (answer != QMessageBox::Yes)
+            return;
+    }
+
+    QJsonObject canvas{{"width", m_width->value()}, {"height", m_height->value()}};
+    QJsonObject project{{"name", name}, {"canvas", canvas},
+                        {"elements", QJsonArray{}}, {"wires", QJsonArray{}}};
+    QSaveFile file(m_projectFilePath);
+    if (!file.open(QIODevice::WriteOnly) ||
+        file.write(QJsonDocument(project).toJson(QJsonDocument::Indented)) < 0 || !file.commit()) {
+        QMessageBox::critical(this, tr("Cannot save project"), file.errorString());
+        m_projectFilePath.clear();
+        return;
+    }
+
+    rememberProject(m_projectFilePath);
+    accept();
+}
+
+void StartDialog::openProject()
+{
+    const QString path = QFileDialog::getOpenFileName(
+        this, tr("Open circuit project"), m_location->text(),
+        tr("Circuit projects (*.circuit.json *.json *.txt);;All files (*)"));
+    if (path.isEmpty())
+        return;
+    m_projectFilePath = path;
+    m_name->setText(QFileInfo(path).completeBaseName().remove(".circuit"));
+    applyProjectMetadata(path);
+    rememberProject(path);
+    accept();
+}
+
+void StartDialog::applyProjectMetadata(const QString &path)
+{
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) return;
+    const QJsonDocument document = QJsonDocument::fromJson(file.readAll());
+    const QJsonObject canvas = document.object().value("canvas").toObject();
+    const int width = canvas.value("width").toInt();
+    const int height = canvas.value("height").toInt();
+    if (width >= m_width->minimum() && height >= m_height->minimum()) {
+        m_width->setValue(width);
+        m_height->setValue(height);
+        m_sizePreset->setCurrentIndex(m_sizePreset->count() - 1);
+    }
+    const QString savedName = document.object().value("name").toString();
+    if (!savedName.isEmpty()) m_name->setText(savedName);
+}
+
+void StartDialog::loadRecentProjects()
+{
+    const QStringList paths = QSettings().value("recentProjects").toStringList();
+    for (int i = 0; i < kRecentProjectCount; ++i) {
+        if (i < paths.size()) {
+            const QFileInfo info(paths.at(i));
+            auto *item = new QListWidgetItem(QString("%1\n%2")
+                                                  .arg(info.completeBaseName().remove(".circuit"),
+                                                       QDir::toNativeSeparators(info.absolutePath())));
+            item->setData(Qt::UserRole, paths.at(i));
+            item->setToolTip(QDir::toNativeSeparators(paths.at(i)));
+            m_recent->addItem(item);
+        } else {
+            auto *item = new QListWidgetItem(tr("No recent project"));
+            item->setFlags(Qt::NoItemFlags);
+            item->setForeground(QColor("#9AA3AF"));
+            m_recent->addItem(item);
+        }
+    }
+}
+
+void StartDialog::rememberProject(const QString &path)
+{
+    QSettings settings;
+    QStringList paths = settings.value("recentProjects").toStringList();
+    paths.removeAll(path);
+    paths.prepend(path);
+    while (paths.size() > kRecentProjectCount)
+        paths.removeLast();
+    settings.setValue("recentProjects", paths);
+}
+
+QString StartDialog::projectName() const
+{
+    return m_name->text().trimmed();
+}
+
+QString StartDialog::projectFilePath() const
+{
+    return m_projectFilePath;
+}
+
+QSize StartDialog::canvasSize() const
+{
+    return {m_width->value(), m_height->value()};
+}
+
+
+============================================================
+FILE: src\ui\startdialog.h
+============================================================
+
+#pragma once
+
+#include <QDialog>
+#include <QSize>
+
+class QLineEdit;
+class QListWidget;
+class QComboBox;
+class QSpinBox;
+
+class StartDialog final : public QDialog
+{
+    Q_OBJECT
+
+public:
+    explicit StartDialog(QWidget *parent = nullptr);
+    QString projectName() const;
+    QString projectFilePath() const;
+    QSize canvasSize() const;
+
+private:
+    void createProject();
+    void openProject();
+    void applyProjectMetadata(const QString &path);
+    void loadRecentProjects();
+    void rememberProject(const QString &path);
+
+    QLineEdit *m_name = nullptr;
+    QLineEdit *m_location = nullptr;
+    QComboBox *m_sizePreset = nullptr;
+    QSpinBox *m_width = nullptr;
+    QSpinBox *m_height = nullptr;
+    QListWidget *m_recent = nullptr;
+    QString m_projectFilePath;
+};
+

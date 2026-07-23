@@ -6,7 +6,8 @@
 #include "../components/logic_gates.h"
 #include "../components/mcu.h"
 #include "../components/peripherals.h"
-
+#include "../core/probe_item.h"
+#include "../canvas/circuit_scene.h"
 #include <QFile>
 #include <QTextStream>
 #include <QDebug>
@@ -107,6 +108,16 @@ void FileManager::restoreSceneState(const QByteArray &stateData, QGraphicsScene 
     if (doc.isNull() || !doc.isObject()) return;
 
     scene->clear();
+
+    // ======= بازسازی پروب پس از پاکسازی بوم =======
+    if (auto *circuitScene = dynamic_cast<CircuitScene*>(scene)) {
+        circuitScene->voltageProbe = new ProbeItem();
+        circuitScene->addItem(circuitScene->voltageProbe);
+        circuitScene->voltageProbe->hide();
+    }
+    // ==============================================
+
+    // این دو خط احتمالاً در سیستم شما پاک شده بودند:
     QJsonObject rootObject = doc.object();
     QList<Element*> loadedElements;
 
