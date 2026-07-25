@@ -47,7 +47,78 @@ FILE: src\canvas\circuit_scene.cpp
 #include "../components/logic_gates.h"
 #include "../components/peripherals.h"
 #include "../io/file_manager.h"
+#include <QLineF>
 
+// تابع قدرتمند: قیچی مجازی با قابلیت تراز خودکار (Auto-Alignment) روی خطوط
+static QPointF splitWireExactly(Wire* clickedWire, QPointF rawMousePos, JunctionNode* junction, QGraphicsScene* scene) {
+    Terminal *targetStart = clickedWire->getStartTerminal();
+    Terminal *targetEnd = clickedWire->getEndTerminal();
+    QVector<QPointF> oldPath = clickedWire->getPoints();
+
+    QVector<QPointF> path1, path2;
+    bool splitFound = false;
+    QPointF exactPos = rawMousePos;
+
+    // ۱. یافتن قطعه‌ای از سیم که موس دقیقاً روی آن کلیک کرده است (حتی اگر چند پیکسل خطا داشته باشد)
+    double minDiff = 1000000.0;
+    int bestSegment = 0;
+    for (int i = 0; i < oldPath.size() - 1; ++i) {
+        double d1 = QLineF(oldPath[i], rawMousePos).length();
+        double d2 = QLineF(rawMousePos, oldPath[i+1]).length();
+        double d  = QLineF(oldPath[i], oldPath[i+1]).length();
+        double diff = qAbs((d1 + d2) - d); // اختلاف مسیر مثلثی
+        if (diff < minDiff) {
+            minDiff = diff;
+            bestSegment = i;
+        }
+    }
+
+    // ۲. بریدن سیم و تراز کردن نقطه جدید
+    for (int i = 0; i < oldPath.size() - 1; ++i) {
+        QPointF A = oldPath[i];
+        QPointF B = oldPath[i+1];
+
+        if (!splitFound) {
+            path1.append(A);
+            if (i == bestSegment) {
+                // جادوی صاف ماندن سیم: تراز کردن X یا Y بر اساس جهت سیم
+                if (qAbs(A.x() - B.x()) < 1.0) exactPos.setX(A.x()); // اگر خط عمودی است، X باید کاملا فیکس شود
+                else if (qAbs(A.y() - B.y()) < 1.0) exactPos.setY(A.y()); // اگر خط افقی است، Y باید کاملا فیکس شود
+
+                path1.append(exactPos);
+                path2.append(exactPos);
+                path2.append(B);
+                splitFound = true;
+            }
+        } else {
+            path2.append(B);
+        }
+    }
+
+    // در صورتی که سیم خیلی عجیب بود (احتمال ۱ درصد)
+    if (!splitFound) {
+        path1 = {targetStart->sceneBoundingRect().center(), exactPos};
+        path2 = {exactPos, targetEnd->sceneBoundingRect().center()};
+    }
+
+    // ۳. قرار دادن گره "دقیقاً" روی نقطه تراز شده (حل باگ معلق بودن گره)
+    junction->setPos(exactPos);
+
+    scene->removeItem(clickedWire);
+    delete clickedWire;
+
+    Wire *w1 = new Wire(targetStart, targetStart->sceneBoundingRect().center());
+    w1->confirmConnection(junction->term);
+    scene->addItem(w1);
+    w1->setFullRoute(path1);
+
+    Wire *w2 = new Wire(junction->term, junction->term->sceneBoundingRect().center());
+    w2->confirmConnection(targetEnd);
+    scene->addItem(w2);
+    w2->setFullRoute(path2);
+
+    return exactPos; // برگرداندن نقطه کاملاً تراز شده برای استفاده در سیم جدید
+}
 CircuitScene::CircuitScene(QObject *parent)
         : QGraphicsScene(parent), isWiring(false), tempWire(nullptr), startTerminal(nullptr) {
 
@@ -101,57 +172,107 @@ void CircuitScene::drawBackground(QPainter *painter, const QRectF &rect) {
 // رویدادهای موس (سیم‌کشی و جابجایی)
 // ==========================================
 void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
-    if (event->button() == Qt::LeftButton) {
-        QGraphicsItem *item = itemAt(event->scenePos(), QTransform());
-        Terminal *clickedTerminal = dynamic_cast<Terminal*>(item);
-
-        if (clickedTerminal) {
-            if (!isWiring) {
-                // شروع سیم‌کشی
-                isWiring = true;
-                startTerminal = clickedTerminal;
-
-                QPointF startPos = clickedTerminal->sceneBoundingRect().center();
-                tempWire = new Wire(startTerminal, startPos);
-                addItem(tempWire);
-                return;
-            } else {
-                // --- پایان سیم‌کشی (وصل شدن به پایه دوم) ---
-                if (clickedTerminal != startTerminal) {
-                    QPointF startP = startTerminal->sceneBoundingRect().center();
-                    QPointF endP = clickedTerminal->sceneBoundingRect().center();
-
-                    // فراخوانی مسیریاب خودکار هوشمند
-                    QVector<QPointF> smartPath = AutoRouter::findPath(this, startP, endP, startTerminal, clickedTerminal, tempWire);
-
-                    tempWire->setFullRoute(smartPath);
-                    tempWire->confirmConnection(clickedTerminal);
-
-                    isWiring = false;
-                    tempWire = nullptr;
-                    startTerminal = nullptr;
-
-                    // ثبت در تاریخچه برای کارکردن Undo بعد از سیم‌کشی
-                    FileManager::recordState(this);
-                    return;
-                }
-            }
-        } else if (isWiring) {
-            // لغو سیم‌کشی با کلیک روی فضای خالی
-            if (tempWire) {
-                removeItem(tempWire);
-                delete tempWire;
-            }
-            isWiring = false;
-            tempWire = nullptr;
-            startTerminal = nullptr;
+    if (event->button() == Qt::RightButton) {
+        if (isWiring) {
+            if (tempWire) { removeItem(tempWire); delete tempWire; }
+            isWiring = false; tempWire = nullptr; startTerminal = nullptr;
             event->accept();
             return;
         }
     }
+
+    if (event->button() == Qt::LeftButton) {
+        QPointF rawPos = event->scenePos();
+        QPointF dropPos = rawPos;
+        if (m_snapEnabled) {
+            dropPos.setX(qRound(dropPos.x() / m_gridSize) * m_gridSize);
+            dropPos.setY(qRound(dropPos.y() / m_gridSize) * m_gridSize);
+        }
+
+        // ==========================================
+        // رادار هوشمند موس: اسکن نقطه دقیق و اسنپ شده
+        // ==========================================
+        QGraphicsItem *item = itemAt(rawPos, QTransform());
+        if (!item) {
+            QList<QGraphicsItem*> itemsNearSnap = items(QRectF(dropPos.x() - 2, dropPos.y() - 2, 4, 4));
+            for (QGraphicsItem *cit : itemsNearSnap) {
+                if (dynamic_cast<Terminal*>(cit) || dynamic_cast<Wire*>(cit)) {
+                    item = cit;
+                    break;
+                }
+            }
+        }
+
+        Terminal *clickedTerminal = dynamic_cast<Terminal*>(item);
+        Wire *clickedWire = dynamic_cast<Wire*>(item);
+
+        if (!isWiring) {
+            if (clickedTerminal) {
+                isWiring = true;
+                startTerminal = clickedTerminal;
+                tempWire = new Wire(startTerminal, startTerminal->sceneBoundingRect().center());
+                addItem(tempWire);
+                return;
+            }
+            else if (clickedWire) {
+                JunctionNode *junction = new JunctionNode();
+                addItem(junction);
+
+                QPointF exactPos = splitWireExactly(clickedWire, rawPos, junction, this);
+
+                isWiring = true;
+                startTerminal = junction->term;
+                tempWire = new Wire(startTerminal, exactPos);
+                addItem(tempWire);
+                return;
+            }
+        } else { // در حال سیم‌کشی
+            if (clickedTerminal) {
+                if (clickedTerminal != startTerminal) {
+                    // اولویت اول: اتصال به پایه قطعه (مرکز دقیق هندسی پایه بدون توجه به اسنپ)
+                    QPointF targetPos = clickedTerminal->sceneBoundingRect().center();
+                    QVector<QPointF> smartPath = AutoRouter::findPath(this, startTerminal->sceneBoundingRect().center(), targetPos, startTerminal, clickedTerminal, tempWire);
+                    tempWire->setFullRoute(smartPath);
+                    tempWire->confirmConnection(clickedTerminal);
+
+                    isWiring = false; tempWire = nullptr; startTerminal = nullptr;
+                    FileManager::recordState(this);
+                }
+                return;
+            }
+            else if (clickedWire && clickedWire != tempWire) {
+                JunctionNode *junction = new JunctionNode();
+                addItem(junction);
+
+                // اولویت دوم: اتصال به سیم دیگر (مختصات فیزیکی تراز شده بدون توجه به اسنپ)
+                QPointF exactPos = splitWireExactly(clickedWire, rawPos, junction, this);
+
+                tempWire->confirmConnection(junction->term);
+                QVector<QPointF> smartPath = AutoRouter::findPath(this, startTerminal->sceneBoundingRect().center(), exactPos, startTerminal, junction->term, tempWire);
+                tempWire->setFullRoute(smartPath);
+
+                isWiring = false; tempWire = nullptr; startTerminal = nullptr;
+                FileManager::recordState(this);
+                return;
+            }
+            else {
+                // اولویت سوم: رها کردن روی هوای خالی (اینجا اسنپ کاملاً معتبر است و باید اعمال شود)
+                JunctionNode *junction = new JunctionNode();
+                junction->setPos(dropPos);
+                addItem(junction);
+
+                tempWire->confirmConnection(junction->term);
+                QVector<QPointF> smartPath = AutoRouter::findPath(this, startTerminal->sceneBoundingRect().center(), dropPos, startTerminal, junction->term, tempWire);
+                tempWire->setFullRoute(smartPath);
+
+                isWiring = false; tempWire = nullptr; startTerminal = nullptr;
+                FileManager::recordState(this);
+                return;
+            }
+        }
+    }
     QGraphicsScene::mousePressEvent(event);
 }
-
 void CircuitScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
     if (isWiring && tempWire) {
         tempWire->setEndPoint(event->scenePos());
@@ -276,37 +397,8 @@ void CircuitScene::dragMoveEvent(QGraphicsSceneDragDropEvent *event) {
 
 void CircuitScene::dropEvent(QGraphicsSceneDragDropEvent *event) {
     if (event->mimeData()->hasText()) {
+        // قطعه را دقیقاً در محلی که موس رها شده با استفاده از سیستم Snap می‌سازد
         addComponent(event->mimeData()->text(), event->scenePos());
-        event->acceptProposedAction();
-        return;
-    }
-    if (event->mimeData()->hasText()) {
-        QString componentType = event->mimeData()->text();
-        QPointF dropPosition = event->scenePos();
-
-        // چسباندن خودکار قطعه به خطوط شبکه (Snap to Grid) برای تمیزی مدار
-        dropPosition.setX(qRound(dropPosition.x() / m_gridSize) * m_gridSize);
-        dropPosition.setY(qRound(dropPosition.y() / m_gridSize) * m_gridSize);
-
-        QGraphicsItem *newItem = nullptr;
-
-        // کارخانه تولید قطعات
-        if (componentType == "MCU") newItem = new MCUChip();
-        else if (componentType == "RESISTOR") newItem = new Resistor();
-        else if (componentType == "CAPACITOR") newItem = new Capacitor();
-        else if (componentType == "AND_GATE") newItem = new AndGate();
-        else if (componentType == "OR_GATE") newItem = new OrGate();
-        else if (componentType == "LED") newItem = new LED();
-
-        // اگر قطعه با موفقیت ساخته شد
-        if (newItem != nullptr) {
-            newItem->setPos(dropPosition);
-            addItem(newItem);
-
-            // ثبت وضعیت در تاریخچه
-            FileManager::recordState(this);
-        }
-
         event->acceptProposedAction();
     } else {
         event->ignore();
@@ -1107,6 +1199,28 @@ void ClockGenerator::setProperties(const QMap<QString, QString>& props) {
     if (props.contains("Frequency")) frequency = props["Frequency"];
     if (props.contains("Amplitude")) amplitude = props["Amplitude"];
 }
+// ============================================================================
+// ۱۲. پیاده‌سازی گره اتصال (Junction Node)
+// ============================================================================
+JunctionNode::JunctionNode() {
+    term = new Terminal(this);
+    term->setPos(0, 0); // ترمینال دقیقاً در مرکز گره قرار می‌گیرد
+}
+
+QRectF JunctionNode::boundingRect() const {
+    return QRectF(-6, -6, 12, 12);
+}
+
+void JunctionNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    // رسم یک نقطه توپر سیاه رنگ (استاندارد شماتیک برای گره‌ها)
+    painter->setBrush(isSelected() ? Qt::red : Qt::black);
+    painter->setPen(Qt::NoPen);
+    painter->drawEllipse(-4, -4, 8, 8);
+}
+
+void JunctionNode::process() {
+    // گره‌ها پردازش منطقی خاصی ندارند، فقط ولتاژ را از سیم‌ها عبور می‌دهند
+}
 
 ============================================================
 FILE: src\components\basic_components.h
@@ -1309,6 +1423,20 @@ public:
 
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
+// ==========================================
+// ۱۲. گره اتصال سیم به سیم (Junction Node)
+// ==========================================
+
+};
+class JunctionNode : public Element {
+public:
+    Terminal *term; // تنها پایه این گره که سیم‌ها به آن وصل می‌شوند
+
+    JunctionNode();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Junction Node"; }
 };
 
 ============================================================
@@ -2361,6 +2489,7 @@ FILE: src\core\auto_router.cpp
 #include <queue>
 #include <vector>
 #include <algorithm>
+#include "element.h"
 
 QString pointToString(const QPointF &p) {
     return QString("%1,%2").arg(p.x()).arg(p.y()); // ذخیره دقیق اعشار برای گام‌های پویا
@@ -2382,6 +2511,13 @@ struct AStarNode {
 // ==========================================
 QPointF getPinDirection(Terminal* term) {
     if (!term || !term->parentItem()) return QPointF(20, 0);
+
+    // === رفع باگ بیرون زدن پایه از گره‌ها ===
+    // اگر قطعه یک گره است، جهت خروجی صفر است تا سیم دقیقاً از مرکز آن خارج شود (بدون خط اضافی)
+    Element *el = dynamic_cast<Element*>(term->parentItem());
+    if (el && el->getComponentName() == "Junction Node") {
+        return QPointF(0, 0);
+    }
 
     QPointF local = term->pos();
     QRectF bounds = term->parentItem()->boundingRect();
@@ -2527,12 +2663,13 @@ QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, Q
     }
 
     // ==========================================
-    // ۳. بازسازی و فیلتر نقاط
+    // ۳. بازسازی مسیر و صاف کردن ارتوگونال گام آخر
     // ==========================================
     QVector<QPointF> rawPath;
     if (pathFound) {
         QPointF curr = finalPoint;
-        rawPath.prepend(endPos);
+        rawPath.prepend(endPos); // نقطه دقیق گره روی سیم
+
         if (finalPoint != endStub) rawPath.prepend(endStub);
 
         while (curr != startStub && cameFrom.contains(pointToString(curr))) {
@@ -2542,14 +2679,34 @@ QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, Q
 
         rawPath.prepend(startStub);
         rawPath.prepend(startPos);
+
+        // --- جادوی فیکس کردن گام آخر ---
+        // اگر حداقل ۳ نقطه داریم، نقطه ماقبل آخر را طوری اصلاح کن که خط پایانی کاملاً افقی یا عمودی شود
+        if (rawPath.size() >= 3) {
+            int lastIdx = rawPath.size() - 1;
+            QPointF &lastPoint = rawPath[lastIdx];     // خود گره مقصد
+            QPointF &prevPoint = rawPath[lastIdx - 1]; // نقطه ماقبل آخر شبیه‌ساز
+
+            // بررسی می‌کنیم مسیر کلی به مقصد بیشتر افقی بوده یا عمودی
+            if (qAbs(prevPoint.x() - lastPoint.x()) > qAbs(prevPoint.y() - lastPoint.y())) {
+                // مسیر افقی است -> Y نقطه ماقبل آخر را دقیقاً برابر Y گره کن تا خط صاف شود
+                prevPoint.setY(lastPoint.y());
+            } else {
+                // مسیر عمودی است -> X نقطه ماقبل آخر را دقیقاً برابر X گره کن تا خط صاف شود
+                prevPoint.setX(lastPoint.x());
+            }
+        }
     } else {
         rawPath.append(endPos);
     }
 
+    // ==========================================
+    // ۴. بهینه‌سازی و حذف نقاط موازی و میانی اضافه
+    // ==========================================
     QVector<QPointF> optimizedPath;
-    if(rawPath.size() > 2) {
+    if (rawPath.size() > 2) {
         optimizedPath.append(rawPath[0]);
-        for(int i = 1; i < rawPath.size() - 1; i++) {
+        for (int i = 1; i < rawPath.size() - 1; i++) {
             QPointF prev = optimizedPath.last();
             QPointF curr = rawPath[i];
             QPointF next = rawPath[i+1];
@@ -3095,6 +3252,7 @@ FILE: src\core\wire.cpp
 #include <QGraphicsSceneHoverEvent>
 #include "probe_item.h"
 #include "../canvas/circuit_scene.h"
+#include <QPainterPath>
 Wire::Wire(Terminal *startTerm, QPointF startPos) {
     startTerminal = startTerm;
     endTerminal = nullptr;
@@ -3211,6 +3369,37 @@ void Wire::disconnectTerminal(Terminal *term) {
         endTerminal = nullptr;
     }
 }
+// ==========================================================
+// محاسبه دقیق خطوط برخورد سیم با موس (جلوگیری از باگ کادر بزرگ)
+// ==========================================================
+QPainterPath Wire::shape() const {
+    QPainterPath path;
+    if (points.size() < 2) return path;
+
+    // رسم مسیر دقیق سیم برای موتور برخوردی (Collision Engine)
+    if (points.size() <= 3) {
+        for (int i = 0; i < points.size() - 1; ++i) {
+            QPointF pA = points[i];
+            QPointF pB = points[i+1];
+            qreal midX = (pA.x() + pB.x()) / 2.0;
+
+            if (i == 0) path.moveTo(pA);
+            path.lineTo(QPointF(midX, pA.y()));
+            path.lineTo(QPointF(midX, pB.y()));
+            path.lineTo(pB);
+        }
+    } else {
+        path.moveTo(points[0]);
+        for (int i = 1; i < points.size(); ++i) {
+            path.lineTo(points[i]);
+        }
+    }
+
+    // ایجاد یک ضخامت مجازی ۱۰ پیکسلی تا موس کاربر به راحتی سیم را پیدا کند
+    QPainterPathStroker stroker;
+    stroker.setWidth(10);
+    return stroker.createStroke(path);
+}
 
 ============================================================
 FILE: src\core\wire.h
@@ -3226,6 +3415,7 @@ class Terminal;
 
 class Wire : public QGraphicsItem {
 public:
+    QPainterPath shape() const override;
     Wire(Terminal *startTerm, QPointF startPos);
 
     void setEndPoint(QPointF endPos);
@@ -3246,7 +3436,7 @@ public:
     // توابع کمکی برای خواندن پایه‌های متصل به سیم در سیستم ذخیره‌سازی
     Terminal* getStartTerminal() const { return startTerminal; }
     Terminal* getEndTerminal() const { return endTerminal; }
-
+    QVector<QPointF> getPoints() const { return points; }
     // قطع اتصال ترمینال (اضافه شده از سمت رابط کاربری)
     void disconnectTerminal(Terminal *term);
 
@@ -3513,6 +3703,25 @@ void MainWindow::buildInterface()
     });
     connect(view, &CircuitView::cursorPositionChanged, this, [this](const QPointF &point) {
         m_coordinates->setText(tr("X %1   Y %2").arg(qRound(point.x())).arg(qRound(point.y())));
+
+        // === منطق آپدیت آنی پروب هنگام حرکت موس (مستقل از اجرای شبیه‌ساز) ===
+        if (scene->isProbeEnabled && scene->voltageProbe) {
+            bool found = false;
+            // بررسی المان‌هایی که دقیقا زیر نشانگر موس هستند
+            for (QGraphicsItem *item : scene->items(point)) {
+                if (auto *wire = dynamic_cast<Wire*>(item)) {
+                    scene->voltageProbe->updateProbe(wire->voltageLevel, point);
+                    found = true;
+                    break;
+                }
+                if (auto *terminal = dynamic_cast<Terminal*>(item)) {
+                    scene->voltageProbe->updateProbe(terminal->voltageLevel, point);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) scene->voltageProbe->hide();
+        }
     });
     connect(view, &CircuitView::zoomChanged, this, [this](int percent) {
         m_zoomLabel->setText(tr("Zoom %1%").arg(percent));
@@ -3827,7 +4036,8 @@ FILE: src\io\file_manager.cpp
 #include "../components/logic_gates.h"
 #include "../components/mcu.h"
 #include "../components/peripherals.h"
-
+#include "../core/probe_item.h"
+#include "../canvas/circuit_scene.h"
 #include <QFile>
 #include <QTextStream>
 #include <QDebug>
@@ -3896,7 +4106,12 @@ static Element* createComponent(const QString &type) {
     if (type == "Matrix Keypad 4x4") return new Keypad();
     if (type == "Analog to Digital Converter (ADC)") return new ADC_Chip();
     if (type == "Digital to Analog Converter (DAC)") return new DAC_Chip();
+    if (type == "Digital to Analog Converter (DAC)") return new DAC_Chip();
 
+    // اضافه کردن این خط برای شناسایی گره‌ها
+    if (type == "Junction Node") return new JunctionNode();
+
+    // اگر نام قطعه‌ای در لیست نبود...
     // اگر نام قطعه‌ای در لیست نبود، ارور را در کنسول چاپ کن تا سریع پیدایش کنیم
     qWarning() << "[FileManager] ERROR: Unknown component type in Factory:" << type;
     return nullptr;
@@ -3928,6 +4143,16 @@ void FileManager::restoreSceneState(const QByteArray &stateData, QGraphicsScene 
     if (doc.isNull() || !doc.isObject()) return;
 
     scene->clear();
+
+    // ======= بازسازی پروب پس از پاکسازی بوم =======
+    if (auto *circuitScene = dynamic_cast<CircuitScene*>(scene)) {
+        circuitScene->voltageProbe = new ProbeItem();
+        circuitScene->addItem(circuitScene->voltageProbe);
+        circuitScene->voltageProbe->hide();
+    }
+    // ==============================================
+
+    // این دو خط احتمالاً در سیستم شما پاک شده بودند:
     QJsonObject rootObject = doc.object();
     QList<Element*> loadedElements;
 
@@ -4196,7 +4421,17 @@ FILE: src\ui\componentlibrary.cpp
 #include <QPushButton>
 #include <QTreeWidget>
 #include <QVBoxLayout>
-
+#include <QDrag>
+#include <QMimeData>
+#include <QMouseEvent>
+#include <QApplication>
+#include <QPixmap>
+#include <QPainter>
+#include <QGraphicsScene>
+#include "../components/basic_components.h"
+#include "../components/logic_gates.h"
+#include "../components/mcu.h"
+#include "../components/peripherals.h"
 ComponentLibrary::ComponentLibrary(QWidget *parent) : QFrame(parent)
 {
     setObjectName("libraryPanel");
@@ -4242,7 +4477,7 @@ ComponentLibrary::ComponentLibrary(QWidget *parent) : QFrame(parent)
     m_tree->setHeaderHidden(true);
     m_tree->setIndentation(16);
     m_tree->setRootIsDecorated(true);
-
+    m_tree->viewport()->installEventFilter(this);
     auto *preview = new QFrame;
     preview->setObjectName("previewCard");
     auto *previewLayout = new QVBoxLayout(preview);
@@ -4349,7 +4584,113 @@ void ComponentLibrary::updatePreview(QTreeWidgetItem *current, QTreeWidgetItem *
     m_name->setText(component.name);
     m_description->setText(component.description + "  •  " + component.category);
 }
+// ==========================================================
+// منطق آغاز Drag & Drop از منو به بوم طراحی
+// ==========================================================
+// ==========================================================
+// منطق آغاز Drag & Drop به همراه شبح گرافیکی قطعه (Ghosting)
+// ==========================================================
+// ==========================================================
+// منطق آغاز Drag & Drop با رندر شکل واقعی قطعه (Real Ghosting)
+// ==========================================================
+bool ComponentLibrary::eventFilter(QObject *obj, QEvent *event) {
+    if (obj == m_tree->viewport()) {
 
+        if (event->type() == QEvent::MouseButtonPress) {
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            if (mouseEvent->button() == Qt::LeftButton) {
+                m_dragStartPos = mouseEvent->pos();
+            }
+        }
+        else if (event->type() == QEvent::MouseMove) {
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+
+            if ((mouseEvent->buttons() & Qt::LeftButton) &&
+                (mouseEvent->pos() - m_dragStartPos).manhattanLength() > QApplication::startDragDistance()) {
+
+                QTreeWidgetItem *item = m_tree->itemAt(m_dragStartPos);
+
+                if (item && item->data(0, Qt::UserRole).isValid()) {
+                    int index = item->data(0, Qt::UserRole).toInt();
+                    QString componentId = m_components.at(index).id;
+
+                    QDrag *drag = new QDrag(this);
+                    QMimeData *mimeData = new QMimeData;
+                    mimeData->setText(componentId);
+                    drag->setMimeData(mimeData);
+
+                    // ==========================================
+                    // ۱. ساخت موقت قطعه برای گرفتن عکس از آن
+                    // ==========================================
+                    QGraphicsItem *tempItem = nullptr;
+                    if (componentId == "MCU") tempItem = new MCUChip();
+                    else if (componentId == "RESISTOR") tempItem = new Resistor();
+                    else if (componentId == "CAPACITOR") tempItem = new Capacitor();
+                    else if (componentId == "INDUCTOR") tempItem = new Inductor();
+                    else if (componentId == "DC_SOURCE") tempItem = new DCVoltageSource();
+                    else if (componentId == "GROUND") tempItem = new Ground();
+                    else if (componentId == "AND_GATE") tempItem = new AndGate();
+                    else if (componentId == "OR_GATE") tempItem = new OrGate();
+                    else if (componentId == "NOT_GATE") tempItem = new NotGate();
+                    else if (componentId == "XOR_GATE") tempItem = new XorGate();
+                    else if (componentId == "NAND_GATE") tempItem = new NandGate();
+                    else if (componentId == "D_FLIP_FLOP") tempItem = new DFlipFlop();
+                    else if (componentId == "LED") tempItem = new LED();
+                    else if (componentId == "SWITCH") tempItem = new Switch();
+                    else if (componentId == "PUSH_BUTTON") tempItem = new PushButton();
+                    else if (componentId == "SEVEN_SEGMENT") tempItem = new SevenSegment();
+                    else if (componentId == "PULSE_GENERATOR") tempItem = new PulseGenerator();
+                    else if (componentId == "MEMORY") tempItem = new MemoryChip();
+                    else if (componentId == "LCD") tempItem = new LCD16x2();
+                    else if (componentId == "KEYPAD") tempItem = new Keypad();
+                    else if (componentId == "ADC") tempItem = new ADC_Chip();
+                    else if (componentId == "DAC") tempItem = new DAC_Chip();
+
+                    if (tempItem) {
+                        // ۲. ایجاد یک بوم موقت و انداختن قطعه درون آن
+                        QGraphicsScene tempScene;
+                        tempScene.addItem(tempItem);
+
+                        // پیدا کردن دقیق ابعاد قطعه به همراه تمام پایه‌های متصل به آن
+                        QRectF rect = tempScene.itemsBoundingRect();
+                        rect.adjust(-2, -2, 2, 2); // کمی حاشیه برای جلوگیری از برش لبه‌ها
+
+                        // ۳. ایجاد بوم عکاسی کاملاً شفاف
+                        QPixmap pixmap(rect.size().toSize());
+                        pixmap.fill(Qt::transparent);
+
+                        QPainter painter(&pixmap);
+                        painter.setRenderHint(QPainter::Antialiasing);
+
+                        // رندر کردن گرافیک قطعه روی عکس
+                        tempScene.render(&painter, QRectF(), rect);
+                        painter.end();
+
+                        // ۴. کم‌رنگ کردن عکس برای افکت "شبح" (Ghosting)
+                        QPixmap ghostPixmap(pixmap.size());
+                        ghostPixmap.fill(Qt::transparent);
+                        QPainter ghostPainter(&ghostPixmap);
+                        ghostPainter.setOpacity(0.6); // شفافیت ۶۰ درصدی
+                        ghostPainter.drawPixmap(0, 0, pixmap);
+                        ghostPainter.end();
+
+                        drag->setPixmap(ghostPixmap);
+
+                        // ۵. تنظیم نقطه اتصال موس دقیقاً به مرکز قطعه
+                        drag->setHotSpot(QPoint(-rect.left(), -rect.top()));
+
+                        // توجه: با اتمام این بلوک if، متغیر tempScene از بین می‌رود
+                        // و به طور خودکار tempItem را نیز از حافظه پاک می‌کند (جلوگیری از Memory Leak)
+                    }
+
+                    drag->exec(Qt::CopyAction);
+                    return true;
+                }
+            }
+        }
+    }
+    return QFrame::eventFilter(obj, event);
+}
 
 ============================================================
 FILE: src\ui\componentlibrary.h
@@ -4360,7 +4701,7 @@ FILE: src\ui\componentlibrary.h
 #include <QFrame>
 #include <QString>
 #include <QVector>
-
+#include <QPoint>
 class QLabel;
 class QLineEdit;
 class QListWidget;
@@ -4389,7 +4730,8 @@ signals:
 private slots:
     void rebuildTree(const QString &query = {});
     void updatePreview(QTreeWidgetItem *current, QTreeWidgetItem *previous);
-
+protected:
+    bool eventFilter(QObject *obj, QEvent *event) override;
 private:
     QVector<ComponentInfo> m_components;
     QLineEdit *m_search = nullptr;
@@ -4399,6 +4741,7 @@ private:
     QLabel *m_description = nullptr;
     QLabel *m_empty = nullptr;
     QListWidget *m_active = nullptr;
+    QPoint m_dragStartPos; // ذخیره مختصات اولیه کلیک موس
 };
 
 

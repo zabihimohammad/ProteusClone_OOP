@@ -460,3 +460,25 @@ void ClockGenerator::setProperties(const QMap<QString, QString>& props) {
     if (props.contains("Frequency")) frequency = props["Frequency"];
     if (props.contains("Amplitude")) amplitude = props["Amplitude"];
 }
+// ============================================================================
+// ۱۲. پیاده‌سازی گره اتصال (Junction Node)
+// ============================================================================
+JunctionNode::JunctionNode() {
+    term = new Terminal(this);
+    term->setPos(0, 0); // ترمینال دقیقاً در مرکز گره قرار می‌گیرد
+}
+
+QRectF JunctionNode::boundingRect() const {
+    return QRectF(-6, -6, 12, 12);
+}
+
+void JunctionNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    // رسم یک نقطه توپر سیاه رنگ (استاندارد شماتیک برای گره‌ها)
+    painter->setBrush(isSelected() ? Qt::red : Qt::black);
+    painter->setPen(Qt::NoPen);
+    painter->drawEllipse(-4, -4, 8, 8);
+}
+
+void JunctionNode::process() {
+    // گره‌ها پردازش منطقی خاصی ندارند، فقط ولتاژ را از سیم‌ها عبور می‌دهند
+}

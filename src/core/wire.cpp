@@ -35,9 +35,8 @@ void Wire::addWaypoint(QPointF point) {
 }
 
 void Wire::setFullRoute(const QVector<QPointF> &route) {
-    points.clear();
-    points.append(startTerminal->sceneBoundingRect().center());
-    points.append(route);
+    // 🛠️ باگ بزرگ اینجا بود! حالا مسیر هوش مصنوعی دقیقاً و بدون اضافات کپی می‌شود
+    points = route;
     prepareGeometryChange();
 }
 
@@ -72,8 +71,9 @@ void Wire::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWid
 
     if (points.size() < 2) return;
 
-    // اگر سیم در حال کشیده شدن با موس است (نقاط کمی دارد)
-    if (points.size() <= 3) {
+    // 🛠️ اصلاح طلایی: به جای سایز آرایه، چک می‌کنیم که سیم به مقصد رسیده است یا خیر
+    if (!endTerminal) {
+        // سیم در دست کاربر است (رسم ارتوگونال موقت)
         for (int i = 0; i < points.size() - 1; ++i) {
             QPointF pA = points[i];
             QPointF pB = points[i+1];
@@ -84,8 +84,7 @@ void Wire::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWid
             painter->drawLine(QPointF(midX, pB.y()), pB);
         }
     } else {
-        // اگر سیم توسط هوش مصنوعی مسیردهی شده (صدها نقطه 10 پیکسلی دارد)
-        // خطوط مستقیماً به هم وصل می‌شوند تا زیگ‌زاگ نشود
+        // سیم نهایی شده است (اتصال مستقیم نقاط هوش مصنوعی بدون کج شدن)
         for (int i = 0; i < points.size() - 1; ++i) {
             painter->drawLine(points[i], points[i+1]);
         }
@@ -130,8 +129,7 @@ QPainterPath Wire::shape() const {
     QPainterPath path;
     if (points.size() < 2) return path;
 
-    // رسم مسیر دقیق سیم برای موتور برخوردی (Collision Engine)
-    if (points.size() <= 3) {
+    if (!endTerminal) {
         for (int i = 0; i < points.size() - 1; ++i) {
             QPointF pA = points[i];
             QPointF pB = points[i+1];
@@ -149,7 +147,6 @@ QPainterPath Wire::shape() const {
         }
     }
 
-    // ایجاد یک ضخامت مجازی ۱۰ پیکسلی تا موس کاربر به راحتی سیم را پیدا کند
     QPainterPathStroker stroker;
     stroker.setWidth(10);
     return stroker.createStroke(path);

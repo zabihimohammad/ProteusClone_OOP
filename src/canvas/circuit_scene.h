@@ -33,6 +33,7 @@ public slots:
 
 protected:
     void drawBackground(QPainter *painter, const QRectF &rect) override;
+    void drawForeground(QPainter *painter, const QRectF &rect) override;
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
@@ -48,4 +49,7 @@ private:
     bool isWiring = false;
     Wire *tempWire = nullptr;
     Terminal *startTerminal = nullptr;
+
+    bool m_wiringMode = false;
+    QPointF m_crosshairPos;
 };

@@ -8,9 +8,11 @@
 #include <queue>
 #include <vector>
 #include <algorithm>
+#include "element.h"
 
+// 🛠️ حل قطعی باگ تلرانس اعشاری در هش‌مپ
 QString pointToString(const QPointF &p) {
-    return QString("%1,%2").arg(p.x()).arg(p.y()); // ذخیره دقیق اعشار برای گام‌های پویا
+    return QString("%1,%2").arg(qRound(p.x())).arg(qRound(p.y()));
 }
 
 struct AStarNode {
@@ -24,11 +26,13 @@ struct AStarNode {
     }
 };
 
-// ==========================================
-// ۱. سیستم پیشرفته تشخیص جهت پایه
-// ==========================================
 QPointF getPinDirection(Terminal* term) {
     if (!term || !term->parentItem()) return QPointF(20, 0);
+
+    Element *el = dynamic_cast<Element*>(term->parentItem());
+    if (el && el->getComponentName() == "Junction Node") {
+        return QPointF(0, 0);
+    }
 
     QPointF local = term->pos();
     QRectF bounds = term->parentItem()->boundingRect();
@@ -46,9 +50,6 @@ QPointF getPinDirection(Terminal* term) {
     return QPointF(0, 20);
 }
 
-// ==========================================
-// ۲. هسته اصلی مسیریاب منهتن با گام‌های پویا
-// ==========================================
 QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, QPointF endPos, Terminal *startTerm, Terminal *endTerm, Wire *currentWire) {
     double stepSize = 10.0;
     int maxIterations = 10000;
@@ -58,14 +59,15 @@ QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, Q
     QPointF startStub = startPos + startDir;
     QPointF endStub = endPos + endDir;
 
-    if (startStub == endStub) return {startPos, startStub, endPos};
+    if (qAbs(startStub.x() - endStub.x()) < 1.0 && qAbs(startStub.y() - endStub.y()) < 1.0) {
+        return {startPos, endPos};
+    }
 
     std::priority_queue<AStarNode, std::vector<AStarNode>, std::greater<AStarNode>> openSet;
     QMap<QString, QPointF> cameFrom;
     QMap<QString, double> gScore;
     QSet<QString> closedSet;
 
-    // نرمال‌سازی جهت اولیه برای جلوگیری از خطاهای اعشاری
     QPointF normStartDir(0, 0);
     if (qAbs(startDir.x()) > 0) normStartDir.setX(startDir.x() > 0 ? 1 : -1);
     if (qAbs(startDir.y()) > 0) normStartDir.setY(startDir.y() > 0 ? 1 : -1);
@@ -86,24 +88,22 @@ QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, Q
         if (closedSet.contains(currentStr)) continue;
         closedSet.insert(currentStr);
 
-        // رسیدن به هدف با دقت ۱۰۰٪ (دیگر نیازی به شعاع ۵ پیکسلی نیست)
-        if (current.pos == endStub) {
+        // 🛠️ تضمین رسیدن به مقصد با بررسی تلرانس (حل مشکل متوقف شدن زودتر از موعد سیم)
+        if (qAbs(current.pos.x() - endStub.x()) < 1.0 && qAbs(current.pos.y() - endStub.y()) < 1.0) {
             pathFound = true;
             finalPoint = current.pos;
             break;
         }
 
-        // تولید گام‌های پویا: هم گام‌های ۱۰ پیکسلی ثابت و هم گام‌های ریز برای رسیدن دقیق به هدف
         QVector<QPointF> nextPoints = {
                 current.pos + QPointF(0, -stepSize), current.pos + QPointF(0, stepSize),
                 current.pos + QPointF(-stepSize, 0), current.pos + QPointF(stepSize, 0)
         };
 
-        // تزریق گام‌های دقیق برای جلوگیری از زیگ‌زاگ
-        if (current.pos.x() != endStub.x() && qAbs(current.pos.x() - endStub.x()) < stepSize) {
+        if (qAbs(current.pos.x() - endStub.x()) > 0.1 && qAbs(current.pos.x() - endStub.x()) <= stepSize) {
             nextPoints.append(QPointF(endStub.x(), current.pos.y()));
         }
-        if (current.pos.y() != endStub.y() && qAbs(current.pos.y() - endStub.y()) < stepSize) {
+        if (qAbs(current.pos.y() - endStub.y()) > 0.1 && qAbs(current.pos.y() - endStub.y()) <= stepSize) {
             nextPoints.append(QPointF(current.pos.x(), endStub.y()));
         }
 
@@ -113,7 +113,6 @@ QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, Q
             if (qAbs(moveDir.x()) > 0) normDir.setX(moveDir.x() > 0 ? 1 : -1);
             if (qAbs(moveDir.y()) > 0) normDir.setY(moveDir.y() > 0 ? 1 : -1);
 
-            // ممنوعیت برگشت به عقب
             if (current.dir != QPointF(0,0) && normDir == QPointF(-current.dir.x(), -current.dir.y())) {
                 continue;
             }
@@ -127,13 +126,13 @@ QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, Q
             bool hitObstacle = false;
             double wirePenalty = 0.0;
 
+            // اگر نقطه بعدی دقیقاً همان مقصد ماست، آن را مجاز می‌شماریم
+            bool isTarget = (qAbs(next.x() - endStub.x()) < 1.0 && qAbs(next.y() - endStub.y()) < 1.0);
+
             for (QGraphicsItem *item : itemsAtNext) {
                 Wire *wireItem = dynamic_cast<Wire*>(item);
                 if (wireItem) {
                     if (wireItem == currentWire) continue;
-
-                    // تنظیم طلایی: جریمه بسیار کم برای تقاطع (۱۵)
-                    // باعث می‌شود سیم بدون ترس از دیگران عبور کند اما همچنان موازی نیفتد
                     wirePenalty += 15.0;
                     continue;
                 }
@@ -142,8 +141,8 @@ QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, Q
 
                 QGraphicsItem *parent = item->parentItem() ? item->parentItem() : item;
 
-                // شعاع فرار از قطعه مبدا و مقصد به ۱۵ کاهش یافت تا در کنار قطعه پله نسازد
                 if (parent == startTerm->parentItem() || parent == endTerm->parentItem()) {
+                    if (isTarget) continue; // نقطه مقصد را مانع در نظر نگیر!
                     if (QLineF(next, startStub).length() <= 15.0 || QLineF(next, endStub).length() <= 15.0) {
                         continue;
                     }
@@ -155,7 +154,6 @@ QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, Q
 
             if (hitObstacle) continue;
 
-            // جریمه چرخش ۱۰ امتیاز است تا خطوط مستقیم بمانند
             double turnPenalty = (current.dir != QPointF(0,0) && current.dir != normDir) ? 10.0 : 0.0;
             double stepCost = qAbs(moveDir.x()) + qAbs(moveDir.y());
             double tentative_gScore = gScore[currentStr] + stepCost + turnPenalty + wirePenalty;
@@ -167,42 +165,72 @@ QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, Q
                 double hScore = std::abs(next.x() - endStub.x()) + std::abs(next.y() - endStub.y());
                 hScore *= 1.001;
 
-                double fScore = tentative_gScore + hScore;
-                openSet.push({next, tentative_gScore, fScore, normDir});
+                openSet.push({next, tentative_gScore, tentative_gScore + hScore, normDir});
             }
         }
     }
 
-    // ==========================================
-    // ۳. بازسازی و فیلتر نقاط
-    // ==========================================
     QVector<QPointF> rawPath;
     if (pathFound) {
         QPointF curr = finalPoint;
-        rawPath.prepend(endPos);
-        if (finalPoint != endStub) rawPath.prepend(endStub);
-
         while (curr != startStub && cameFrom.contains(pointToString(curr))) {
             rawPath.prepend(curr);
             curr = cameFrom[pointToString(curr)];
         }
-
         rawPath.prepend(startStub);
         rawPath.prepend(startPos);
+
+        // اضافه کردن مستقیمِ نقطه پایانی برای حذف قطعی باگ "فاصله داشتن سیم"
+        if (qAbs(rawPath.last().x() - endStub.x()) > 0.1 || qAbs(rawPath.last().y() - endStub.y()) > 0.1) {
+            rawPath.append(endStub);
+        }
+        if (qAbs(rawPath.last().x() - endPos.x()) > 0.1 || qAbs(rawPath.last().y() - endPos.y()) > 0.1) {
+            rawPath.append(endPos);
+        }
+
+        for (int i = 0; i < rawPath.size() - 1; ) {
+            if (qAbs(rawPath[i].x() - rawPath[i+1].x()) < 0.5 && qAbs(rawPath[i].y() - rawPath[i+1].y()) < 0.5) {
+                rawPath.removeAt(i+1);
+            } else {
+                i++;
+            }
+        }
+
+        // 🛠️ ایجاد زاویه ۹۰ درجه استاندارد در اتصال نهایی به گره
+        if (rawPath.size() >= 2) {
+            QPointF pLast = rawPath.last();
+            QPointF pPrev = rawPath[rawPath.size() - 2];
+
+            if (qAbs(pPrev.x() - pLast.x()) > 0.5 && qAbs(pPrev.y() - pLast.y()) > 0.5) {
+                QPointF corner;
+                if (rawPath.size() >= 3) {
+                    QPointF pPrevPrev = rawPath[rawPath.size() - 3];
+                    if (qAbs(pPrevPrev.x() - pPrev.x()) < 0.5) {
+                        corner = QPointF(pPrev.x(), pLast.y());
+                    } else {
+                        corner = QPointF(pLast.x(), pPrev.y());
+                    }
+                } else {
+                    corner = QPointF(pPrev.x(), pLast.y());
+                }
+                rawPath.insert(rawPath.size() - 1, corner);
+            }
+        }
     } else {
-        rawPath.append(endPos);
+        // در صورت عدم یافتن مسیر، سیم را به صورت مستقیم متصل کن تا معلق نماند
+        rawPath = {startPos, startStub, endStub, endPos};
     }
 
     QVector<QPointF> optimizedPath;
-    if(rawPath.size() > 2) {
+    if (rawPath.size() > 2) {
         optimizedPath.append(rawPath[0]);
-        for(int i = 1; i < rawPath.size() - 1; i++) {
+        for (int i = 1; i < rawPath.size() - 1; i++) {
             QPointF prev = optimizedPath.last();
             QPointF curr = rawPath[i];
             QPointF next = rawPath[i+1];
 
-            bool sameX = (qAbs(prev.x() - curr.x()) < 1) && (qAbs(curr.x() - next.x()) < 1);
-            bool sameY = (qAbs(prev.y() - curr.y()) < 1) && (qAbs(curr.y() - next.y()) < 1);
+            bool sameX = (qAbs(prev.x() - curr.x()) < 0.5) && (qAbs(curr.x() - next.x()) < 0.5);
+            bool sameY = (qAbs(prev.y() - curr.y()) < 0.5) && (qAbs(curr.y() - next.y()) < 0.5);
 
             if (!sameX && !sameY) {
                 optimizedPath.append(curr);

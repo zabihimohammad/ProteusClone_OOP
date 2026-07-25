@@ -195,4 +195,18 @@ public:
 
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
+// ==========================================
+// ۱۲. گره اتصال سیم به سیم (Junction Node)
+// ==========================================
+
+};
+class JunctionNode : public Element {
+public:
+    Terminal *term; // تنها پایه این گره که سیم‌ها به آن وصل می‌شوند
+
+    JunctionNode();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Junction Node"; }
 };

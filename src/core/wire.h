@@ -29,7 +29,7 @@ public:
     // توابع کمکی برای خواندن پایه‌های متصل به سیم در سیستم ذخیره‌سازی
     Terminal* getStartTerminal() const { return startTerminal; }
     Terminal* getEndTerminal() const { return endTerminal; }
-
+    QVector<QPointF> getPoints() const { return points; }
     // قطع اتصال ترمینال (اضافه شده از سمت رابط کاربری)
     void disconnectTerminal(Terminal *term);
 

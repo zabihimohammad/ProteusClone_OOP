@@ -76,7 +76,12 @@ static Element* createComponent(const QString &type) {
     if (type == "Matrix Keypad 4x4") return new Keypad();
     if (type == "Analog to Digital Converter (ADC)") return new ADC_Chip();
     if (type == "Digital to Analog Converter (DAC)") return new DAC_Chip();
+    if (type == "Digital to Analog Converter (DAC)") return new DAC_Chip();
 
+    // اضافه کردن این خط برای شناسایی گره‌ها
+    if (type == "Junction Node") return new JunctionNode();
+
+    // اگر نام قطعه‌ای در لیست نبود...
     // اگر نام قطعه‌ای در لیست نبود، ارور را در کنسول چاپ کن تا سریع پیدایش کنیم
     qWarning() << "[FileManager] ERROR: Unknown component type in Factory:" << type;
     return nullptr;

@@ -1,13 +1,13 @@
 #include "circuit_scene.h"
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsSceneDragDropEvent>
-#include <QMimeData> // اضافه شده برای پشتیبانی از Drag & Drop
+#include <QMimeData>
 #include <QPainter>
 #include <QPen>
 #include <QColor>
 #include <QKeyEvent>
 #include <QDebug>
-
+#include <QGraphicsView>
 #include "../core/terminal.h"
 #include "../core/wire.h"
 #include "../core/auto_router.h"
@@ -17,10 +17,94 @@
 #include "../components/logic_gates.h"
 #include "../components/peripherals.h"
 #include "../io/file_manager.h"
+#include <QLineF>
+static QPointF m_crosshairPos; // اضافه کردن این متغیر برای ثبت موقعیت نشانگر متقاطع
+// تابع قدرتمند و ۱۰۰٪ دقیق: پروجکشن برداری برای یافتن نقطه برخورد روی سیم
+static QPointF splitWireExactly(Wire* clickedWire, QPointF targetPos, JunctionNode* junction, QGraphicsScene* scene) {
+    Terminal *targetStart = clickedWire->getStartTerminal();
+    Terminal *targetEnd = clickedWire->getEndTerminal();
+    QVector<QPointF> oldPath = clickedWire->getPoints();
+
+    QVector<QPointF> path1, path2;
+    bool splitFound = false;
+
+    double minDistance = 1e9;
+    int bestSegment = 0;
+    QPointF exactPos = targetPos;
+
+    // ۱. ریاضیات برداری برای پیدا کردن نزدیک‌ترین نقطه کاملاً منطبق بر سیم
+    for (int i = 0; i < oldPath.size() - 1; ++i) {
+        QPointF a = oldPath[i];
+        QPointF b = oldPath[i+1];
+        QPointF proj;
+
+        double dx = b.x() - a.x();
+        double dy = b.y() - a.y();
+
+        if (qAbs(dx) < 0.1 && qAbs(dy) < 0.1) {
+            proj = a;
+        } else {
+            double t = ((targetPos.x() - a.x()) * dx + (targetPos.y() - a.y()) * dy) / (dx * dx + dy * dy);
+            t = qBound(0.0, t, 1.0);
+            proj = QPointF(a.x() + t * dx, a.y() + t * dy);
+        }
+
+        double dist = QLineF(targetPos, proj).length();
+        if (dist < minDistance) {
+            minDistance = dist;
+            bestSegment = i;
+            exactPos = proj; // این نقطه تضمین می‌کند که از روی سیم خارج نمی‌شویم
+        }
+    }
+
+    // ۲. بریدن سیم و تراز کردن نقاط
+    for (int i = 0; i < oldPath.size() - 1; ++i) {
+        QPointF A = oldPath[i];
+        QPointF B = oldPath[i+1];
+
+        if (!splitFound) {
+            path1.append(A);
+            if (i == bestSegment) {
+                // فیکس طلایی: جلوگیری از هرگونه خطای اعشاری در خطوط صاف
+                if (qAbs(A.x() - B.x()) < 0.5) exactPos.setX(A.x());
+                if (qAbs(A.y() - B.y()) < 0.5) exactPos.setY(A.y());
+
+                path1.append(exactPos);
+                path2.append(exactPos);
+                path2.append(B);
+                splitFound = true;
+            }
+        } else {
+            path2.append(B);
+        }
+    }
+
+    if (!splitFound) {
+        path1 = {targetStart->sceneBoundingRect().center(), exactPos};
+        path2 = {exactPos, targetEnd->sceneBoundingRect().center()};
+    }
+
+    junction->setPos(exactPos);
+
+    scene->removeItem(clickedWire);
+    delete clickedWire;
+
+    Wire *w1 = new Wire(targetStart, targetStart->sceneBoundingRect().center());
+    w1->confirmConnection(junction->term);
+    scene->addItem(w1);
+    w1->setFullRoute(path1);
+
+    Wire *w2 = new Wire(junction->term, junction->term->sceneBoundingRect().center());
+    w2->confirmConnection(targetEnd);
+    scene->addItem(w2);
+    w2->setFullRoute(path2);
+
+    return exactPos;
+}
 
 CircuitScene::CircuitScene(QObject *parent)
         : QGraphicsScene(parent), isWiring(false), tempWire(nullptr), startTerminal(nullptr) {
-
+    setFocusOnTouch(true);
     setCanvasSize(m_canvasRect.size());
     voltageProbe = new ProbeItem();
     addItem(voltageProbe);
@@ -35,28 +119,24 @@ void CircuitScene::setGridSize(int size) {
 void CircuitScene::setCanvasSize(const QSizeF &size) {
     if (size.width() < 1 || size.height() < 1) return;
     m_canvasRect = QRectF(-size.width() / 2.0, -size.height() / 2.0,
-                         size.width(), size.height());
+                          size.width(), size.height());
     const qreal margin = qMax(size.width(), size.height()) * 2.0;
     setSceneRect(m_canvasRect.adjusted(-margin, -margin, margin, margin));
     invalidate(sceneRect(), QGraphicsScene::BackgroundLayer);
 }
 
 void CircuitScene::drawBackground(QPainter *painter, const QRectF &rect) {
-    // پر کردن پس‌زمینه با رنگ ملایم
     painter->fillRect(rect, QColor("#E9EDF2"));
     painter->fillRect(m_canvasRect, QColor("#FBFCFD"));
 
-    // تنظیم قلم برای نقاط گرید
     QPen pen;
     pen.setColor(QColor(199, 207, 218, 180));
     pen.setWidth(1);
     painter->setPen(pen);
 
-    // بهینه‌سازی رسم ناحیه قابل دید
     int left = int(rect.left()) - (int(rect.left()) % m_gridSize);
     int top = int(rect.top()) - (int(rect.top()) % m_gridSize);
 
-    // رسم نقاط روی بوم
     for (int x = left; x < rect.right(); x += m_gridSize) {
         for (int y = top; y < rect.bottom(); y += m_gridSize) {
             painter->drawPoint(x, y);
@@ -67,62 +147,135 @@ void CircuitScene::drawBackground(QPainter *painter, const QRectF &rect) {
     painter->drawRect(m_canvasRect);
 }
 
-// ==========================================
-// رویدادهای موس (سیم‌کشی و جابجایی)
-// ==========================================
 void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
-    if (event->button() == Qt::LeftButton) {
-        QGraphicsItem *item = itemAt(event->scenePos(), QTransform());
-        Terminal *clickedTerminal = dynamic_cast<Terminal*>(item);
+    // ۱. خروج از حالت سیم‌کشی با راست کلیک (سناریو درخواستی)
+    if (event->button() == Qt::RightButton) {
+        if (isWiring) {
+            if (tempWire) { removeItem(tempWire); delete tempWire; }
+            isWiring = false; tempWire = nullptr; startTerminal = nullptr;
+        }
+        m_wiringMode = false;
+        for (auto view : views()) view->setCursor(Qt::ArrowCursor);
+        event->accept();
+        return;
+    }
 
-        if (clickedTerminal) {
-            if (!isWiring) {
-                // شروع سیم‌کشی
+    if (event->button() == Qt::LeftButton) {
+        // ۲. اگر در حالت سیم‌کشی نیستیم، اجازه بده موس آزادانه سیم‌ها و قطعات را انتخاب و جابجا کند
+        if (!m_wiringMode) {
+            QGraphicsScene::mousePressEvent(event); // واگذاری کنترل به خود Qt برای Select و Drag
+            return;
+        }
+
+        // ==========================================
+        // بقیه کدهای سیم‌کشی شما دقیقاً مثل قبل اینجا قرار می‌گیرد...
+        // (تمام کدهای رادار نفوذپذیر و splitWireExactly که در مرحله قبل نوشتیم اینجا هستند)
+        // ==========================================
+        QPointF rawPos = event->scenePos();
+        QPointF dropPos = rawPos;
+        if (m_snapEnabled) {
+            dropPos.setX(qRound(dropPos.x() / m_gridSize) * m_gridSize);
+            dropPos.setY(qRound(dropPos.y() / m_gridSize) * m_gridSize);
+        }
+
+        QGraphicsItem *targetItem = nullptr;
+        QList<QGraphicsItem*> exactItems = items(rawPos);
+        for (QGraphicsItem *it : exactItems) {
+            if (it == tempWire) continue;
+            if (dynamic_cast<Terminal*>(it) || dynamic_cast<Wire*>(it)) {
+                targetItem = it;
+                break;
+            }
+        }
+
+        if (!targetItem) {
+            QList<QGraphicsItem*> itemsNear = items(QRectF(rawPos.x() - 8, rawPos.y() - 8, 16, 16));
+            for (QGraphicsItem *it : itemsNear) {
+                if (it == tempWire) continue;
+                if (dynamic_cast<Terminal*>(it) || dynamic_cast<Wire*>(it)) {
+                    targetItem = it;
+                    break;
+                }
+            }
+        }
+
+        Terminal *clickedTerminal = dynamic_cast<Terminal*>(targetItem);
+        Wire *clickedWire = dynamic_cast<Wire*>(targetItem);
+
+        if (!isWiring) {
+            if (clickedTerminal) {
                 isWiring = true;
                 startTerminal = clickedTerminal;
-
-                QPointF startPos = clickedTerminal->sceneBoundingRect().center();
-                tempWire = new Wire(startTerminal, startPos);
+                tempWire = new Wire(startTerminal, startTerminal->sceneBoundingRect().center());
                 addItem(tempWire);
                 return;
-            } else {
-                // --- پایان سیم‌کشی (وصل شدن به پایه دوم) ---
+            }
+            else if (clickedWire) {
+                JunctionNode *junction = new JunctionNode();
+                addItem(junction);
+
+                QPointF targetPos = m_snapEnabled ? dropPos : rawPos;
+                QPointF exactPos = splitWireExactly(clickedWire, targetPos, junction, this);
+
+                isWiring = true;
+                startTerminal = junction->term;
+                tempWire = new Wire(startTerminal, exactPos);
+                addItem(tempWire);
+                return;
+            }
+        } else {
+            if (clickedTerminal) {
                 if (clickedTerminal != startTerminal) {
-                    QPointF startP = startTerminal->sceneBoundingRect().center();
-                    QPointF endP = clickedTerminal->sceneBoundingRect().center();
-
-                    // فراخوانی مسیریاب خودکار هوشمند
-                    QVector<QPointF> smartPath = AutoRouter::findPath(this, startP, endP, startTerminal, clickedTerminal, tempWire);
-
+                    QPointF targetPos = clickedTerminal->sceneBoundingRect().center();
+                    QVector<QPointF> smartPath = AutoRouter::findPath(this, startTerminal->sceneBoundingRect().center(), targetPos, startTerminal, clickedTerminal, tempWire);
                     tempWire->setFullRoute(smartPath);
                     tempWire->confirmConnection(clickedTerminal);
 
-                    isWiring = false;
-                    tempWire = nullptr;
-                    startTerminal = nullptr;
-
-                    // ثبت در تاریخچه برای کارکردن Undo بعد از سیم‌کشی
+                    isWiring = false; tempWire = nullptr; startTerminal = nullptr;
                     FileManager::recordState(this);
-                    return;
                 }
+                return;
             }
-        } else if (isWiring) {
-            // لغو سیم‌کشی با کلیک روی فضای خالی
-            if (tempWire) {
-                removeItem(tempWire);
-                delete tempWire;
+            else if (clickedWire) {
+                JunctionNode *junction = new JunctionNode();
+                addItem(junction);
+
+                QPointF targetPos = m_snapEnabled ? dropPos : rawPos;
+                QPointF exactPos = splitWireExactly(clickedWire, targetPos, junction, this);
+
+                tempWire->confirmConnection(junction->term);
+                QVector<QPointF> smartPath = AutoRouter::findPath(this, startTerminal->sceneBoundingRect().center(), exactPos, startTerminal, junction->term, tempWire);
+                tempWire->setFullRoute(smartPath);
+
+                isWiring = false; tempWire = nullptr; startTerminal = nullptr;
+                FileManager::recordState(this);
+                return;
             }
-            isWiring = false;
-            tempWire = nullptr;
-            startTerminal = nullptr;
-            event->accept();
-            return;
+            else {
+                JunctionNode *junction = new JunctionNode();
+                junction->setPos(dropPos);
+                addItem(junction);
+
+                tempWire->confirmConnection(junction->term);
+                QVector<QPointF> smartPath = AutoRouter::findPath(this, startTerminal->sceneBoundingRect().center(), dropPos, startTerminal, junction->term, tempWire);
+                tempWire->setFullRoute(smartPath);
+
+                isWiring = false; tempWire = nullptr; startTerminal = nullptr;
+                FileManager::recordState(this);
+                return;
+            }
         }
     }
     QGraphicsScene::mousePressEvent(event);
 }
-
 void CircuitScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
+    // ثبت موقعیت موس برای خطوط متقاطع LTspice
+    m_crosshairPos = event->scenePos();
+
+    if (m_wiringMode) {
+        invalidate(sceneRect(), QGraphicsScene::ForegroundLayer); // آپدیت آنی لایه رویی
+    }
+
     if (isWiring && tempWire) {
         tempWire->setEndPoint(event->scenePos());
     }
@@ -131,18 +284,37 @@ void CircuitScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
 
 void CircuitScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     QGraphicsScene::mouseReleaseEvent(event);
-
-    // اگر قطعه‌ای در حال جابجایی (Drag) بوده و حالا رها شده، یک عکس برای Undo بگیریم
     if (!isWiring && selectedItems().count() > 0) {
         FileManager::recordState(this);
     }
 }
 
 // ==========================================
-// رویداد فشردن کلیدهای کیبورد (میانبرها و حذف)
+// رویداد فشردن کلیدهای کیبورد (میانبرها، سیم‌کشی و حذف)
 // ==========================================
 void CircuitScene::keyPressEvent(QKeyEvent *event) {
-    // --- 1. سیستم پاک کردن قطعات (Delete) ---
+    // --- فعال کردن حالت سیم‌کشی (W) ---
+    if (event->key() == Qt::Key_W) {
+        m_wiringMode = true;
+        for (auto view : views()) view->setCursor(Qt::CrossCursor); // تغییر شکل موس به حالت هدف‌گیری
+        qDebug() << "Wiring Mode: ON";
+        return;
+    }
+
+    // --- لغو حالت سیم‌کشی (Esc) ---
+    if (event->key() == Qt::Key_Escape) {
+        if (isWiring) {
+            if (tempWire) { removeItem(tempWire); delete tempWire; }
+            isWiring = false; tempWire = nullptr; startTerminal = nullptr;
+        }
+        m_wiringMode = false;
+        for (auto view : views()) view->setCursor(Qt::ArrowCursor); // بازگشت موس به حالت عادی
+        qDebug() << "Wiring Mode: OFF";
+        return;
+    }
+
+    // --- سیستم پاک کردن قطعات و سیم‌ها (Delete) ---
+    // (از آنجایی که سیم‌ها در فایل wire.cpp قابلیت ItemIsSelectable دارند، با این دکمه به راحتی حذف می‌شوند)
     if (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace) {
         bool somethingDeleted = false;
         for (QGraphicsItem *item : selectedItems()) {
@@ -150,7 +322,6 @@ void CircuitScene::keyPressEvent(QKeyEvent *event) {
             delete item;
             somethingDeleted = true;
         }
-        // اگر چیزی پاک شد، وضعیت جدید را برای Undo ثبت کن
         if (somethingDeleted) {
             FileManager::recordState(this);
             qDebug() << "[CircuitScene] Items deleted and state recorded.";
@@ -158,39 +329,21 @@ void CircuitScene::keyPressEvent(QKeyEvent *event) {
         return;
     }
 
-    // --- 2. میانبرهای ترکیبی با Control ---
+    // --- میانبرهای ترکیبی با Control ---
     if (event->modifiers() & Qt::ControlModifier) {
-        // 💾 سیستم Save
-        if (event->key() == Qt::Key_S) {
-            FileManager::saveCircuit("my_circuit_test.json", this);
-            qDebug() << "[TEST] Circuit Saved to my_circuit_test.json";
-            return;
-        }
-        // 📂 سیستم Load
-        if (event->key() == Qt::Key_O) {
-            FileManager::loadCircuit("my_circuit_test.json", this);
-            qDebug() << "[TEST] Circuit Loaded!";
-            return;
-        }
-        // ↩️ سیستم Undo / Redo
+        if (event->key() == Qt::Key_S) { FileManager::saveCircuit("my_circuit_test.json", this); return; }
+        if (event->key() == Qt::Key_O) { FileManager::loadCircuit("my_circuit_test.json", this); return; }
         if (event->key() == Qt::Key_Z) {
-            if (event->modifiers() & Qt::ShiftModifier) {
-                FileManager::redo(this);
-            } else {
-                FileManager::undo(this);
-            }
-            return;
-        } else if (event->key() == Qt::Key_Y) {
-            FileManager::redo(this);
+            if (event->modifiers() & Qt::ShiftModifier) FileManager::redo(this);
+            else FileManager::undo(this);
             return;
         }
+        else if (event->key() == Qt::Key_Y) { FileManager::redo(this); return; }
     }
+
     QGraphicsScene::keyPressEvent(event);
 }
 
-// ==========================================
-// سیستم Drag & Drop (کشیدن و رها کردن قطعات)
-// ==========================================
 QGraphicsItem *CircuitScene::addComponent(const QString &componentType, const QPointF &position) {
     QGraphicsItem *item = nullptr;
     if (componentType == "MCU") item = new MCUChip();
@@ -246,10 +399,26 @@ void CircuitScene::dragMoveEvent(QGraphicsSceneDragDropEvent *event) {
 
 void CircuitScene::dropEvent(QGraphicsSceneDragDropEvent *event) {
     if (event->mimeData()->hasText()) {
-        // قطعه را دقیقاً در محلی که موس رها شده با استفاده از سیستم Snap می‌سازد
         addComponent(event->mimeData()->text(), event->scenePos());
         event->acceptProposedAction();
     } else {
         event->ignore();
     }
+}
+// ==========================================
+// رسم لایه رویی (خطوط متقاطع سیم‌کشی مثل LTspice)
+// ==========================================
+void CircuitScene::drawForeground(QPainter *painter, const QRectF &rect) {
+    if (m_wiringMode) {
+        QPen pen(QColor(100, 100, 100, 180)); // رنگ خاکستری نیمه‌شفاف
+        pen.setStyle(Qt::DashLine);           // حالت نقطه‌چین
+        pen.setWidth(1);
+        pen.setCosmetic(true); // جادوی Qt: ضخامت خط همیشه 1 پیکسل می‌ماند حتی اگر زوم کنید!
+        painter->setPen(pen);
+
+        // رسم خط عمودی و افقی که کل صفحه را می‌پوشانند
+        painter->drawLine(QPointF(m_crosshairPos.x(), rect.top()), QPointF(m_crosshairPos.x(), rect.bottom()));
+        painter->drawLine(QPointF(rect.left(), m_crosshairPos.y()), QPointF(rect.right(), m_crosshairPos.y()));
+    }
+    QGraphicsScene::drawForeground(painter, rect);
 }
