@@ -10,7 +10,7 @@
 #include "../core/terminal.h"
 
 class Wire;
-
+class Element;
 class CircuitScene : public QGraphicsScene
 {
     Q_OBJECT
@@ -43,6 +43,23 @@ protected:
     void dropEvent(QGraphicsSceneDragDropEvent *event) override;
 
 private:
+    // 🛠️ ساختار پیشرفته کلیپ‌بورد برای ذخیره همزمان قطعات و اتصالات بین آن‌ها
+    struct CopiedComponent {
+        QString type;
+        QMap<QString, QString> properties;
+        QPointF relativePos;
+        Element* originalAddress; // برای ردیابی اتصالات در زمان کپی
+    };
+
+    struct CopiedWire {
+        int startComponentIndex;
+        int startTerminalIndex;
+        int endComponentIndex;
+        int endTerminalIndex;
+    };
+
+    QVector<CopiedComponent> m_clipboardComponents;
+    QVector<CopiedWire> m_clipboardWires;
     int m_gridSize = 20;
     bool m_snapEnabled = true;
     QRectF m_canvasRect{-800, -500, 1600, 1000};

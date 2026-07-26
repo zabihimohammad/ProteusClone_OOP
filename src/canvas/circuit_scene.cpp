@@ -336,7 +336,171 @@ void CircuitScene::keyPressEvent(QKeyEvent *event) {
     // --- میانبرهای ترکیبی با Control ---
     // --- میانبرهای ترکیبی با Control ---
     if (event->modifiers() & Qt::ControlModifier) {
+// 🛠️ سناریو جدید: کپی کردن قطعات انتخاب شده (Ctrl + C)
+        // 🛠️ نسخه ارتقایافته: کپی گروهی قطعات به همراه سیم‌های بین آن‌ها (Ctrl + C)
+        if (event->key() == Qt::Key_C) {
+            m_clipboardComponents.clear();
+            m_clipboardWires.clear();
 
+            QList<QGraphicsItem*> selected = selectedItems();
+            QList<Element*> selectedElements;
+            QPointF referencePos;
+            bool hasReference = false;
+
+            // ۱. ابتدا قطعات انتخاب شده را جمع‌آوری و فیکس می‌کنیم
+            for (QGraphicsItem *item : selected) {
+                Element *el = dynamic_cast<Element*>(item);
+                if (el && el->getComponentName() != "Junction Node") {
+                    if (!hasReference) {
+                        referencePos = el->scenePos();
+                        hasReference = true;
+                    }
+                    selectedElements.append(el);
+
+                    CopiedComponent comp;
+                    comp.type = el->getComponentName();
+
+                    // نگاشت نام‌های کارخانه
+                    if (comp.type == "Microcontroller (MCU)") comp.type = "MCU";
+                    else if (comp.type == "Ground (GND)") comp.type = "GROUND";
+                    else if (comp.type == "DC Voltage Source") comp.type = "DC_SOURCE";
+                    else if (comp.type == "Pulse Generator") comp.type = "PULSE_GENERATOR";
+                    else if (comp.type == "7-Segment Display") comp.type = "SEVEN_SEGMENT";
+                    else if (comp.type == "LCD 16x2 Display") comp.type = "LCD";
+                    else if (comp.type == "Matrix Keypad 4x4") comp.type = "KEYPAD";
+                    else if (comp.type == "Analog to Digital Converter (ADC)") comp.type = "ADC";
+                    else if (comp.type == "Digital to Analog Converter (DAC)") comp.type = "DAC";
+                    else comp.type = comp.type.toUpper().replace(" GATE", "_GATE").replace("-TYPE ", "_").replace(" ", "_");
+
+                    comp.properties = el->getProperties();
+                    comp.relativePos = el->scenePos() - referencePos;
+                    comp.originalAddress = el; // ذخیره برای ردیابی اتصالات سیم
+                    m_clipboardComponents.append(comp);
+                }
+            }
+
+            // ۲. حالا سیم‌هایی که دو سرشان به قطعات کپی شده متصل است را پیدا می‌کنیم
+            for (QGraphicsItem *item : selected) {
+                if (Wire *wire = dynamic_cast<Wire*>(item)) {
+                    Terminal *startTerm = wire->getStartTerminal();
+                    Terminal *endTerm = wire->getEndTerminal();
+                    if (!startTerm || !endTerm) continue;
+
+                    Element *startEl = dynamic_cast<Element*>(startTerm->parentItem());
+                    Element *endEl = dynamic_cast<Element*>(endTerm->parentItem());
+
+                    // بررسی اینکه آیا هر دو قطعه‌ی متصل به سیم در لیست کپی هستند؟
+                    int startIdx = selectedElements.indexOf(startEl);
+                    int endIdx = selectedElements.indexOf(endEl);
+
+                    if (startIdx != -1 && endIdx != -1) {
+                        CopiedWire cw;
+                        cw.startComponentIndex = startIdx;
+                        cw.endComponentIndex = endIdx;
+
+                        // پیدا کردن ایندکس ترمینال در داخل قطعه مبدا
+                        int tIdx = 0;
+                        for (QGraphicsItem* child : startEl->childItems()) {
+                            if (Terminal* t = dynamic_cast<Terminal*>(child)) {
+                                if (t == startTerm) { cw.startTerminalIndex = tIdx; break; }
+                                tIdx++;
+                            }
+                        }
+
+                        // پیدا کردن ایندکس ترمینال در داخل قطعه مقصد
+                        tIdx = 0;
+                        for (QGraphicsItem* child : endEl->childItems()) {
+                            if (Terminal* t = dynamic_cast<Terminal*>(child)) {
+                                if (t == endTerm) { cw.endTerminalIndex = tIdx; break; }
+                                tIdx++;
+                            }
+                        }
+                        m_clipboardWires.append(cw);
+                    }
+                }
+            }
+
+            qDebug() << "[Clipboard] Copied:" << m_clipboardComponents.size() << "elements," << m_clipboardWires.size() << "wires.";
+            return;
+        }
+
+        // 🛠️ نسخه ارتقایافته: پیست کردن همزمان قطعات و بازسازی سیم‌های میانی (Ctrl + V)
+        if (event->key() == Qt::Key_V) {
+            if (m_clipboardComponents.isEmpty()) return;
+
+            clearSelection();
+            QVector<Element*> pastedElements; // برای ردیابی قطعات جدید نیو شده
+
+            // پیدا کردن موقعیت موس برای پیست دقیق
+            QGraphicsView* activeView = views().isEmpty() ? nullptr : views().first();
+            QPointF targetOrigin = activeView ? activeView->mapToScene(activeView->mapFromGlobal(QCursor::pos())) : QPointF(0,0);
+            if (m_snapEnabled) {
+                targetOrigin.setX(qRound(targetOrigin.x() / m_gridSize) * m_gridSize);
+                targetOrigin.setY(qRound(targetOrigin.y() / m_gridSize) * m_gridSize);
+            }
+
+            // ۱. ساخت و قراردهی قطعات جدید
+            for (const CopiedComponent &comp : m_clipboardComponents) {
+                QPointF finalPos = targetOrigin + comp.relativePos;
+                QGraphicsItem *newItem = addComponent(comp.type, finalPos);
+
+                if (newItem) {
+                    Element *newEl = dynamic_cast<Element*>(newItem);
+                    if (newEl) {
+                        newEl->setProperties(comp.properties);
+                        newEl->setSelected(true);
+                        pastedElements.append(newEl);
+                    } else {
+                        pastedElements.append(nullptr);
+                    }
+                } else {
+                    pastedElements.append(nullptr);
+                }
+            }
+
+            // ۲. ساخت و اتصال سیم‌های جدید بر اساس ایندکس‌های ذخیره شده
+            for (const CopiedWire &cw : m_clipboardWires) {
+                Element *startEl = pastedElements.value(cw.startComponentIndex, nullptr);
+                Element *endEl = pastedElements.value(cw.endComponentIndex, nullptr);
+
+                if (startEl && endEl) {
+                    Terminal *startTerm = nullptr;
+                    Terminal *endTerm = nullptr;
+
+                    // استخراج ترمینال کپی شده مبدا
+                    int tIdx = 0;
+                    for (QGraphicsItem* child : startEl->childItems()) {
+                        if (Terminal* t = dynamic_cast<Terminal*>(child)) {
+                            if (tIdx == cw.startTerminalIndex) { startTerm = t; break; }
+                            tIdx++;
+                        }
+                    }
+
+                    // استخراج ترمینال کپی شده مقصد
+                    tIdx = 0;
+                    for (QGraphicsItem* child : endEl->childItems()) {
+                        if (Terminal* t = dynamic_cast<Terminal*>(child)) {
+                            if (tIdx == cw.endTerminalIndex) { endTerm = t; break; }
+                            tIdx++;
+                        }
+                    }
+
+                    // اگر هر دو ترمینال با موفقیت در قطعات جدید پیدا شدند، سیم را متصل کن
+                    if (startTerm && endTerm) {
+                        Wire *newWire = new Wire(startTerm, startTerm->sceneBoundingRect().center());
+                        newWire->confirmConnection(endTerm);
+                        addItem(newWire);
+                        newWire->updateRoute(); // صدا زدن هوش مصنوعی A* برای سیم‌کشی ارتوگونال جدید
+                        newWire->setSelected(true);
+                    }
+                }
+            }
+
+            FileManager::recordState(this);
+            update();
+            qDebug() << "[Clipboard] Paste completed with interconnected wires.";
+            return;
+        }
         // 🛠️ سناریو جدید: چرخش ۹۰ درجه قطعات انتخاب شده با Ctrl + R
         // 🛠️ چرخش ۹۰ درجه قطعات انتخاب شده با Ctrl + R
         if (event->key() == Qt::Key_R) {
