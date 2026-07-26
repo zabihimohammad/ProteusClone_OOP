@@ -35,7 +35,7 @@ void AndGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 
     painter->setFont(QFont("Consolas", 6));
     painter->setPen(Qt::darkGray);
-    painter->drawText(QRectF(-30, 25, 60, 15), Qt::AlignCenter, propagationDelay);
+    drawReadableText(painter,QRectF(-30, 25, 60, 15), Qt::AlignCenter, propagationDelay);
 }
 
 void AndGate::process() {
@@ -94,7 +94,7 @@ void OrGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
 
     painter->setFont(QFont("Consolas", 6));
     painter->setPen(Qt::darkGray);
-    painter->drawText(QRectF(-30, 25, 60, 15), Qt::AlignCenter, propagationDelay);
+    drawReadableText(painter,QRectF(-30, 25, 60, 15), Qt::AlignCenter, propagationDelay);
 }
 
 void OrGate::process() {
@@ -145,7 +145,7 @@ void NotGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 
     painter->setFont(QFont("Consolas", 6));
     painter->setPen(Qt::darkGray);
-    painter->drawText(QRectF(-25, 25, 50, 15), Qt::AlignCenter, propagationDelay);
+    drawReadableText(painter,QRectF(-25, 25, 50, 15), Qt::AlignCenter, propagationDelay);
 }
 
 void NotGate::process() {
@@ -203,7 +203,7 @@ void XorGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 
     painter->setFont(QFont("Consolas", 6));
     painter->setPen(Qt::darkGray);
-    painter->drawText(QRectF(-35, 25, 70, 15), Qt::AlignCenter, propagationDelay);
+    drawReadableText(painter,QRectF(-35, 25, 70, 15), Qt::AlignCenter, propagationDelay);
 }
 
 void XorGate::process() {
@@ -257,7 +257,7 @@ void NandGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
     painter->setFont(QFont("Consolas", 6));
     painter->setPen(Qt::darkGray);
-    painter->drawText(QRectF(-35, 25, 70, 15), Qt::AlignCenter, propagationDelay);
+    drawReadableText(painter,QRectF(-35, 25, 70, 15), Qt::AlignCenter, propagationDelay);
 }
 
 void NandGate::process() {
@@ -306,9 +306,9 @@ void DFlipFlop::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
 
     // لیبل‌های داخلی پایه‌ها
     painter->setFont(QFont("Consolas", 8, QFont::Bold));
-    painter->drawText(QRectF(-25, -23, 20, 15), Qt::AlignLeft, "D");
-    painter->drawText(QRectF(10, -23, 20, 15), Qt::AlignRight, "Q");
-    painter->drawText(QRectF(5, 7, 25, 15), Qt::AlignRight, "Q'");
+    drawReadableText(painter,QRectF(-25, -23, 20, 15), Qt::AlignLeft, "D");
+    drawReadableText(painter,QRectF(10, -23, 20, 15), Qt::AlignRight, "Q");
+    drawReadableText(painter,QRectF(5, 7, 25, 15), Qt::AlignRight, "Q'");
 
     // رسم نماد کلاک (مثلث لبه)
     painter->drawLine(-30, 7, -23, 15);
@@ -316,7 +316,7 @@ void DFlipFlop::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
 
     painter->setFont(QFont("Consolas", 6));
     painter->setPen(Qt::darkGray);
-    painter->drawText(QRectF(-40, 40, 80, 15), Qt::AlignCenter, propagationDelay);
+    drawReadableText(painter,QRectF(-40, 40, 80, 15), Qt::AlignCenter, propagationDelay);
 }
 
 void DFlipFlop::process() {

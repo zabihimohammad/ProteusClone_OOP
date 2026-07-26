@@ -7,7 +7,8 @@
 #include "terminal.h"
 #include "wire.h"
 #include "../gui/properties_dialog.h"
-
+#include <QPainter>       // 🛠️ اضافه شد برای رفع خطاهای incomplete type
+#include <QFontMetrics>   // 🛠️ اضافه شد برای محاسبه ابعاد فونت
 // کلاس مجازی مادر که تمام قطعات از آن ارث‌بری می‌کنند
 class Element : public QGraphicsItem {
 public:
@@ -41,6 +42,64 @@ public:
     }
 
 protected:
+    // 🛠️ نسخه هوشمند ۱: رسم متن کادردار با خنثی‌سازی همزمان میرور و چرخش
+    void drawReadableText(QPainter *painter, const QRectF &rect, int flags, const QString &text) {
+        painter->save();
+
+        // تشخیص وضعیت میرور و چرخش فعلی قطعه
+        bool isMirrored = (transform().m11() < 0);
+        qreal currentRotation = rotation();
+
+        // رفتن به مرکز کادر متن برای چرخاندن و قرینه کردن قلم دور خود متن
+        QPointF center = rect.center();
+        painter->translate(center);
+
+        // ۱. خنثی کردن زاویه قطعه (چرخاندن پینتر در جهت عکس)
+        if (currentRotation != 0.0) {
+            painter->rotate(-currentRotation);
+        }
+
+        // ۲. خنثی کردن میرور افقی
+        if (isMirrored) {
+            painter->scale(-1, 1);
+        }
+
+        // رسم متن در نقطه صفر جدید (چون پینتر روی مرکز کادر ست شده است)
+        QRectF localRect(-rect.width() / 2.0, -rect.height() / 2.0, rect.width(), rect.height());
+        painter->drawText(localRect, flags, text);
+
+        painter->restore();
+    }
+
+    // 🛠️ نسخه هوشمند ۲: رسم متن نقطه‌ای با خنثی‌سازی همزمان میرور و چرخش (برای پین‌ها)
+    void drawReadableText(QPainter *painter, double x, double y, const QString &text) {
+        painter->save();
+
+        bool isMirrored = (transform().m11() < 0);
+        qreal currentRotation = rotation();
+
+        // انتقال پینتر به نقطه دقیق بیس متن
+        painter->translate(x, y);
+
+        // خنثی‌سازی زاویه
+        if (currentRotation != 0.0) {
+            painter->rotate(-currentRotation);
+        }
+
+        // خنثی‌سازی میرور
+        if (isMirrored) {
+            painter->scale(-1, 1);
+            QFontMetrics fm(painter->font());
+            double textWidth = fm.horizontalAdvance(text);
+            // اصلاح آفست متن در حالت میرور
+            if (x > 0) painter->drawText(QPointF(-textWidth, 0), text);
+            else painter->drawText(QPointF(0, 0), text);
+        } else {
+            painter->drawText(QPointF(0, 0), text);
+        }
+
+        painter->restore();
+    }
     // تابعی از Qt که مختصات را هنگام کشیدن با موس، رهگیری و اصلاح می‌کند
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override {
         // اگر قطعه در حال جابجایی روی بوم است

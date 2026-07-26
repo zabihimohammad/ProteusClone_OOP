@@ -59,7 +59,7 @@ void MCUChip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
     // چاپ نام تراشه
     painter->setPen(Qt::white);
     painter->setFont(QFont("Consolas", 10, QFont::Bold));
-    painter->drawText(QRectF(-40, -30, 80, 20), Qt::AlignCenter, "MCU");
+    drawReadableText(painter,QRectF(-40, -30, 80, 20), Qt::AlignCenter, "MCU");
 
     // چاپ فرکانس کاری
     painter->setFont(QFont("Consolas", 7));

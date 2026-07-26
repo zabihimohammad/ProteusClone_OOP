@@ -29,7 +29,7 @@ void Resistor::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
     painter->setFont(QFont("Consolas", 8, QFont::Bold));
     painter->setPen(Qt::darkBlue);
-    painter->drawText(QRectF(-35, -25, 70, 15), Qt::AlignCenter, resistance);
+    drawReadableText(painter, QRectF(-35, -25, 70, 15), Qt::AlignCenter, resistance);
 }
 
 void Resistor::process() {}
@@ -67,7 +67,7 @@ void Capacitor::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
 
     painter->setFont(QFont("Consolas", 8, QFont::Bold));
     painter->setPen(Qt::darkBlue);
-    painter->drawText(QRectF(-35, -30, 70, 15), Qt::AlignCenter, capacitance);
+    drawReadableText(painter,QRectF(-35, -30, 70, 15), Qt::AlignCenter, capacitance);
 }
 
 void Capacitor::process() {}
@@ -106,7 +106,7 @@ void Inductor::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
     painter->setFont(QFont("Consolas", 8, QFont::Bold));
     painter->setPen(Qt::darkBlue);
-    painter->drawText(QRectF(-35, -25, 70, 15), Qt::AlignCenter, inductance);
+    drawReadableText(painter,QRectF(-35, -25, 70, 15), Qt::AlignCenter, inductance);
 }
 
 void Inductor::process() {}
@@ -146,7 +146,7 @@ void PulseGenerator::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     // نمایش فرکانس روی قطعه
     painter->setFont(QFont("Consolas", 7, QFont::Bold));
     painter->setPen(Qt::darkBlue);
-    painter->drawText(QRectF(-25, -35, 50, 15), Qt::AlignCenter, frequency);
+    drawReadableText(painter,QRectF(-25, -35, 50, 15), Qt::AlignCenter, frequency);
 }
 
 // 🛠️ بخش اصلاح شده: موتور شبیه‌ساز هر 0.1 ثانیه این تابع را صدا می‌زند
@@ -212,7 +212,7 @@ void Switch::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
 
     painter->setFont(QFont("Consolas", 8, QFont::Bold));
     painter->setPen(Qt::darkBlue);
-    painter->drawText(QRectF(-35, -30, 70, 15), Qt::AlignCenter, initialState);
+    drawReadableText(painter,QRectF(-35, -30, 70, 15), Qt::AlignCenter, initialState);
 }
 
 void Switch::process() {}
@@ -252,7 +252,7 @@ void PushButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
 
     painter->setFont(QFont("Consolas", 7, QFont::Bold));
     painter->setPen(Qt::darkBlue);
-    painter->drawText(QRectF(-35, -35, 70, 15), Qt::AlignCenter, type);
+    drawReadableText(painter,QRectF(-35, -35, 70, 15), Qt::AlignCenter, type);
 }
 
 void PushButton::process() {}
@@ -300,7 +300,7 @@ void LED::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidg
 
     painter->setFont(QFont("Consolas", 8, QFont::Bold));
     painter->setPen(Qt::darkBlue);
-    painter->drawText(QRectF(-35, -35, 70, 15), Qt::AlignCenter, color);
+    drawReadableText(painter,QRectF(-35, -35, 70, 15), Qt::AlignCenter, color);
 }
 
 void LED::process() {}
@@ -343,7 +343,7 @@ void SevenSegment::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
 
     painter->setFont(QFont("Consolas", 7, QFont::Bold));
     painter->setPen(Qt::darkBlue);
-    painter->drawText(QRectF(-25, -45, 50, 15), Qt::AlignCenter, color);
+    drawReadableText(painter,QRectF(-25, -45, 50, 15), Qt::AlignCenter, color);
 }
 
 void SevenSegment::process() {}
@@ -401,7 +401,7 @@ void DCVoltageSource::paint(QPainter *painter, const QStyleOptionGraphicsItem *o
     painter->drawLine(0, -5, 0, 5);
 
     painter->setFont(QFont("Consolas", 8));
-    painter->drawText(QRectF(-20, 15, 40, 15), Qt::AlignCenter, voltage);
+    drawReadableText(painter,QRectF(-20, 15, 40, 15), Qt::AlignCenter, voltage);
 }
 void DCVoltageSource::process() {
     double v = voltage.replace("V", "").toDouble();
@@ -440,7 +440,7 @@ void ClockGenerator::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     painter->drawLine(5, 10, 10, 10);
 
     painter->setFont(QFont("Consolas", 7));
-    painter->drawText(QRectF(-25, 25, 50, 15), Qt::AlignCenter, frequency);
+    drawReadableText(painter,QRectF(-25, 25, 50, 15), Qt::AlignCenter, frequency);
 }
 void ClockGenerator::process() {
     double v = currentState ? amplitude.replace("V", "").toDouble() : 0.0;

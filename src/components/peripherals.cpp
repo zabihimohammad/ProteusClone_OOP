@@ -33,7 +33,7 @@ void MemoryChip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
 
     // چاپ نام تراشه
     painter->setPen(Qt::white);
-    painter->drawText(QRectF(-40, -50, 80, 100), Qt::AlignCenter, "RAM\nEEPROM");
+    drawReadableText(painter,QRectF(-40, -50, 80, 100), Qt::AlignCenter, "RAM\nEEPROM");
 
     // رسم خطوط اتصال پایه‌ها
     painter->setPen(pen);
@@ -52,7 +52,7 @@ void MemoryChip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
     // چاپ وضعیت فایل هگز در پایین تراشه
     if (initialHexPath == "Not Loaded" || initialHexPath.isEmpty()) {
         painter->setPen(Qt::red);
-        painter->drawText(QRectF(-60, 55, 120, 15), Qt::AlignCenter, "NO HEX");
+        drawReadableText(painter,QRectF(-60, 55, 120, 15), Qt::AlignCenter, "NO HEX");
     } else {
         painter->setPen(QColor(0, 150, 0)); // سبز تیره
         painter->drawText(QRectF(-60, 55, 120, 15), Qt::AlignCenter, "HEX OK");
@@ -99,7 +99,7 @@ void LCD16x2::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
     painter->setPen(Qt::darkBlue);
     QString infoText = busMode;
     if (busMode == "I2C") infoText += " (" + i2cAddress + ")";
-    painter->drawText(QRectF(-70, 30, 140, 15), Qt::AlignCenter, infoText);
+    drawReadableText(painter,QRectF(-70, 30, 140, 15), Qt::AlignCenter, infoText);
 }
 
 // ==========================================
@@ -142,7 +142,7 @@ void Keypad::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
     // === نمایش داینامیک زمان دی‌بانس (Debounce) ===
     painter->setFont(QFont("Consolas", 7, QFont::Bold));
     painter->setPen(Qt::darkBlue);
-    painter->drawText(QRectF(-45, 55, 90, 15), Qt::AlignCenter, "DB: " + debounceTimeMs);
+    drawReadableText(painter,QRectF(-45, 55, 90, 15), Qt::AlignCenter, "DB: " + debounceTimeMs);
 }
 
 // ==========================================
@@ -170,12 +170,12 @@ void ADC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     painter->setBrush(QColor(70, 130, 180));
     painter->drawRect(-30, -30, 60, 60);
     painter->setPen(Qt::white);
-    painter->drawText(QRectF(-30, -30, 60, 60), Qt::AlignCenter, "ADC");
+    drawReadableText(painter,QRectF(-30, -30, 60, 60), Qt::AlignCenter, "ADC");
 
     // پایه ورودی آنالوگ
     painter->setPen(pen);
     painter->drawLine(-40, 0, -30, 0);
-    painter->drawText(-55, 5, "Vin");
+    drawReadableText(painter,-55, 5, "Vin");
 
     // پایه‌های خروجی دیجیتال
     for(int i = -20; i <= 20; i += 10) {
@@ -185,8 +185,8 @@ void ADC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     // === نمایش داینامیک رزولوشن و ولتاژ مرجع ===
     painter->setFont(QFont("Consolas", 7, QFont::Bold));
     painter->setPen(Qt::darkBlue);
-    painter->drawText(QRectF(-65, -50, 120, 15), Qt::AlignCenter, resolutionBits);
-    painter->drawText(QRectF(-65, 35, 120, 15), Qt::AlignCenter, "Vref: " + referenceVoltage);
+    drawReadableText(painter,QRectF(-65, -50, 120, 15), Qt::AlignCenter, resolutionBits);
+    drawReadableText(painter,QRectF(-65, 35, 120, 15), Qt::AlignCenter, "Vref: " + referenceVoltage);
 }
 
 // ==========================================
@@ -214,12 +214,12 @@ void DAC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     painter->setBrush(QColor(210, 105, 30));
     painter->drawRect(-30, -30, 60, 60);
     painter->setPen(Qt::white);
-    painter->drawText(QRectF(-30, -30, 60, 60), Qt::AlignCenter, "DAC");
+    drawReadableText(painter,QRectF(-30, -30, 60, 60), Qt::AlignCenter, "DAC");
 
     // پایه خروجی آنالوگ
     painter->setPen(pen);
     painter->drawLine(30, 0, 40, 0);
-    painter->drawText(45, 5, "Vout");
+    drawReadableText(painter,45, 5, "Vout");
 
     // پایه‌های ورودی دیجیتال
     for(int i = -20; i <= 20; i += 10) {
@@ -229,6 +229,6 @@ void DAC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     // === نمایش داینامیک رزولوشن و ولتاژ خروجی ===
     painter->setFont(QFont("Consolas", 7, QFont::Bold));
     painter->setPen(Qt::darkBlue);
-    painter->drawText(QRectF(-65, -50, 120, 15), Qt::AlignCenter, resolutionBits);
-    painter->drawText(QRectF(-65, 35, 120, 15), Qt::AlignCenter, "Max: " + maxOutputVoltage);
+    drawReadableText(painter,QRectF(-65, -50, 120, 15), Qt::AlignCenter, resolutionBits);
+    drawReadableText(painter,QRectF(-65, 35, 120, 15), Qt::AlignCenter, "Max: " + maxOutputVoltage);
 }

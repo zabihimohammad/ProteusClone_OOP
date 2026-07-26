@@ -1,6 +1,7 @@
 import os
 
-output_filename = "all_project_code.txt"
+# آدرس خروجی را به صورت مستقیم روی دسکتاپ بگذارید
+output_filename = r"C:\Users\Noor-Rayaneh\Desktop\all_project_code.txt"
 # فرمت فایل‌هایی که می‌خواهیم جمع‌آوری کنیم
 valid_extensions = (".cpp", ".h")
 # پوشه‌ای که کدهای شما در آن قرار دارد

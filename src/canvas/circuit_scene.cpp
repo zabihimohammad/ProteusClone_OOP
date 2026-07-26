@@ -387,6 +387,71 @@ void CircuitScene::keyPressEvent(QKeyEvent *event) {
             }
             return;
         }
+        // 🛠️ سناریو جدید: قرینه‌سازی افقی قطعات انتخاب شده با Ctrl + M
+        // 🛠️ نسخه اصلاح‌شده: قرینه‌سازی افقی قطعات به همراه خوانا نگه‌داشتن متن‌ها
+        // 🛠️ نسخه اصلاح‌شده: قرینه‌سازی افقی قطعات به همراه خوانا نگه‌داشتن متن‌ها
+        if (event->key() == Qt::Key_M) {
+            bool mirroredAny = false;
+
+            for (QGraphicsItem *item : selectedItems()) {
+                Element *element = dynamic_cast<Element*>(item);
+
+                if (element && element->getComponentName() != "Junction Node") {
+                    element->setTransformOriginPoint(element->boundingRect().center());
+
+                    // ۱. اعمال قرینه‌سازی روی خود قطعه
+                    QTransform transform = element->transform();
+                    transform.scale(-1, 1);
+                    element->setTransform(transform);
+
+                    // ۲. فیکس کردن متن‌ها: خنثی کردن اثر میرور روی نوشته‌های فرزند
+                    for (QGraphicsItem *child : element->childItems()) {
+                        // بررسی انواع آیتم‌های متنی متداول در Qt
+                        bool isText = dynamic_cast<QGraphicsTextItem*>(child) != nullptr ||
+                                      dynamic_cast<QGraphicsSimpleTextItem*>(child) != nullptr;
+
+                        if (isText) {
+                            child->setTransformOriginPoint(child->boundingRect().center());
+                            QTransform textTransform = child->transform();
+                            // یک بار دیگر روی محور X میرور می‌کنیم تا متن به حالت عادی و خوانا برگردد
+                            textTransform.scale(-1, 1);
+                            child->setTransform(textTransform);
+                        }
+                    }
+
+                    // ۳. به‌روزرسانی آنی مسیر سیم‌های متصل به پایه‌ها
+                    for (QGraphicsItem *child : element->childItems()) {
+                        Terminal *term = dynamic_cast<Terminal*>(child);
+                        if (term) {
+                            for (Wire *wire : term->getConnectedWires()) {
+                                QVector<QPointF> wirePoints = wire->getPoints();
+
+                                if (!wirePoints.isEmpty()) {
+                                    QPointF newTerminalPos = term->sceneBoundingRect().center();
+
+                                    if (wire->getStartTerminal() == term) {
+                                        wirePoints[0] = newTerminalPos;
+                                    }
+                                    if (wire->getEndTerminal() == term) {
+                                        wirePoints.last() = newTerminalPos;
+                                    }
+
+                                    wire->setFullRoute(wirePoints);
+                                }
+                            }
+                        }
+                    }
+                    mirroredAny = true;
+                }
+            }
+
+            if (mirroredAny) {
+                FileManager::recordState(this);
+                update();
+                qDebug() << "[Mirroring] Component mirrored and text readability preserved.";
+            }
+            return;
+        }
 
         // کدهای قبلی شما (Ctrl+S, Ctrl+O, Ctrl+Z و غیره) در ادامه اینجا قرار دارند:
         if (event->key() == Qt::Key_S) { FileManager::saveCircuit("my_circuit_test.json", this); return; }
