@@ -1,13 +1,13 @@
 #include "circuit_view.h"
-
 #include "circuit_scene.h"
-
 #include <QMouseEvent>
 #include <QPainter>
 #include <QResizeEvent>
 #include <QScrollBar>
 #include <QWheelEvent>
-
+#include <QMenu>
+#include <QAction>
+#include "../core/element.h"
 namespace {
 constexpr qreal kMinimumZoom = 0.10;
 constexpr qreal kMaximumZoom = 4.0;
@@ -61,6 +61,71 @@ void CircuitView::wheelEvent(QWheelEvent *event)
 
 void CircuitView::mousePressEvent(QMouseEvent *event)
 {
+    // 🛠️ سیستم پیشرفته منوی راست‌کلیک (Context Menu)
+    if (event->button() == Qt::RightButton) {
+        auto *circuitScene = qobject_cast<CircuitScene *>(scene());
+        if (circuitScene) {
+            QPointF scenePos = mapToScene(event->pos());
+            QGraphicsItem *clickedItem = circuitScene->itemAt(scenePos, QTransform());
+
+            QMenu contextMenu(this);
+            // استایل‌دهی مدرن به منوی راست‌کلیک برای هماهنگی با تم پروژه
+            contextMenu.setStyleSheet(R"(
+                QMenu { background-color: #ffffff; border: 1px solid #DDE2E8; border-radius: 8px; padding: 4px; }
+                QMenu::item { padding: 6px 24px 6px 20px; border-radius: 4px; color: #253143; font-weight: 500; }
+                QMenu::item:selected { background-color: #E8F2FF; color: #0A66D3; }
+                QMenu::separator { height: 1px; background: #E6E9ED; margin: 4px 0; }
+            )");
+
+            // سناریو آ: کلیک روی یک قطعه
+            if (clickedItem && dynamic_cast<Element*>(clickedItem)) {
+                // مطمئن می‌شویم قطعه کلیک شده در حالت انتخاب قرار بگیرد
+                if (!clickedItem->isSelected()) {
+                    circuitScene->clearSelection();
+                    clickedItem->setSelected(true);
+                }
+
+                QAction *actCopy = contextMenu.addAction(tr("Copy (Ctrl+C)"));
+                contextMenu.addSeparator();
+                QAction *actRotate = contextMenu.addAction(tr("Rotate (Ctrl+R)"));
+                QAction *actMirror = contextMenu.addAction(tr("Mirror (Ctrl+M)"));
+                contextMenu.addSeparator();
+                QAction *actDelete = contextMenu.addAction(tr("Delete"));
+
+                // نمایش منو در موقعیت زنده موس روی دسکتاپ
+                QAction *selectedAction = contextMenu.exec(event->globalPosition().toPoint());
+
+                // اجرای دستورات بر اساس انتخاب کاربر (منوی قطعه)
+                if (selectedAction == actCopy) {
+                    // 🛠️ فیکس طلایی: فراخوانی صریح متد عمومی کپی بدون نیاز به رویداد مجازی
+                    circuitScene->copySelectedComponents();
+                } else if (selectedAction == actRotate) {
+                    clickedItem->setRotation(clickedItem->rotation() + 90);
+                    circuitScene->update();
+                } else if (selectedAction == actMirror) {
+                    QTransform t = clickedItem->transform();
+                    clickedItem->setTransform(QTransform(-t.m11(), t.m12(), t.m21(), t.m22(), t.dx(), t.dy()));
+                    circuitScene->update();
+                } else if (selectedAction == actDelete) {
+                    QKeyEvent delEvent(QEvent::KeyPress, Qt::Key_Delete, Qt::NoModifier);
+                    QCoreApplication::sendEvent(circuitScene, &delEvent);
+                }
+            }
+                // سناریو ب: کلیک روی فضای خالی بوم
+            else {
+                QAction *actPaste = contextMenu.addAction(tr("Paste Here (Ctrl+V)"));
+
+                QAction *selectedAction = contextMenu.exec(event->globalPosition().toPoint());
+                if (selectedAction == actPaste) {
+                    // 🛠️ فیکس طلایی: گرفتن مختصات دقیق محل کلیک راست موس و ارسال مستقیم آن به متد پیست
+                    QPointF clickScenePos = mapToScene(event->pos());
+                    circuitScene->pasteCopiedComponents(clickScenePos);
+                }
+            }
+            event->accept();
+            return;
+        }
+    }
     if (event->button() == Qt::LeftButton && navigatorToggleRect().contains(event->pos())) {
         m_navigatorCollapsed = !m_navigatorCollapsed;
         viewport()->update();

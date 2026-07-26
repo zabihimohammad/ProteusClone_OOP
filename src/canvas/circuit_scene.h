@@ -24,6 +24,8 @@ public:
     int gridSpacing() const { return m_gridSize; }
     bool snapEnabled() const { return m_snapEnabled; }
     QRectF canvasRect() const { return m_canvasRect; }
+    void copySelectedComponents();
+    void pasteCopiedComponents(const QPointF &targetScenePos);
 
 public slots:
     void setGridSize(int size);
