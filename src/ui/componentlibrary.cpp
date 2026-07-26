@@ -47,7 +47,8 @@ ComponentLibrary::ComponentLibrary(QWidget *parent) : QFrame(parent)
         {"MEMORY", "Memory", "Advanced", "External memory chip", "[ RAM ]"},
         {"KEYPAD", "Keypad", "Advanced", "Matrix keypad", "[ # ]"},
         {"ADC", "ADC", "Converters", "Analog-to-digital converter", "[ A→D ]"},
-        {"DAC", "DAC", "Converters", "Digital-to-analog converter", "[ D→A ]"}
+        {"DAC", "DAC", "Converters", "Digital-to-analog converter", "[ D→A ]"},
+        {"OSCILLOSCOPE", "Oscilloscope", "Outputs", "Real-time voltage waveform scope", "[ ∿ SCOPE ]"}
     };
 
     auto *layout = new QVBoxLayout(this);
@@ -232,7 +233,7 @@ bool ComponentLibrary::eventFilter(QObject *obj, QEvent *event) {
                     else if (componentId == "KEYPAD") tempItem = new Keypad();
                     else if (componentId == "ADC") tempItem = new ADC_Chip();
                     else if (componentId == "DAC") tempItem = new DAC_Chip();
-
+                    else if (componentId == "OSCILLOSCOPE") tempItem = new Oscilloscope();
                     if (tempItem) {
                         // ۲. ایجاد یک بوم موقت و انداختن قطعه درون آن
                         QGraphicsScene tempScene;

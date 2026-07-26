@@ -494,3 +494,109 @@ void JunctionNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
 void JunctionNode::process() {
     // گره‌ها پردازش منطقی خاصی ندارند، فقط ولتاژ را از سیم‌ها عبور می‌دهند
 }
+// ==========================================
+// ۱۳. پیاده‌سازی اسیلوسکوپ گرافیکی پیشرفته
+// ==========================================
+Oscilloscope::Oscilloscope() {
+    // ایجاد یک پین ورودی در سمت چپ دستگاه برای اتصال سیم مدار
+    inChannel = new Terminal(this);
+    inChannel->setPos(-80, 0);
+
+    // پر کردن بافر اولیه با ولتاژ صفر
+    voltageHistory.fill(0.0, maxSamples);
+}
+
+QRectF Oscilloscope::boundingRect() const {
+    // کادر کلی اسیلوسکوپ (یک مستطیل عریض آزمایشگاهی)
+    return QRectF(-75, -55, 150, 110);
+}
+
+void Oscilloscope::process() {
+    // خواندن ولتاژ زنده از روی رشته متنی یا متغیر الکتریکی پین ورودی
+    double currentV = 0.0;
+    if (inChannel) {
+        // تبدیل رشته "5.0V" یا مشابه به عدد double برای رسم ریاضی
+        QString vStr = inChannel->voltageLevel;
+        currentV = vStr.replace("V", "").toDouble();
+    }
+
+    // شیفت دادن بافر به چپ و اضافه کردن نمونه جدید از سمت راست (حرکت زمانی موج)
+    voltageHistory.pop_front();
+    voltageHistory.append(currentV);
+}
+
+void Oscilloscope::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    painter->save();
+    painter->setRenderHint(QPainter::Antialiasing);
+
+    // ─── ۱. بدنه فیزیکی دستگاه (تم تیره و مدرن) ───
+    QLinearGradient bgGrad(-70, -50, 70, 50);
+    bgGrad.setColorAt(0.0, QColor("#2D3540"));
+    bgGrad.setColorAt(1.0, QColor("#1A1F26"));
+    painter->setBrush(bgGrad);
+
+    QPen bodyPen(isSelected() ? Qt::red : QColor("#4F5D6B"), 2.5);
+    painter->setPen(bodyPen);
+    painter->drawRoundedRect(-70, -50, 140, 100, 10, 10);
+
+    // ─── ۲. اسکرین تیره دیجیتال (CRT Screen) ───
+    QRectF screenRect(-60, -42, 120, 74);
+    painter->setBrush(QColor("#0D1117"));
+    painter->setPen(QPen(QColor("#30363D"), 1.5));
+    painter->drawRoundedRect(screenRect, 4, 4);
+
+    // ─── ۳. رسم گرید شطرنجی فسفری (مختصات اسیلوسکوپ) ───
+    QColor gridColor("#00FFCC");
+    gridColor.setAlpha(25);
+    painter->setPen(QPen(gridColor, 1, Qt::DotLine));
+    // خطوط عمودی گرید
+    for (int x = -50; x <= 50; x += 15) {
+        painter->drawLine(x, -42, x, 32);
+    }
+    // خطوط افقی گرید
+    for (int y = -30; y <= 30; y += 12) {
+        painter->drawLine(-60, y, 60, y);
+    }
+
+    // ─── ۴. رسم شکل موج ولتاژ به صورت نئونی (Glow Waveform) ───
+    QPainterPath wavePath;
+    double stepX = 120.0 / (maxSamples - 1);
+    double startX = -60.0;
+
+    // تبدیل ولتاژ به مختصات Y صفحه (فرض می‌کنیم محدوده ولتاژ ۰ تا ۵ ولت است)
+    auto voltageToY = [&](double v) {
+        // ۵ ولت در بالای صفحه و ۰ ولت در پایین صفحه گرید
+        double clampedV = qBound(0.0, v, 5.0);
+        return 26.0 - (clampedV / 5.0) * 56.0;
+    };
+
+    wavePath.moveTo(startX, voltageToY(voltageHistory[0]));
+    for (int i = 1; i < maxSamples; ++i) {
+        wavePath.lineTo(startX + (i * stepX), voltageToY(voltageHistory[i]));
+    }
+
+    // لایه اول: رسم هاله درخشان پشتی (شفافیت بالا و ضخامت بیشتر)
+    QColor glowColor("#00FFCC");
+    glowColor.setAlpha(60);
+    painter->setPen(QPen(glowColor, 4, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    painter->drawPath(wavePath);
+
+    // لایه دوم: هسته اصلی موج فسفری تیز (ضخامت کمتر و تمام رنگ)
+    painter->setPen(QPen(QColor("#FFFFFF"), 1.5, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    painter->drawPath(wavePath);
+
+    // ─── ۵. لِیبل‌ها و مقادیر متنی وضعیت ولتاژ زنده ───
+    painter->setFont(QFont("Consolas", 7, QFont::Bold));
+
+    // نمایش ولتاژ لحظه‌ای کانال در گوشه بالا سمت چپ اسکرین
+    QString liveVText = QString::number(voltageHistory.last(), 'f', 1) + "V";
+    painter->setPen(QColor("#00FFCC"));
+    painter->drawText(QRectF(-55, -38, 50, 15), Qt::AlignLeft, liveVText);
+
+    // چاپ نام مدل اسیلوسکوپ در پایین بدنه دستگاه
+    painter->setPen(QColor("#9AA6B5"));
+    painter->setFont(QFont("Segoe UI", 7, QFont::DemiBold));
+    drawReadableText(painter, QRectF(-70, 37, 140, 12), Qt::AlignCenter, "DIGITAL OSCILLOSCOPE");
+
+    painter->restore();
+}

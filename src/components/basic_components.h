@@ -211,3 +211,20 @@ public:
     QString getComponentName() const override { return "Junction Node"; }
     ~JunctionNode() override;
 };
+// ==========================================
+// ۱۳. اسیلوسکوپ گرافیکی پیشرفته (Oscilloscope)
+// ==========================================
+class Oscilloscope : public Element {
+private:
+    Terminal *inChannel;          // پین ورودی کانال اسیلوسکوپ
+    QVector<double> voltageHistory; // بافر ذخیره ولتاژهای قبلی برای رسم نمودار
+    const int maxSamples = 60;    // تعداد نمونه‌های روی صفحه نمایش
+    int updateCounter = 0;
+
+public:
+    Oscilloscope();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Oscilloscope"; }
+};

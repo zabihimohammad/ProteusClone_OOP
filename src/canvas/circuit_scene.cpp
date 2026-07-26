@@ -655,7 +655,7 @@ QGraphicsItem *CircuitScene::addComponent(const QString &componentType, const QP
     else if (componentType == "KEYPAD") item = new Keypad();
     else if (componentType == "ADC") item = new ADC_Chip();
     else if (componentType == "DAC") item = new DAC_Chip();
-
+    else if (componentType == "OSCILLOSCOPE") item = new Oscilloscope();
     if (!item) return nullptr;
     QPointF finalPosition = position;
     if (m_snapEnabled) {
