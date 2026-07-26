@@ -3,7 +3,7 @@
 #include <QFont> // برای تنظیم فونت نوشته‌های داینامیک
 #include "../core/terminal.h"
 #include "../core/wire.h"
-
+#include <qmath.h>
 // ==========================================
 // ۱. حافظه خارجی (RAM/EEPROM)
 // ==========================================
@@ -159,8 +159,30 @@ QRectF ADC_Chip::boundingRect() const {
     return QRectF(-65, -55, 120, 110);
 }
 
-void ADC_Chip::process() {}
+void ADC_Chip::process() {
+    Terminal *vinTerm = dynamic_cast<Terminal*>(childItems()[0]); // اولین فرزند پین ورودی است
+    if (!vinTerm) return;
 
+    double vin = vinTerm->getVoltage();
+    double vref = referenceVoltage.replace("V", "").toDouble();
+    int bits = resolutionBits.split("-")[0].toInt(); // استخراج عدد 10 یا 8 از رشته "10-Bit"
+
+    // کلمپ کردن ولتاژ بین 0 و Vref
+    vin = qBound(0.0, vin, vref);
+
+    // محاسبه مقدار دیجیتال
+    int maxDigitalValue = (1 << bits) - 1; // 2^N - 1
+    int digitalOut = qRound((vin / vref) * maxDigitalValue);
+
+    // ارسال بیت‌ها به پین‌های خروجی (پین‌های ایندکس 1 به بعد)
+    for (int i = 0; i < bits && (i + 1) < childItems().size(); ++i) {
+        Terminal *outTerm = dynamic_cast<Terminal*>(childItems()[i + 1]);
+        if (outTerm) {
+            bool bitHigh = (digitalOut >> i) & 1;
+            outTerm->setVoltage(bitHigh ? 5.0 : 0.0);
+        }
+    }
+}
 void ADC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(Qt::black, 2);
     if (isSelected()) pen.setColor(Qt::red);
@@ -203,8 +225,29 @@ QRectF DAC_Chip::boundingRect() const {
     return QRectF(-65, -55, 120, 110);
 }
 
-void DAC_Chip::process() {}
+void DAC_Chip::process() {
+    double vref = maxOutputVoltage.replace("V", "").toDouble();
+    int bits = resolutionBits.split("-")[0].toInt();
+    int digitalIn = 0;
 
+    // خواندن بیت‌های ورودی (پین‌های ایندکس 1 به بعد)
+    for (int i = 0; i < bits && (i + 1) < childItems().size(); ++i) {
+        Terminal *inTerm = dynamic_cast<Terminal*>(childItems()[i + 1]);
+        if (inTerm && inTerm->getLogicState()) {
+            digitalIn |= (1 << i);
+        }
+    }
+
+    // محاسبه ولتاژ آنالوگ خروجی
+    int maxDigitalValue = (1 << bits) - 1;
+    double vout = ((double)digitalIn / maxDigitalValue) * vref;
+
+    // اعمال به پین خروجی (اولین فرزند)
+    Terminal *voutTerm = dynamic_cast<Terminal*>(childItems()[0]);
+    if (voutTerm) {
+        voutTerm->setVoltage(vout);
+    }
+}
 void DAC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(Qt::black, 2);
     if (isSelected()) pen.setColor(Qt::red);

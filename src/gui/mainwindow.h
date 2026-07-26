@@ -2,6 +2,7 @@
 
 #include <QMainWindow>
 #include <QSize>
+#include <QTextEdit>
 
 class CircuitScene;
 class CircuitView;
@@ -30,6 +31,7 @@ private:
     QTimer *m_simulationTimer = nullptr;
     QLabel *m_coordinates = nullptr;
     QLabel *m_zoomLabel = nullptr;
+    QTextEdit *m_simulationLog = nullptr;
     QSize m_canvasSize;
     QString m_projectPath;
 };

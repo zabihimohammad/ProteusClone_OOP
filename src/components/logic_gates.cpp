@@ -39,17 +39,19 @@ void AndGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 }
 
 void AndGate::process() {
-    if (inA->getConnectedWires().isEmpty() || inB->getConnectedWires().isEmpty()) {
+    if (inA->isFloating() || inB->isFloating()) {
+        outY->setUndefined();
         qWarning() << "DRC Warning: Floating input detected on AND Gate!";
         return;
     }
-    // گیت‌های دیجیتال وضعیت فلوتینگ/نامشخص بودن را به این صورت بررسی می‌کنند
-    bool stateA = (inA->getConnectedWires().first()->boundingRect().width() > 0); // منطق پیش‌فرض شما
-    bool stateB = (inB->getConnectedWires().first()->boundingRect().width() > 0);
-
+    if (inA->isUndefinedState() || inB->isUndefinedState()) {
+        outY->setUndefined();
+        return;
+    }
+    bool stateA = inA->getLogicState();
+    bool stateB = inB->getLogicState();
     bool result = stateA && stateB;
-    double vMax = highVoltage.replace("V", "").toDouble();
-    // در گام بعدی با توسعه موتور شبیه‌ساز، ولتاژهای حقیقی را به ترمینال‌ها پاس می‌دهیم
+    outY->setVoltage(result ? highVoltage.replace("V", "").toDouble() : 0.0);
 }
 
 QMap<QString, QString> AndGate::getProperties() const {
@@ -98,10 +100,17 @@ void OrGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
 }
 
 void OrGate::process() {
-    if (inA->getConnectedWires().isEmpty() || inB->getConnectedWires().isEmpty()) {
+    if (inA->isFloating() || inB->isFloating()) {
+        outY->setUndefined();
         qWarning() << "DRC Warning: Floating input detected on OR Gate!";
         return;
     }
+    if (inA->isUndefinedState() || inB->isUndefinedState()) {
+        outY->setUndefined();
+        return;
+    }
+    bool result = inA->getLogicState() || inB->getLogicState();
+    outY->setVoltage(result ? highVoltage.replace("V", "").toDouble() : 0.0);
 }
 
 QMap<QString, QString> OrGate::getProperties() const {
@@ -149,10 +158,17 @@ void NotGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 }
 
 void NotGate::process() {
-    if (inA->getConnectedWires().isEmpty()) {
+    if (inA->isFloating()) {
+        outY->setUndefined();
         qWarning() << "DRC Warning: Floating input detected on NOT Gate!";
         return;
     }
+    if (inA->isUndefinedState()) {
+        outY->setUndefined();
+        return;
+    }
+    bool result = !inA->getLogicState();
+    outY->setVoltage(result ? highVoltage.replace("V", "").toDouble() : 0.0);
 }
 
 QMap<QString, QString> NotGate::getProperties() const {
@@ -207,10 +223,17 @@ void XorGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 }
 
 void XorGate::process() {
-    if (inA->getConnectedWires().isEmpty() || inB->getConnectedWires().isEmpty()) {
+    if (inA->isFloating() || inB->isFloating()) {
+        outY->setUndefined();
         qWarning() << "DRC Warning: Floating input detected on XOR Gate!";
         return;
     }
+    if (inA->isUndefinedState() || inB->isUndefinedState()) {
+        outY->setUndefined();
+        return;
+    }
+    bool result = inA->getLogicState() ^ inB->getLogicState();
+    outY->setVoltage(result ? highVoltage.replace("V", "").toDouble() : 0.0);
 }
 
 QMap<QString, QString> XorGate::getProperties() const {
@@ -261,10 +284,17 @@ void NandGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 }
 
 void NandGate::process() {
-    if (inA->getConnectedWires().isEmpty() || inB->getConnectedWires().isEmpty()) {
+    if (inA->isFloating() || inB->isFloating()) {
+        outY->setUndefined();
         qWarning() << "DRC Warning: Floating input detected on NAND Gate!";
         return;
     }
+    if (inA->isUndefinedState() || inB->isUndefinedState()) {
+        outY->setUndefined();
+        return;
+    }
+    bool result = !(inA->getLogicState() && inB->getLogicState());
+    outY->setVoltage(result ? highVoltage.replace("V", "").toDouble() : 0.0);
 }
 
 QMap<QString, QString> NandGate::getProperties() const {
@@ -320,11 +350,27 @@ void DFlipFlop::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
 }
 
 void DFlipFlop::process() {
-    if (inD->getConnectedWires().isEmpty() || clk->getConnectedWires().isEmpty()) {
+    if (inD->isFloating() || clk->isFloating()) {
+        outQ->setUndefined();
+        outQBar->setUndefined();
         qWarning() << "DRC Warning: Floating input detected on D-FlipFlop!";
         return;
     }
-    // منطق تشخیص لبه بالارونده کلاک (Sequential Logic) در استپ بعدی شبیه‌ساز فعال خواهد شد
+    if (inD->isUndefinedState() || clk->isUndefinedState()) {
+        outQ->setUndefined();
+        outQBar->setUndefined();
+        return;
+    }
+
+    bool currentClockState = clk->getLogicState();
+    // تشخیص لبه بالارونده کلاک
+    if (currentClockState && !lastClockState) {
+        currentInternalQ = inD->getLogicState();
+    }
+    lastClockState = currentClockState;
+
+    outQ->setVoltage(currentInternalQ ? 5.0 : 0.0);
+    outQBar->setVoltage(!currentInternalQ ? 5.0 : 0.0);
 }
 
 QMap<QString, QString> DFlipFlop::getProperties() const {

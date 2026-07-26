@@ -67,8 +67,8 @@ target_link_libraries(ProteusClone_OOP PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 if (WIN32)
     find_program(WINDEPLOYQT_EXECUTABLE windeployqt
             HINTS "${Qt${QT_VERSION_MAJOR}_DIR}/../../../bin")
-    if (WINDEPLOYQT_EXECUTABLE)
-        add_custom_command(TARGET ProteusClone_OOP POST_BUILD
-                COMMAND "${WINDEPLOYQT_EXECUTABLE}" --no-translations "$<TARGET_FILE:ProteusClone_OOP>")
-    endif()
+#    if (WINDEPLOYQT_EXECUTABLE)
+#        add_custom_command(TARGET ProteusClone_OOP POST_BUILD
+#                COMMAND "${WINDEPLOYQT_EXECUTABLE}" --no-translations "$<TARGET_FILE:ProteusClone_OOP>")
+#    endif()
 endif()

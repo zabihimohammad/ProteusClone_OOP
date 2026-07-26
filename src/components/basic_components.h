@@ -91,6 +91,9 @@ public:
 
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
+
+protected:
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override; // 🛠️ اضافه شد
 };
 
 // ==========================================
@@ -99,6 +102,7 @@ public:
 class PushButton : public Element {
 private:
     QString type = "NO"; // Normally Open
+    bool isPressed = false; // 🛠️ اضافه شد
 public:
     PushButton();
     QRectF boundingRect() const override;
@@ -108,6 +112,11 @@ public:
 
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
+
+protected:
+    // 🛠️ اضافه شد
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
 };
 
 // ==========================================
@@ -116,6 +125,7 @@ public:
 class LED : public Element {
 private:
     QString color = "Red";
+    bool isOn = false; // 🛠️ اضافه شد
 public:
     LED();
     QRectF boundingRect() const override;
@@ -195,11 +205,11 @@ public:
 
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
+};
+
 // ==========================================
 // ۱۲. گره اتصال سیم به سیم (Junction Node)
 // ==========================================
-
-};
 class JunctionNode : public Element {
 public:
     Terminal *term; // تنها پایه این گره که سیم‌ها به آن وصل می‌شوند
@@ -211,6 +221,7 @@ public:
     QString getComponentName() const override { return "Junction Node"; }
     ~JunctionNode() override;
 };
+
 // ==========================================
 // ۱۳. اسیلوسکوپ گرافیکی پیشرفته (Oscilloscope)
 // ==========================================

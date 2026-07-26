@@ -148,29 +148,13 @@ void CircuitScene::drawBackground(QPainter *painter, const QRectF &rect) {
 }
 
 void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
-    // ۱. خروج از حالت سیم‌کشی با راست کلیک (سناریو درخواستی)
     if (event->button() == Qt::RightButton) {
-        if (isWiring) {
-            if (tempWire) { removeItem(tempWire); delete tempWire; }
-            isWiring = false; tempWire = nullptr; startTerminal = nullptr;
-        }
-        m_wiringMode = false;
-        for (auto view : views()) view->setCursor(Qt::ArrowCursor);
+        setWiringMode(false); // 🛠️ لغو هوشمند با راست‌کلیک
         event->accept();
         return;
     }
 
     if (event->button() == Qt::LeftButton) {
-        // ۲. اگر در حالت سیم‌کشی نیستیم، اجازه بده موس آزادانه سیم‌ها و قطعات را انتخاب و جابجا کند
-        if (!m_wiringMode) {
-            QGraphicsScene::mousePressEvent(event); // واگذاری کنترل به خود Qt برای Select و Drag
-            return;
-        }
-
-        // ==========================================
-        // بقیه کدهای سیم‌کشی شما دقیقاً مثل قبل اینجا قرار می‌گیرد...
-        // (تمام کدهای رادار نفوذپذیر و splitWireExactly که در مرحله قبل نوشتیم اینجا هستند)
-        // ==========================================
         QPointF rawPos = event->scenePos();
         QPointF dropPos = rawPos;
         if (m_snapEnabled) {
@@ -178,8 +162,11 @@ void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
             dropPos.setY(qRound(dropPos.y() / m_gridSize) * m_gridSize);
         }
 
+        // جستجو برای یافتن قطعه، ترمینال یا سیم زیر موس
         QGraphicsItem *targetItem = nullptr;
         QList<QGraphicsItem*> exactItems = items(rawPos);
+        if (exactItems.isEmpty()) exactItems = items(QRectF(rawPos.x() - 8, rawPos.y() - 8, 16, 16));
+
         for (QGraphicsItem *it : exactItems) {
             if (it == tempWire) continue;
             if (dynamic_cast<Terminal*>(it) || dynamic_cast<Wire*>(it)) {
@@ -188,19 +175,18 @@ void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
             }
         }
 
-        if (!targetItem) {
-            QList<QGraphicsItem*> itemsNear = items(QRectF(rawPos.x() - 8, rawPos.y() - 8, 16, 16));
-            for (QGraphicsItem *it : itemsNear) {
-                if (it == tempWire) continue;
-                if (dynamic_cast<Terminal*>(it) || dynamic_cast<Wire*>(it)) {
-                    targetItem = it;
-                    break;
-                }
-            }
-        }
-
         Terminal *clickedTerminal = dynamic_cast<Terminal*>(targetItem);
         Wire *clickedWire = dynamic_cast<Wire*>(targetItem);
+
+        // 🛠️ هوشمندسازی UX: اگر کاربر روی یک ترمینال کلیک کرد، خودکار وارد حالت سیم‌کشی شو!
+        if (clickedTerminal && !m_wiringMode) {
+            setWiringMode(true);
+        }
+
+        if (!m_wiringMode) {
+            QGraphicsScene::mousePressEvent(event); // واگذاری به Qt برای Select و Drag
+            return;
+        }
 
         if (!isWiring) {
             if (clickedTerminal) {
@@ -209,14 +195,10 @@ void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
                 tempWire = new Wire(startTerminal, startTerminal->sceneBoundingRect().center());
                 addItem(tempWire);
                 return;
-            }
-            else if (clickedWire) {
+            } else if (clickedWire) {
                 JunctionNode *junction = new JunctionNode();
                 addItem(junction);
-
-                QPointF targetPos = m_snapEnabled ? dropPos : rawPos;
-                QPointF exactPos = splitWireExactly(clickedWire, targetPos, junction, this);
-
+                QPointF exactPos = splitWireExactly(clickedWire, m_snapEnabled ? dropPos : rawPos, junction, this);
                 isWiring = true;
                 startTerminal = junction->term;
                 tempWire = new Wire(startTerminal, exactPos);
@@ -226,41 +208,34 @@ void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
         } else {
             if (clickedTerminal) {
                 if (clickedTerminal != startTerminal) {
-                    QPointF targetPos = clickedTerminal->sceneBoundingRect().center();
-                    QVector<QPointF> smartPath = AutoRouter::findPath(this, startTerminal->sceneBoundingRect().center(), targetPos, startTerminal, clickedTerminal, tempWire);
+                    QVector<QPointF> smartPath = AutoRouter::findPath(this, startTerminal->sceneBoundingRect().center(), clickedTerminal->sceneBoundingRect().center(), startTerminal, clickedTerminal, tempWire);
                     tempWire->setFullRoute(smartPath);
                     tempWire->confirmConnection(clickedTerminal);
-
                     isWiring = false; tempWire = nullptr; startTerminal = nullptr;
+                    setWiringMode(false); // خروج خودکار از حالت سیم‌کشی بعد از اتصال موفق
                     FileManager::recordState(this);
                 }
                 return;
-            }
-            else if (clickedWire) {
+            } else if (clickedWire) {
                 JunctionNode *junction = new JunctionNode();
                 addItem(junction);
-
-                QPointF targetPos = m_snapEnabled ? dropPos : rawPos;
-                QPointF exactPos = splitWireExactly(clickedWire, targetPos, junction, this);
-
+                QPointF exactPos = splitWireExactly(clickedWire, m_snapEnabled ? dropPos : rawPos, junction, this);
                 tempWire->confirmConnection(junction->term);
                 QVector<QPointF> smartPath = AutoRouter::findPath(this, startTerminal->sceneBoundingRect().center(), exactPos, startTerminal, junction->term, tempWire);
                 tempWire->setFullRoute(smartPath);
-
                 isWiring = false; tempWire = nullptr; startTerminal = nullptr;
+                setWiringMode(false);
                 FileManager::recordState(this);
                 return;
-            }
-            else {
+            } else {
                 JunctionNode *junction = new JunctionNode();
                 junction->setPos(dropPos);
                 addItem(junction);
-
                 tempWire->confirmConnection(junction->term);
                 QVector<QPointF> smartPath = AutoRouter::findPath(this, startTerminal->sceneBoundingRect().center(), dropPos, startTerminal, junction->term, tempWire);
                 tempWire->setFullRoute(smartPath);
-
                 isWiring = false; tempWire = nullptr; startTerminal = nullptr;
+                setWiringMode(false);
                 FileManager::recordState(this);
                 return;
             }
@@ -700,4 +675,15 @@ void CircuitScene::pasteCopiedComponents(const QPointF &targetScenePos) {
 
     FileManager::recordState(this);
     update();
+}
+// 🛠️ متد کنترل حالت سیم‌کشی از طریق UI
+void CircuitScene::setWiringMode(bool mode) {
+    m_wiringMode = mode;
+    if (!m_wiringMode && isWiring) {
+        if (tempWire) { removeItem(tempWire); delete tempWire; tempWire = nullptr; }
+        isWiring = false; startTerminal = nullptr;
+    }
+    for (auto view : views()) {
+        view->setCursor(mode ? Qt::CrossCursor : Qt::ArrowCursor);
+    }
 }

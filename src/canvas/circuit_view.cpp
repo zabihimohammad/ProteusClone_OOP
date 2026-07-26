@@ -4,6 +4,7 @@
 #include <QPainter>
 #include <QResizeEvent>
 #include <QScrollBar>
+#include <QCoreApplication> // 🛠️ این خط برای رفع ارور اضافه شد
 #include <QWheelEvent>
 #include <QMenu>
 #include <QAction>
@@ -92,12 +93,11 @@ void CircuitView::mousePressEvent(QMouseEvent *event)
                 contextMenu.addSeparator();
                 QAction *actDelete = contextMenu.addAction(tr("Delete"));
 
-                // نمایش منو در موقعیت زنده موس روی دسکتاپ
-                QAction *selectedAction = contextMenu.exec(event->globalPosition().toPoint());
+                // نمایش منو در موقعیت زنده موس روی دسکتاپ (استفاده از globalPos برای رفع ارور Qt5)
+                QAction *selectedAction = contextMenu.exec(event->globalPos());
 
                 // اجرای دستورات بر اساس انتخاب کاربر (منوی قطعه)
                 if (selectedAction == actCopy) {
-                    // 🛠️ فیکس طلایی: فراخوانی صریح متد عمومی کپی بدون نیاز به رویداد مجازی
                     circuitScene->copySelectedComponents();
                 } else if (selectedAction == actRotate) {
                     clickedItem->setRotation(clickedItem->rotation() + 90);
@@ -115,9 +115,8 @@ void CircuitView::mousePressEvent(QMouseEvent *event)
             else {
                 QAction *actPaste = contextMenu.addAction(tr("Paste Here (Ctrl+V)"));
 
-                QAction *selectedAction = contextMenu.exec(event->globalPosition().toPoint());
+                QAction *selectedAction = contextMenu.exec(event->globalPos());
                 if (selectedAction == actPaste) {
-                    // 🛠️ فیکس طلایی: گرفتن مختصات دقیق محل کلیک راست موس و ارسال مستقیم آن به متد پیست
                     QPointF clickScenePos = mapToScene(event->pos());
                     circuitScene->pasteCopiedComponents(clickScenePos);
                 }
@@ -126,12 +125,14 @@ void CircuitView::mousePressEvent(QMouseEvent *event)
             return;
         }
     }
+
     if (event->button() == Qt::LeftButton && navigatorToggleRect().contains(event->pos())) {
         m_navigatorCollapsed = !m_navigatorCollapsed;
         viewport()->update();
         event->accept();
         return;
     }
+
     if (!m_navigatorCollapsed && event->button() == Qt::LeftButton &&
         navigatorCanvasRect().contains(event->pos())) {
         m_isNavigating = true;
@@ -157,7 +158,7 @@ void CircuitView::mousePressEvent(QMouseEvent *event)
     // در حالت عادی کلیک چپ روی فضای خالی، کادر انتخاب مستطیلی باز می‌کند
     setDragMode(QGraphicsView::RubberBandDrag);
     QGraphicsView::mousePressEvent(event);
-}
+} // <--- این آکولاد همان چیزی بود که در کدهای شما گم شده بود!
 
 void CircuitView::mouseMoveEvent(QMouseEvent *event)
 {

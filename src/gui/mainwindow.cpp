@@ -27,9 +27,22 @@
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QtMath>
+#include <QImage>
+#include <QPainter>
+#include <QTextEdit> // 🛠️ اضافه شدن کتابخانه پنل لاگ
 
+// 🛠️ سیستم هدایت پیام‌های بک‌اند (DRC) به پنل گزارشات گرافیکی
+static QTextEdit* g_logWidget = nullptr;
+void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
+    if (g_logWidget) {
+        QString color = "#00FF00"; // سبز برای لاگ‌های عادی
+        if (type == QtWarningMsg) color = "#FFD700"; // زرد برای اخطارهای Floating
+        else if (type == QtCriticalMsg || type == QtFatalMsg) color = "#FF3333"; // قرمز برای اتصال کوتاه
+        g_logWidget->append(QString("<span style='color:%1'>%2</span>").arg(color, msg));
+    }
+}
 MainWindow::MainWindow(const QSize &canvasSize, const QString &projectPath, QWidget *parent)
-    : QMainWindow(parent), m_canvasSize(canvasSize), m_projectPath(projectPath)
+        : QMainWindow(parent), m_canvasSize(canvasSize), m_projectPath(projectPath)
 {
     resize(1280, 780);
     setMinimumSize(900, 600);
@@ -68,17 +81,21 @@ void MainWindow::buildInterface()
     auto *project = new QLabel(QFileInfo(m_projectPath).completeBaseName());
     if (project->text().isEmpty()) project->setText(tr("Untitled circuit"));
     project->setObjectName("projectName");
+
     auto *save = new QPushButton(tr("Save"));
+    auto *exportBtn = new QPushButton(tr("Export Image")); // 🛠️ دکمه خروجی تصویر
     auto *undo = new QPushButton(tr("↶"));
     auto *redo = new QPushButton(tr("↷"));
     auto *run = new QPushButton(tr("▶  Run"));
     run->setCheckable(true);
     run->setObjectName("primaryButton");
+
     topLayout->addWidget(brand);
     topLayout->addSpacing(12);
     topLayout->addWidget(project);
     topLayout->addStretch();
     topLayout->addWidget(save);
+    topLayout->addWidget(exportBtn);
     topLayout->addWidget(undo);
     topLayout->addWidget(redo);
     topLayout->addSpacing(8);
@@ -95,6 +112,7 @@ void MainWindow::buildInterface()
     auto *workspaceLayout = new QVBoxLayout(workspace);
     workspaceLayout->setContentsMargins(0, 0, 0, 0);
     workspaceLayout->setSpacing(0);
+
     auto *tools = new QFrame;
     tools->setObjectName("canvasTools");
     auto *toolsLayout = new QHBoxLayout(tools);
@@ -123,8 +141,24 @@ void MainWindow::buildInterface()
     toolsLayout->addWidget(reset);
     toolsLayout->addWidget(zoomIn);
 
+    // 🛠️ ایجاد پنل گزارشات DRC
+    m_simulationLog = new QTextEdit();
+    m_simulationLog->setReadOnly(true);
+    m_simulationLog->setMaximumHeight(120);
+    m_simulationLog->setStyleSheet("background-color: #1E1E1E; color: #00FF00; font-family: Consolas; font-size: 11px; border-radius: 8px; padding: 5px;");
+    m_simulationLog->append(">> Circuit Studio Simulation Log Initialized...");
+    g_logWidget = m_simulationLog;
+    qInstallMessageHandler(customMessageHandler); // متصل کردن بک‌اند به UI
+    // 🛠️ ساخت لیوت جدید که شامل بوم (view) و لاگ در زیر آن است
+    auto *workspaceWithLogLayout = new QVBoxLayout();
+    workspaceWithLogLayout->setContentsMargins(0,0,0,0);
+    workspaceWithLogLayout->addWidget(view, 1);
+    workspaceWithLogLayout->addWidget(m_simulationLog);
+
+    // 🛠️ اضافه کردن ابزارها و لیوتِ ترکیبی بوم و لاگ به محیط کار اصلی
     workspaceLayout->addWidget(tools);
-    workspaceLayout->addWidget(view, 1);
+    workspaceLayout->addLayout(workspaceWithLogLayout, 1);
+
     contentLayout->addWidget(library);
     contentLayout->addWidget(workspace, 1);
     rootLayout->addWidget(top);
@@ -140,6 +174,41 @@ void MainWindow::buildInterface()
     connect(save, &QPushButton::clicked, this, &MainWindow::saveProject);
     connect(undo, &QPushButton::clicked, this, [this] { FileManager::undo(scene); });
     connect(redo, &QPushButton::clicked, this, [this] { FileManager::redo(scene); });
+// اتصال دکمه‌های ابزار به بک‌اند بوم
+    connect(wire, &QPushButton::clicked, this, [this]() { scene->setWiringMode(true); });
+    connect(select, &QPushButton::clicked, this, [this]() { scene->setWiringMode(false); });
+    // 🛠️ منطق دکمه اکسپورت تصویر
+    connect(exportBtn, &QPushButton::clicked, this, [this]() {
+        QString imagePath = QFileDialog::getSaveFileName(this, tr("Export Circuit Image"), "", tr("PNG Image (*.png);;JPEG Image (*.jpg)"));
+        if (imagePath.isEmpty()) return;
+
+        scene->clearSelection(); // غیرفعال کردن انتخاب‌ها تا خطوط قرمز در عکس نیفتد
+
+        // پیدا کردن محدوده دقیق مداری که رسم شده است
+        QRectF circuitArea = scene->itemsBoundingRect();
+        if (circuitArea.isEmpty()) {
+            QMessageBox::warning(this, tr("Export Failed"), tr("The canvas is empty!"));
+            return;
+        }
+
+        // کمی حاشیه برای زیباتر شدن کادر عکس
+        circuitArea.adjust(-20, -20, 20, 20);
+
+        QImage image(circuitArea.size().toSize(), QImage::Format_ARGB32);
+        image.fill(Qt::white); // پس‌زمینه تصویر خروجی سفید باشد
+
+        QPainter painter(&image);
+        painter.setRenderHint(QPainter::Antialiasing);
+        scene->render(&painter, QRectF(), circuitArea);
+        painter.end();
+
+        if (image.save(imagePath)) {
+            statusBar()->showMessage(tr("Image exported successfully!"), 3000);
+        } else {
+            QMessageBox::critical(this, tr("Export Failed"), tr("Could not save the image."));
+        }
+    });
+
     connect(zoomIn, &QPushButton::clicked, view, &CircuitView::zoomIn);
     connect(zoomOut, &QPushButton::clicked, view, &CircuitView::zoomOut);
     connect(reset, &QPushButton::clicked, view, &CircuitView::fitCanvas);
@@ -163,10 +232,8 @@ void MainWindow::buildInterface()
     connect(view, &CircuitView::cursorPositionChanged, this, [this](const QPointF &point) {
         m_coordinates->setText(tr("X %1   Y %2").arg(qRound(point.x())).arg(qRound(point.y())));
 
-        // === منطق آپدیت آنی پروب هنگام حرکت موس (مستقل از اجرای شبیه‌ساز) ===
         if (scene->isProbeEnabled && scene->voltageProbe) {
             bool found = false;
-            // بررسی المان‌هایی که دقیقا زیر نشانگر موس هستند
             for (QGraphicsItem *item : scene->items(point)) {
                 if (auto *wire = dynamic_cast<Wire*>(item)) {
                     scene->voltageProbe->updateProbe(wire->voltageLevel, point);
@@ -198,7 +265,6 @@ void MainWindow::configureSimulation()
     m_simulationTimer = new QTimer(this);
     connect(m_simulationTimer, &QTimer::timeout, this, [this] {
         m_engine->stepSimulation();
-        // 🛠️ فیکس طلایی: اجبار بوم به بازرسم تمام سیم‌ها و قطعات در هر سیکل شبیه‌سازی
         scene->update();
         if (isActiveWindow() && view->underMouse() && scene->isProbeEnabled && scene->voltageProbe) {
             const QPoint viewPos = view->mapFromGlobal(QCursor::pos());
@@ -227,7 +293,7 @@ void MainWindow::saveProject()
 {
     if (m_projectPath.isEmpty()) {
         m_projectPath = QFileDialog::getSaveFileName(
-            this, tr("Save circuit"), {}, tr("Circuit projects (*.circuit.json *.json)"));
+                this, tr("Save circuit"), {}, tr("Circuit projects (*.circuit.json *.json)"));
     }
     if (m_projectPath.isEmpty()) return;
     if (!FileManager::saveCircuit(m_projectPath, scene)) {

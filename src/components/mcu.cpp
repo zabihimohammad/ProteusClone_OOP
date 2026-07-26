@@ -24,9 +24,49 @@ QRectF MCUChip::boundingRect() const {
 }
 
 void MCUChip::process() {
-    // منطق اجرای کدهای هگز در موتور شبیه‌ساز (مرحله بک‌اند)
-}
+    // 🛠️ مفسر پایه‌ای دستورات اسمبلی (MCU Instruction Decoder)
+    if (firmwareInstructions.isEmpty()) return; // اگر فریمور لود نشده بود
+    if (PC >= firmwareInstructions.size()) PC = 0; // لوپ بی‌نهایت برنامه
 
+    QString instruction = firmwareInstructions[PC].trimmed().toUpper();
+    QStringList tokens = instruction.split(" ");
+
+    if (tokens.isEmpty()) return;
+    QString opCode = tokens[0];
+
+    // ۱. انتقال داده
+    if (opCode == "MOV" && tokens.size() >= 3) {
+        int val = tokens[2].toInt();
+        if (tokens[1] == "A") accumulator = val;
+    }
+        // ۲. جمع ریاضی
+    else if (opCode == "ADD" && tokens.size() >= 2) {
+        accumulator += tokens[1].toInt();
+    }
+        // ۳. پرش به خط دیگر
+    else if (opCode == "JMP" && tokens.size() >= 2) {
+        PC = tokens[1].toInt() - 1; // -1 به خاطر اینکه در انتها PC پلاس پلاس می‌شود
+    }
+        // ۴. یک کردن پورت خروجی
+    else if (opCode == "SETB" && tokens.size() >= 2) {
+        int pinIndex = tokens[1].replace("P", "").toInt();
+        if (pinIndex >= 0 && pinIndex < childItems().size()) {
+            if (auto* term = dynamic_cast<Terminal*>(childItems()[pinIndex])) {
+                term->setVoltage(5.0);
+            }
+        }
+    }
+        // ۵. صفر کردن پورت خروجی
+    else if (opCode == "CLR" && tokens.size() >= 2) {
+        int pinIndex = tokens[1].replace("P", "").toInt();
+        if (pinIndex >= 0 && pinIndex < childItems().size()) {
+            if (auto* term = dynamic_cast<Terminal*>(childItems()[pinIndex])) {
+                term->setVoltage(0.0);
+            }
+        }
+    }
+    PC++; // رفتن به دستور بعدی در سیکل بعدی شبیه‌سازی
+}
 // ==========================================
 // رسم گرافیکی میکروکنترلر روی بوم
 // ==========================================

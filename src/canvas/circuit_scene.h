@@ -28,6 +28,7 @@ public:
     void pasteCopiedComponents(const QPointF &targetScenePos);
 
 public slots:
+    void setWiringMode(bool mode); // 🛠️ این متد اضافه شد
     void setGridSize(int size);
     void setSnapEnabled(bool enabled) { m_snapEnabled = enabled; }
     void setCanvasSize(const QSizeF &size);

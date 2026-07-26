@@ -6,6 +6,10 @@ class MCUChip : public Element {
 private:
     QString hexFilePath = "Not Loaded";
     QString clockFrequency = "8MHz";
+    int PC = 0; // Program Counter
+    int accumulator = 0; // ثبات اصلی
+    QMap<int, int> RAM; // حافظه داخلی
+    QStringList firmwareInstructions; // کدهای لود شده
 
 public:
     MCUChip();
