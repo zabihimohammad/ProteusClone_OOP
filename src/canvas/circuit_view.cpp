@@ -24,6 +24,7 @@ CircuitView::CircuitView(QWidget *parent) : QGraphicsView(parent)
     setMouseTracking(true);
     setFrameShape(QFrame::NoFrame);
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    setDragMode(QGraphicsView::RubberBandDrag);
 }
 
 void CircuitView::setZoom(qreal zoom)
@@ -74,14 +75,22 @@ void CircuitView::mousePressEvent(QMouseEvent *event)
         event->accept();
         return;
     }
+
+    // 🛠️ مدیریت Panning: اگر دکمه وسط فشرده شد یا Shift+Click چپ انجام شد
     if (event->button() == Qt::MiddleButton ||
         (event->button() == Qt::LeftButton && (event->modifiers() & Qt::ShiftModifier))) {
+
+        // موقتاً درگ مود انتخابی را خاموش می‌کنیم تا کادر مستطیلی مزاحم حرکت روی بوم نشود
+        setDragMode(QGraphicsView::NoDrag);
         m_isPanning = true;
         m_lastMousePos = event->pos();
         setCursor(Qt::ClosedHandCursor);
         event->accept();
         return;
     }
+
+    // در حالت عادی کلیک چپ روی فضای خالی، کادر انتخاب مستطیلی باز می‌کند
+    setDragMode(QGraphicsView::RubberBandDrag);
     QGraphicsView::mousePressEvent(event);
 }
 
@@ -112,6 +121,9 @@ void CircuitView::mouseReleaseEvent(QMouseEvent *event)
     if (m_isPanning && (event->button() == Qt::MiddleButton || event->button() == Qt::LeftButton)) {
         m_isPanning = false;
         setCursor(Qt::ArrowCursor);
+
+        // 🛠️ پس از اتمام حرکت روی بوم، دوباره درگ مود را روی کادر انتخابی تنظیم می‌کنیم
+        setDragMode(QGraphicsView::RubberBandDrag);
         event->accept();
         return;
     }
