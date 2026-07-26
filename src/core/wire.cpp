@@ -67,7 +67,23 @@ QRectF Wire::boundingRect() const {
 
 
 void Wire::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
-    QPen pen(isSelected() ? Qt::red : Qt::blue, 2);
+    // 🛠️ رنگ‌بندی داینامیک و زنده بر اساس سطح ولتاژ شبیه‌ساز (قرمز برای ۱ منطقی، آبی برای ۰ منطقی)
+    QColor wireColor = Qt::blue; // حالت پیش‌فرض مدار معمولی
+
+    if (isSelected()) {
+        wireColor = Qt::red; // اگر کاربر سیم را کلیک کرد، قرمز (هایلایت) شود
+    } else {
+        // تغییر رنگ داینامیک هنگام شبیه‌سازی زنده
+        if (voltageLevel == "5.0V") {
+            wireColor = QColor("#D64545"); // قرمز جذاب برای منطق HIGH
+        } else if (voltageLevel == "0.0V") {
+            wireColor = QColor("#1473E6"); // آبی روشن برای منطق LOW (زمین)
+        } else {
+            wireColor = QColor("#253143"); // سرمه‌ای/مشکی برای حالت قطع یا فلوتینگ
+        }
+    }
+
+    QPen pen(wireColor, 2);
     painter->setPen(pen);
 
     if (points.size() < 2) return;

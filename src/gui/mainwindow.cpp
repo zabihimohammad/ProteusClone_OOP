@@ -198,6 +198,8 @@ void MainWindow::configureSimulation()
     m_simulationTimer = new QTimer(this);
     connect(m_simulationTimer, &QTimer::timeout, this, [this] {
         m_engine->stepSimulation();
+        // 🛠️ فیکس طلایی: اجبار بوم به بازرسم تمام سیم‌ها و قطعات در هر سیکل شبیه‌سازی
+        scene->update();
         if (isActiveWindow() && view->underMouse() && scene->isProbeEnabled && scene->voltageProbe) {
             const QPoint viewPos = view->mapFromGlobal(QCursor::pos());
             const QPointF scenePos = view->mapToScene(viewPos);
