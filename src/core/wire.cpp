@@ -109,36 +109,8 @@ void Wire::updateRoute() {
     setFullRoute(newRoute);
 }
 Wire::~Wire() {
-    // ۱. قطع اتصال از ترمینال‌ها
     if (startTerminal) startTerminal->removeWire(this);
     if (endTerminal) endTerminal->removeWire(this);
-
-    // ۲. بررسی هوشمند گره‌های متصل پس از حذف سیم
-    if (scene()) {
-        QList<Terminal*> termsToCheck = {startTerminal, endTerminal};
-        for (Terminal* term : termsToCheck) {
-            if (!term) continue;
-
-            // پیدا کردن المان مادری که این ترمینال متعلق به آن است
-            QGraphicsItem* parent = term->parentItem();
-            JunctionNode* junction = dynamic_cast<JunctionNode*>(parent);
-
-            if (junction) {
-                int wireCount = term->getConnectedWires().size();
-
-                // الف) اگر هیچ سیمی به گره وصل نبود یا فقط ۱ سیم مانده بود (تکه‌سیم رها شده)، گره کاملاً پاک شود
-                if (wireCount <= 1) {
-                    scene()->removeItem(junction);
-                    // حذف گره به صورت زنجیره‌ای باعث پاک شدن سیم‌های رها شده‌ی متصل به آن نیز می‌شود
-                    delete junction;
-                }
-                    // ب) اگر دقیقاً ۲ سیم به گره مانده بود، گره حذف و دو سیم تبدیل به یک سیم مستقیم شوند (Healing)
-                else if (wireCount == 2) {
-                    // این بخش در گام سوم پیاده‌سازی می‌شود تا سیم‌ها به هم جوش بخورند
-                }
-            }
-        }
-    }
 }
 void Wire::disconnectTerminal(Terminal *term) {
     // اگر ترمینالی که دارد نابود می‌شود پایه شروع من است، آن را فراموش کن

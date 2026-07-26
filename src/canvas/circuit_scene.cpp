@@ -313,24 +313,82 @@ void CircuitScene::keyPressEvent(QKeyEvent *event) {
         return;
     }
 
-    // --- سیستم پاک کردن قطعات و سیم‌ها (Delete) ---
-    // (از آنجایی که سیم‌ها در فایل wire.cpp قابلیت ItemIsSelectable دارند، با این دکمه به راحتی حذف می‌شوند)
+
     if (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace) {
         bool somethingDeleted = false;
+
+        // حذف مستقیم و بدون ریسک هر آیتمی که کاربر انتخاب کرده است
         for (QGraphicsItem *item : selectedItems()) {
-            removeItem(item);
-            delete item;
-            somethingDeleted = true;
+            if (item && item->scene()) {
+                removeItem(item);
+                delete item;
+                somethingDeleted = true;
+            }
         }
+
         if (somethingDeleted) {
             FileManager::recordState(this);
-            qDebug() << "[CircuitScene] Items deleted and state recorded.";
+            qDebug() << "[CircuitScene] Selected items deleted safely.";
         }
         return;
     }
 
     // --- میانبرهای ترکیبی با Control ---
+    // --- میانبرهای ترکیبی با Control ---
     if (event->modifiers() & Qt::ControlModifier) {
+
+        // 🛠️ سناریو جدید: چرخش ۹۰ درجه قطعات انتخاب شده با Ctrl + R
+        // 🛠️ چرخش ۹۰ درجه قطعات انتخاب شده با Ctrl + R
+        if (event->key() == Qt::Key_R) {
+            bool rotatedAny = false;
+
+            for (QGraphicsItem *item : selectedItems()) {
+                Element *element = dynamic_cast<Element*>(item);
+
+                if (element && element->getComponentName() != "Junction Node") {
+                    // تنظیم نقطه دوران روی مرکز قطعه
+                    element->setTransformOriginPoint(element->boundingRect().center());
+
+                    // اعمال چرخش ۹۰ درجه چرخه‌ای
+                    qreal newRotation = element->rotation() + 90.0;
+                    if (newRotation >= 360.0) newRotation -= 360.0;
+                    element->setRotation(newRotation);
+
+                    // به‌روزرسانی مکان گرافیکی سیم‌های متصل
+                    for (QGraphicsItem *child : element->childItems()) {
+                        Terminal *term = dynamic_cast<Terminal*>(child);
+                        if (term) {
+                            for (Wire *wire : term->getConnectedWires()) {
+                                QVector<QPointF> wirePoints = wire->getPoints();
+
+                                if (!wirePoints.isEmpty()) {
+                                    QPointF newTerminalPos = term->sceneBoundingRect().center();
+
+                                    if (wire->getStartTerminal() == term) {
+                                        wirePoints[0] = newTerminalPos;
+                                    }
+                                    if (wire->getEndTerminal() == term) {
+                                        wirePoints.last() = newTerminalPos;
+                                    }
+
+                                    wire->setFullRoute(wirePoints);
+                                }
+                            }
+                        }
+                    }
+                    rotatedAny = true;
+                }
+            }
+
+            if (rotatedAny) {
+                FileManager::recordState(this);
+                update();
+                qDebug() << "[Rotation] Component(s) rotated successfully.";
+            }
+            return;
+        }
+
+        // کدهای قبلی شما (Ctrl+S, Ctrl+O, Ctrl+Z و غیره) در ادامه اینجا قرار دارند:
         if (event->key() == Qt::Key_S) { FileManager::saveCircuit("my_circuit_test.json", this); return; }
         if (event->key() == Qt::Key_O) { FileManager::loadCircuit("my_circuit_test.json", this); return; }
         if (event->key() == Qt::Key_Z) {
