@@ -209,4 +209,5 @@ public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void process() override;
     QString getComponentName() const override { return "Junction Node"; }
+    ~JunctionNode() override;
 };

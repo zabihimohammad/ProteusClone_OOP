@@ -6,6 +6,7 @@
 #include <QGraphicsSceneHoverEvent>
 #include "probe_item.h"
 #include "../canvas/circuit_scene.h"
+#include "../components/basic_components.h"
 #include <QPainterPath>
 Wire::Wire(Terminal *startTerm, QPointF startPos) {
     startTerminal = startTerm;
@@ -108,9 +109,36 @@ void Wire::updateRoute() {
     setFullRoute(newRoute);
 }
 Wire::~Wire() {
-    // وقتی کاربر سیم را با کلید Delete پاک می‌کند، سیم باید نام خودش را از لیست پایه‌ها خط بزند
+    // ۱. قطع اتصال از ترمینال‌ها
     if (startTerminal) startTerminal->removeWire(this);
     if (endTerminal) endTerminal->removeWire(this);
+
+    // ۲. بررسی هوشمند گره‌های متصل پس از حذف سیم
+    if (scene()) {
+        QList<Terminal*> termsToCheck = {startTerminal, endTerminal};
+        for (Terminal* term : termsToCheck) {
+            if (!term) continue;
+
+            // پیدا کردن المان مادری که این ترمینال متعلق به آن است
+            QGraphicsItem* parent = term->parentItem();
+            JunctionNode* junction = dynamic_cast<JunctionNode*>(parent);
+
+            if (junction) {
+                int wireCount = term->getConnectedWires().size();
+
+                // الف) اگر هیچ سیمی به گره وصل نبود یا فقط ۱ سیم مانده بود (تکه‌سیم رها شده)، گره کاملاً پاک شود
+                if (wireCount <= 1) {
+                    scene()->removeItem(junction);
+                    // حذف گره به صورت زنجیره‌ای باعث پاک شدن سیم‌های رها شده‌ی متصل به آن نیز می‌شود
+                    delete junction;
+                }
+                    // ب) اگر دقیقاً ۲ سیم به گره مانده بود، گره حذف و دو سیم تبدیل به یک سیم مستقیم شوند (Healing)
+                else if (wireCount == 2) {
+                    // این بخش در گام سوم پیاده‌سازی می‌شود تا سیم‌ها به هم جوش بخورند
+                }
+            }
+        }
+    }
 }
 void Wire::disconnectTerminal(Terminal *term) {
     // اگر ترمینالی که دارد نابود می‌شود پایه شروع من است، آن را فراموش کن
@@ -150,4 +178,114 @@ QPainterPath Wire::shape() const {
     QPainterPathStroker stroker;
     stroker.setWidth(10);
     return stroker.createStroke(path);
+}
+// ==========================================================
+// ۱. تشخیص دقیق خطی از سیم که کاربر روی آن کلیک کرده است
+// ==========================================================
+void Wire::mousePressEvent(QGraphicsSceneMouseEvent *event) {
+    if (event->button() == Qt::LeftButton && points.size() >= 2) {
+        QPointF clickPos = event->scenePos();
+        m_draggedSegmentIndex = -1;
+        m_isDraggingHorizontal = false;
+        m_isDraggingVertical = false;
+
+        double minDistance = 10.0; // شعاع ۱۰ پیکسلی برای گرفتن سیم
+
+        for (int i = 0; i < points.size() - 1; ++i) {
+            QPointF a = points[i];
+            QPointF b = points[i+1];
+
+            double dx = b.x() - a.x();
+            double dy = b.y() - a.y();
+            double l2 = dx * dx + dy * dy;
+            if (l2 < 0.1) continue;
+
+            double t = ((clickPos.x() - a.x()) * dx + (clickPos.y() - a.y()) * dy) / l2;
+            t = qBound(0.0, t, 1.0);
+            QPointF proj(a.x() + t * dx, a.y() + t * dy);
+
+            double dist = QLineF(clickPos, proj).length();
+            if (dist < minDistance) {
+                minDistance = dist;
+                m_draggedSegmentIndex = i;
+            }
+        }
+
+        if (m_draggedSegmentIndex != -1) {
+            m_lastDragPos = clickPos;
+            QPointF p1 = points[m_draggedSegmentIndex];
+            QPointF p2 = points[m_draggedSegmentIndex + 1];
+
+            if (qAbs(p1.y() - p2.y()) < 1.0) m_isDraggingHorizontal = true;
+            else m_isDraggingVertical = true;
+
+            if (m_draggedSegmentIndex == 0) {
+                points.insert(1, points[0]);
+                m_draggedSegmentIndex = 1;
+            }
+            if (m_draggedSegmentIndex == points.size() - 2) {
+                points.insert(points.size() - 1, points.last());
+            }
+
+            // 🛠️ فیکس طلایی: به جای ریترن زودهنگام، اجازه می‌دهیم رویداد کلیک
+            // به کلاس مادر برسد تا سیم به درستی متوجه وضعیت Selection (انتخاب) بشود.
+            QGraphicsItem::mousePressEvent(event);
+            return;
+        }
+    }
+    QGraphicsItem::mousePressEvent(event);
+}
+
+// ==========================================================
+// ۲. جابجایی زنده خطوط سیم با حرکت موس
+// ==========================================================
+void Wire::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
+    if (m_draggedSegmentIndex != -1) {
+        QPointF currentPos = event->scenePos();
+        QPointF delta = currentPos - m_lastDragPos;
+        m_lastDragPos = currentPos;
+
+        prepareGeometryChange(); // به Qt اطلاع می‌دهیم که ابعاد گرافیکی در حال تغییر است
+
+        if (m_isDraggingHorizontal) {
+            points[m_draggedSegmentIndex].setY(points[m_draggedSegmentIndex].y() + delta.y());
+            points[m_draggedSegmentIndex + 1].setY(points[m_draggedSegmentIndex + 1].y() + delta.y());
+        } else if (m_isDraggingVertical) {
+            points[m_draggedSegmentIndex].setX(points[m_draggedSegmentIndex].x() + delta.x());
+            points[m_draggedSegmentIndex + 1].setX(points[m_draggedSegmentIndex + 1].x() + delta.x());
+        }
+
+        update();
+        return;
+    }
+    QGraphicsItem::mouseMoveEvent(event);
+}
+
+// ==========================================================
+// ۳. رها کردن سیم و قفل شدن اتوماتیک روی گرید (Snap)
+// ==========================================================
+void Wire::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
+    if (m_draggedSegmentIndex != -1) {
+        int snapSize = 20; // گام‌های ۲۰ پیکسلی برای صاف ماندن مدار
+
+        prepareGeometryChange();
+        if (m_isDraggingHorizontal) {
+            double snappedY = qRound(points[m_draggedSegmentIndex].y() / snapSize) * snapSize;
+            points[m_draggedSegmentIndex].setY(snappedY);
+            points[m_draggedSegmentIndex + 1].setY(snappedY);
+        } else if (m_isDraggingVertical) {
+            double snappedX = qRound(points[m_draggedSegmentIndex].x() / snapSize) * snapSize;
+            points[m_draggedSegmentIndex].setX(snappedX);
+            points[m_draggedSegmentIndex + 1].setX(snappedX);
+        }
+
+        m_draggedSegmentIndex = -1;
+        m_isDraggingHorizontal = false;
+        m_isDraggingVertical = false;
+        update();
+
+        event->accept();
+        return;
+    }
+    QGraphicsItem::mouseReleaseEvent(event);
 }

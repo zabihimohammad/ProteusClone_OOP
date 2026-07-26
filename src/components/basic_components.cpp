@@ -3,7 +3,7 @@
 #include <QPainterPath>
 #include <QFont>
 #include "../core/terminal.h"
-
+#include <QGraphicsScene>
 // ==========================================
 // ۱. پیاده‌سازی کلاس مقاومت (Resistor)
 // ==========================================
@@ -467,10 +467,22 @@ JunctionNode::JunctionNode() {
     term = new Terminal(this);
     term->setPos(0, 0); // ترمینال دقیقاً در مرکز گره قرار می‌گیرد
 }
-
+JunctionNode::~JunctionNode() {
+    if (term) {
+        // گرفتن کپی از لیست سیم‌ها چون در حین حذف، لیست اصلی تغییر می‌کند
+        QList<Wire*> wiresToDelete = term->getConnectedWires();
+        for (Wire* wire : wiresToDelete) {
+            if (wire && wire->scene()) {
+                wire->scene()->removeItem(wire);
+                delete wire; // حذف زنجیره‌ای تکه‌سیم‌های متصل به این گره
+            }
+        }
+    }
+}
 QRectF JunctionNode::boundingRect() const {
     return QRectF(-6, -6, 12, 12);
 }
+// 🛠️ مخرب هوشمند جدید برای پاکسازی سیم‌های متصل به گره
 
 void JunctionNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     // رسم یک نقطه توپر سیاه رنگ (استاندارد شماتیک برای گره‌ها)

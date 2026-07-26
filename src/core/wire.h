@@ -37,8 +37,15 @@ private:
     Terminal *startTerminal;
     Terminal *endTerminal;
     QVector<QPointF> points; // جایگزین p1 و p2 شد تا بتواند چندین شکستگی را ذخیره کند
-
+// متغیرهای سیستم درگ دستی سیم
+    int m_draggedSegmentIndex = -1;
+    bool m_isDraggingHorizontal = false;
+    bool m_isDraggingVertical = false;
+    QPointF m_lastDragPos;
 protected:
     //void hoverMoveEvent(QGraphicsSceneHoverEvent *event) override;
     // void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
 };
