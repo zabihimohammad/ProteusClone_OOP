@@ -18,21 +18,28 @@
 #include "../components/peripherals.h"
 #include "../io/file_manager.h"
 #include <QLineF>
-static QPointF m_crosshairPos; // اضافه کردن این متغیر برای ثبت موقعیت نشانگر متقاطع
-// تابع قدرتمند و ۱۰۰٪ دقیق: پروجکشن برداری برای یافتن نقطه برخورد روی سیم
+
+static QPointF m_crosshairPos;
+
 static QPointF splitWireExactly(Wire* clickedWire, QPointF targetPos, JunctionNode* junction, QGraphicsScene* scene) {
     Terminal *targetStart = clickedWire->getStartTerminal();
     Terminal *targetEnd = clickedWire->getEndTerminal();
-    QVector<QPointF> oldPath = clickedWire->getPoints();
 
+    // 🛠️ فیکس کرش: اگر سیم یتیم یا خراب بود، از نصف شدن آن جلوگیری می‌کنیم
+    if (!targetStart || !targetEnd) {
+        scene->removeItem(clickedWire);
+        delete clickedWire;
+        junction->setPos(targetPos);
+        return targetPos;
+    }
+
+    QVector<QPointF> oldPath = clickedWire->getPoints();
     QVector<QPointF> path1, path2;
     bool splitFound = false;
-
     double minDistance = 1e9;
     int bestSegment = 0;
     QPointF exactPos = targetPos;
 
-    // ۱. ریاضیات برداری برای پیدا کردن نزدیک‌ترین نقطه کاملاً منطبق بر سیم
     for (int i = 0; i < oldPath.size() - 1; ++i) {
         QPointF a = oldPath[i];
         QPointF b = oldPath[i+1];
@@ -53,11 +60,10 @@ static QPointF splitWireExactly(Wire* clickedWire, QPointF targetPos, JunctionNo
         if (dist < minDistance) {
             minDistance = dist;
             bestSegment = i;
-            exactPos = proj; // این نقطه تضمین می‌کند که از روی سیم خارج نمی‌شویم
+            exactPos = proj;
         }
     }
 
-    // ۲. بریدن سیم و تراز کردن نقاط
     for (int i = 0; i < oldPath.size() - 1; ++i) {
         QPointF A = oldPath[i];
         QPointF B = oldPath[i+1];
@@ -65,7 +71,6 @@ static QPointF splitWireExactly(Wire* clickedWire, QPointF targetPos, JunctionNo
         if (!splitFound) {
             path1.append(A);
             if (i == bestSegment) {
-                // فیکس طلایی: جلوگیری از هرگونه خطای اعشاری در خطوط صاف
                 if (qAbs(A.x() - B.x()) < 0.5) exactPos.setX(A.x());
                 if (qAbs(A.y() - B.y()) < 0.5) exactPos.setY(A.y());
 
@@ -85,7 +90,6 @@ static QPointF splitWireExactly(Wire* clickedWire, QPointF targetPos, JunctionNo
     }
 
     junction->setPos(exactPos);
-
     scene->removeItem(clickedWire);
     delete clickedWire;
 
@@ -128,7 +132,6 @@ void CircuitScene::setCanvasSize(const QSizeF &size) {
 void CircuitScene::drawBackground(QPainter *painter, const QRectF &rect) {
     painter->fillRect(rect, QColor("#E9EDF2"));
     painter->fillRect(m_canvasRect, QColor("#FBFCFD"));
-
     QPen pen;
     pen.setColor(QColor(199, 207, 218, 180));
     pen.setWidth(1);
@@ -149,7 +152,7 @@ void CircuitScene::drawBackground(QPainter *painter, const QRectF &rect) {
 
 void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     if (event->button() == Qt::RightButton) {
-        setWiringMode(false); // 🛠️ لغو هوشمند با راست‌کلیک
+        setWiringMode(false);
         event->accept();
         return;
     }
@@ -162,7 +165,6 @@ void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
             dropPos.setY(qRound(dropPos.y() / m_gridSize) * m_gridSize);
         }
 
-        // جستجو برای یافتن قطعه، ترمینال یا سیم زیر موس
         QGraphicsItem *targetItem = nullptr;
         QList<QGraphicsItem*> exactItems = items(rawPos);
         if (exactItems.isEmpty()) exactItems = items(QRectF(rawPos.x() - 8, rawPos.y() - 8, 16, 16));
@@ -178,13 +180,12 @@ void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
         Terminal *clickedTerminal = dynamic_cast<Terminal*>(targetItem);
         Wire *clickedWire = dynamic_cast<Wire*>(targetItem);
 
-        // 🛠️ هوشمندسازی UX: اگر کاربر روی یک ترمینال کلیک کرد، خودکار وارد حالت سیم‌کشی شو!
         if (clickedTerminal && !m_wiringMode) {
             setWiringMode(true);
         }
 
         if (!m_wiringMode) {
-            QGraphicsScene::mousePressEvent(event); // واگذاری به Qt برای Select و Drag
+            QGraphicsScene::mousePressEvent(event);
             return;
         }
 
@@ -212,7 +213,7 @@ void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
                     tempWire->setFullRoute(smartPath);
                     tempWire->confirmConnection(clickedTerminal);
                     isWiring = false; tempWire = nullptr; startTerminal = nullptr;
-                    setWiringMode(false); // خروج خودکار از حالت سیم‌کشی بعد از اتصال موفق
+                    setWiringMode(false);
                     FileManager::recordState(this);
                 }
                 return;
@@ -243,14 +244,12 @@ void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     }
     QGraphicsScene::mousePressEvent(event);
 }
+
 void CircuitScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
-    // ثبت موقعیت موس برای خطوط متقاطع LTspice
     m_crosshairPos = event->scenePos();
-
     if (m_wiringMode) {
-        invalidate(sceneRect(), QGraphicsScene::ForegroundLayer); // آپدیت آنی لایه رویی
+        invalidate(sceneRect(), QGraphicsScene::ForegroundLayer);
     }
-
     if (isWiring && tempWire) {
         tempWire->setEndPoint(event->scenePos());
     }
@@ -264,35 +263,28 @@ void CircuitScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     }
 }
 
-// ==========================================
-// رویداد فشردن کلیدهای کیبورد (میانبرها، سیم‌کشی و حذف)
-// ==========================================
 void CircuitScene::keyPressEvent(QKeyEvent *event) {
-    // --- فعال کردن حالت سیم‌کشی (W) ---
     if (event->key() == Qt::Key_W) {
         m_wiringMode = true;
-        for (auto view : views()) view->setCursor(Qt::CrossCursor); // تغییر شکل موس به حالت هدف‌گیری
-        qDebug() << "Wiring Mode: ON";
+        for (auto view : views()) view->setCursor(Qt::CrossCursor);
         return;
     }
 
-    // --- لغو حالت سیم‌کشی (Esc) ---
     if (event->key() == Qt::Key_Escape) {
         if (isWiring) {
             if (tempWire) { removeItem(tempWire); delete tempWire; }
             isWiring = false; tempWire = nullptr; startTerminal = nullptr;
         }
         m_wiringMode = false;
-        for (auto view : views()) view->setCursor(Qt::ArrowCursor); // بازگشت موس به حالت عادی
-        qDebug() << "Wiring Mode: OFF";
+        for (auto view : views()) view->setCursor(Qt::ArrowCursor);
         return;
     }
 
-
     if (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace) {
-        bool somethingDeleted = false;
+        // 🛠️ فیکس کرش: لغو سیم‌کشی قبل از پاک کردن قطعات
+        if (isWiring) setWiringMode(false);
 
-        // حذف مستقیم و بدون ریسک هر آیتمی که کاربر انتخاب کرده است
+        bool somethingDeleted = false;
         for (QGraphicsItem *item : selectedItems()) {
             if (item && item->scene()) {
                 removeItem(item);
@@ -303,62 +295,40 @@ void CircuitScene::keyPressEvent(QKeyEvent *event) {
 
         if (somethingDeleted) {
             FileManager::recordState(this);
-            qDebug() << "[CircuitScene] Selected items deleted safely.";
         }
         return;
     }
 
-    // --- میانبرهای ترکیبی با Control ---
-    // --- میانبرهای ترکیبی با Control ---
     if (event->modifiers() & Qt::ControlModifier) {
-// 🛠️ سناریو جدید: کپی کردن قطعات انتخاب شده (Ctrl + C)
-        // میانبر کپی کامپوننت‌ها
         if (event->key() == Qt::Key_C) {
-            copySelectedComponents(); // 🛠️ فراخوانی مستقیم تابع عمومی
+            copySelectedComponents();
             return;
         }
-
-        // میانبر پیست کامپوننت‌ها
         if (event->key() == Qt::Key_V) {
             QGraphicsView* activeView = views().isEmpty() ? nullptr : views().first();
             QPointF targetOrigin = activeView ? activeView->mapToScene(activeView->mapFromGlobal(QCursor::pos())) : QPointF(0,0);
-            pasteCopiedComponents(targetOrigin); // 🛠️ فراخوانی مستقیم تابع عمومی
+            pasteCopiedComponents(targetOrigin);
             return;
         }
-        // 🛠️ سناریو جدید: چرخش ۹۰ درجه قطعات انتخاب شده با Ctrl + R
-        // 🛠️ چرخش ۹۰ درجه قطعات انتخاب شده با Ctrl + R
         if (event->key() == Qt::Key_R) {
             bool rotatedAny = false;
-
             for (QGraphicsItem *item : selectedItems()) {
                 Element *element = dynamic_cast<Element*>(item);
-
                 if (element && element->getComponentName() != "Junction Node") {
-                    // تنظیم نقطه دوران روی مرکز قطعه
                     element->setTransformOriginPoint(element->boundingRect().center());
-
-                    // اعمال چرخش ۹۰ درجه چرخه‌ای
                     qreal newRotation = element->rotation() + 90.0;
                     if (newRotation >= 360.0) newRotation -= 360.0;
                     element->setRotation(newRotation);
 
-                    // به‌روزرسانی مکان گرافیکی سیم‌های متصل
                     for (QGraphicsItem *child : element->childItems()) {
                         Terminal *term = dynamic_cast<Terminal*>(child);
                         if (term) {
                             for (Wire *wire : term->getConnectedWires()) {
                                 QVector<QPointF> wirePoints = wire->getPoints();
-
                                 if (!wirePoints.isEmpty()) {
                                     QPointF newTerminalPos = term->sceneBoundingRect().center();
-
-                                    if (wire->getStartTerminal() == term) {
-                                        wirePoints[0] = newTerminalPos;
-                                    }
-                                    if (wire->getEndTerminal() == term) {
-                                        wirePoints.last() = newTerminalPos;
-                                    }
-
+                                    if (wire->getStartTerminal() == term) wirePoints[0] = newTerminalPos;
+                                    if (wire->getEndTerminal() == term) wirePoints.last() = newTerminalPos;
                                     wire->setFullRoute(wirePoints);
                                 }
                             }
@@ -367,63 +337,42 @@ void CircuitScene::keyPressEvent(QKeyEvent *event) {
                     rotatedAny = true;
                 }
             }
-
             if (rotatedAny) {
                 FileManager::recordState(this);
                 update();
-                qDebug() << "[Rotation] Component(s) rotated successfully.";
             }
             return;
         }
-        // 🛠️ سناریو جدید: قرینه‌سازی افقی قطعات انتخاب شده با Ctrl + M
-        // 🛠️ نسخه اصلاح‌شده: قرینه‌سازی افقی قطعات به همراه خوانا نگه‌داشتن متن‌ها
-        // 🛠️ نسخه اصلاح‌شده: قرینه‌سازی افقی قطعات به همراه خوانا نگه‌داشتن متن‌ها
         if (event->key() == Qt::Key_M) {
             bool mirroredAny = false;
-
             for (QGraphicsItem *item : selectedItems()) {
                 Element *element = dynamic_cast<Element*>(item);
-
                 if (element && element->getComponentName() != "Junction Node") {
                     element->setTransformOriginPoint(element->boundingRect().center());
-
-                    // ۱. اعمال قرینه‌سازی روی خود قطعه
                     QTransform transform = element->transform();
                     transform.scale(-1, 1);
                     element->setTransform(transform);
 
-                    // ۲. فیکس کردن متن‌ها: خنثی کردن اثر میرور روی نوشته‌های فرزند
                     for (QGraphicsItem *child : element->childItems()) {
-                        // بررسی انواع آیتم‌های متنی متداول در Qt
                         bool isText = dynamic_cast<QGraphicsTextItem*>(child) != nullptr ||
                                       dynamic_cast<QGraphicsSimpleTextItem*>(child) != nullptr;
-
                         if (isText) {
                             child->setTransformOriginPoint(child->boundingRect().center());
                             QTransform textTransform = child->transform();
-                            // یک بار دیگر روی محور X میرور می‌کنیم تا متن به حالت عادی و خوانا برگردد
                             textTransform.scale(-1, 1);
                             child->setTransform(textTransform);
                         }
                     }
 
-                    // ۳. به‌روزرسانی آنی مسیر سیم‌های متصل به پایه‌ها
                     for (QGraphicsItem *child : element->childItems()) {
                         Terminal *term = dynamic_cast<Terminal*>(child);
                         if (term) {
                             for (Wire *wire : term->getConnectedWires()) {
                                 QVector<QPointF> wirePoints = wire->getPoints();
-
                                 if (!wirePoints.isEmpty()) {
                                     QPointF newTerminalPos = term->sceneBoundingRect().center();
-
-                                    if (wire->getStartTerminal() == term) {
-                                        wirePoints[0] = newTerminalPos;
-                                    }
-                                    if (wire->getEndTerminal() == term) {
-                                        wirePoints.last() = newTerminalPos;
-                                    }
-
+                                    if (wire->getStartTerminal() == term) wirePoints[0] = newTerminalPos;
+                                    if (wire->getEndTerminal() == term) wirePoints.last() = newTerminalPos;
                                     wire->setFullRoute(wirePoints);
                                 }
                             }
@@ -432,19 +381,17 @@ void CircuitScene::keyPressEvent(QKeyEvent *event) {
                     mirroredAny = true;
                 }
             }
-
             if (mirroredAny) {
                 FileManager::recordState(this);
                 update();
-                qDebug() << "[Mirroring] Component mirrored and text readability preserved.";
             }
             return;
         }
 
-        // کدهای قبلی شما (Ctrl+S, Ctrl+O, Ctrl+Z و غیره) در ادامه اینجا قرار دارند:
         if (event->key() == Qt::Key_S) { FileManager::saveCircuit("my_circuit_test.json", this); return; }
         if (event->key() == Qt::Key_O) { FileManager::loadCircuit("my_circuit_test.json", this); return; }
         if (event->key() == Qt::Key_Z) {
+            if (isWiring) setWiringMode(false); // 🛠️ فیکس کرش
             if (event->modifiers() & Qt::ShiftModifier) FileManager::redo(this);
             else FileManager::undo(this);
             return;
@@ -455,9 +402,12 @@ void CircuitScene::keyPressEvent(QKeyEvent *event) {
     QGraphicsScene::keyPressEvent(event);
 }
 
+// ... (سایر توابع مثل addComponent و drawForeground در این فایل که در کدهای خودت هم بود بدون تغییر باقی می‌مانند)
 QGraphicsItem *CircuitScene::addComponent(const QString &componentType, const QPointF &position) {
     QGraphicsItem *item = nullptr;
     if (componentType == "MCU") item = new MCUChip();
+    else if (componentType == "VOLTMETER") item = new Voltmeter();
+    else if (componentType == "AMMETER") item = new Ammeter();
     else if (componentType == "RESISTOR") item = new Resistor();
     else if (componentType == "CAPACITOR") item = new Capacitor();
     else if (componentType == "INDUCTOR") item = new Inductor();
@@ -516,24 +466,20 @@ void CircuitScene::dropEvent(QGraphicsSceneDragDropEvent *event) {
         event->ignore();
     }
 }
-// ==========================================
-// رسم لایه رویی (خطوط متقاطع سیم‌کشی مثل LTspice)
-// ==========================================
+
 void CircuitScene::drawForeground(QPainter *painter, const QRectF &rect) {
     if (m_wiringMode) {
-        QPen pen(QColor(100, 100, 100, 180)); // رنگ خاکستری نیمه‌شفاف
-        pen.setStyle(Qt::DashLine);           // حالت نقطه‌چین
+        QPen pen(QColor(100, 100, 100, 180));
+        pen.setStyle(Qt::DashLine);
         pen.setWidth(1);
-        pen.setCosmetic(true); // جادوی Qt: ضخامت خط همیشه 1 پیکسل می‌ماند حتی اگر زوم کنید!
+        pen.setCosmetic(true);
         painter->setPen(pen);
-
-        // رسم خط عمودی و افقی که کل صفحه را می‌پوشانند
         painter->drawLine(QPointF(m_crosshairPos.x(), rect.top()), QPointF(m_crosshairPos.x(), rect.bottom()));
         painter->drawLine(QPointF(rect.left(), m_crosshairPos.y()), QPointF(rect.right(), m_crosshairPos.y()));
     }
     QGraphicsScene::drawForeground(painter, rect);
 }
-// 🛠️ تابع اختصاصی کپی قطعات و سیم‌ها
+
 void CircuitScene::copySelectedComponents() {
     m_clipboardComponents.clear();
     m_clipboardWires.clear();
@@ -555,7 +501,6 @@ void CircuitScene::copySelectedComponents() {
             CopiedComponent comp;
             comp.type = el->getComponentName();
 
-            // نگاشت نام‌های کارخانه
             if (comp.type == "Microcontroller (MCU)") comp.type = "MCU";
             else if (comp.type == "Ground (GND)") comp.type = "GROUND";
             else if (comp.type == "DC Voltage Source") comp.type = "DC_SOURCE";
@@ -612,7 +557,6 @@ void CircuitScene::copySelectedComponents() {
     }
 }
 
-// 🛠️ تابع اختصاصی پیست قطعات بر اساس مختصات ورودی هدف
 void CircuitScene::pasteCopiedComponents(const QPointF &targetScenePos) {
     if (m_clipboardComponents.isEmpty()) return;
 
@@ -676,7 +620,7 @@ void CircuitScene::pasteCopiedComponents(const QPointF &targetScenePos) {
     FileManager::recordState(this);
     update();
 }
-// 🛠️ متد کنترل حالت سیم‌کشی از طریق UI
+
 void CircuitScene::setWiringMode(bool mode) {
     m_wiringMode = mode;
     if (!m_wiringMode && isWiring) {

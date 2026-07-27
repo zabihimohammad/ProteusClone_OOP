@@ -26,6 +26,8 @@ ComponentLibrary::ComponentLibrary(QWidget *parent) : QFrame(parent)
     setMaximumWidth(340);
 
     m_components = {
+            {"VOLTMETER", "Voltmeter", "Measurement", "Digital DC Voltmeter", "( V )"},
+            {"AMMETER", "Ammeter", "Measurement", "Digital DC Ammeter", "( A )"},
         {"RESISTOR", "Resistor", "Analog", "Limits current flow", R"(─/\/\/─)"},
         {"CAPACITOR", "Capacitor", "Analog", "Stores electrical charge", "─| |─"},
         {"INDUCTOR", "Inductor", "Analog", "Stores energy in a magnetic field", "─((((─"},
@@ -49,6 +51,7 @@ ComponentLibrary::ComponentLibrary(QWidget *parent) : QFrame(parent)
         {"ADC", "ADC", "Converters", "Analog-to-digital converter", "[ A→D ]"},
         {"DAC", "DAC", "Converters", "Digital-to-analog converter", "[ D→A ]"},
         {"OSCILLOSCOPE", "Oscilloscope", "Outputs", "Real-time voltage waveform scope", "[ ∿ SCOPE ]"}
+
     };
 
     auto *layout = new QVBoxLayout(this);

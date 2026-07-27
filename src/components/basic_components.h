@@ -92,8 +92,11 @@ public:
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
 
+    // تابع اضافه شده برای موتور فیزیک
+    bool isClosed() const { return initialState == "Closed"; }
+
 protected:
-    void mousePressEvent(QGraphicsSceneMouseEvent *event) override; // 🛠️ اضافه شد
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 };
 
 // ==========================================
@@ -102,7 +105,7 @@ protected:
 class PushButton : public Element {
 private:
     QString type = "NO"; // Normally Open
-    bool isPressed = false; // 🛠️ اضافه شد
+    bool isPressed = false;
 public:
     PushButton();
     QRectF boundingRect() const override;
@@ -113,8 +116,10 @@ public:
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
 
+    // تابع اضافه شده برای موتور فیزیک
+    bool isClosed() const { return (type == "NO") ? isPressed : !isPressed; }
+
 protected:
-    // 🛠️ اضافه شد
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
 };
@@ -125,7 +130,7 @@ protected:
 class LED : public Element {
 private:
     QString color = "Red";
-    bool isOn = false; // 🛠️ اضافه شد
+    bool isOn = false;
 public:
     LED();
     QRectF boundingRect() const override;
@@ -215,13 +220,37 @@ public:
     Terminal *term; // تنها پایه این گره که سیم‌ها به آن وصل می‌شوند
 
     JunctionNode();
+    ~JunctionNode() override;
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void process() override;
     QString getComponentName() const override { return "Junction Node"; }
-    ~JunctionNode() override;
+};
+// ==========================================
+// ولت‌متر دیجیتال (Voltmeter)
+// ==========================================
+class Voltmeter : public Element {
+private: Terminal *t1; Terminal *t2;
+public:
+    Voltmeter();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Voltmeter"; }
 };
 
+// ==========================================
+// آمپرمتر دیجیتال (Ammeter)
+// ==========================================
+class Ammeter : public Element {
+private: Terminal *t1; Terminal *t2;
+public:
+    Ammeter();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Ammeter"; }
+};
 // ==========================================
 // ۱۳. اسیلوسکوپ گرافیکی پیشرفته (Oscilloscope)
 // ==========================================

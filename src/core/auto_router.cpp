@@ -10,7 +10,6 @@
 #include <algorithm>
 #include "element.h"
 
-// 🛠️ حل قطعی باگ تلرانس اعشاری در هش‌مپ
 QString pointToString(const QPointF &p) {
     return QString("%1,%2").arg(qRound(p.x())).arg(qRound(p.y()));
 }
@@ -51,6 +50,9 @@ QPointF getPinDirection(Terminal* term) {
 }
 
 QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, QPointF endPos, Terminal *startTerm, Terminal *endTerm, Wire *currentWire) {
+    // 🛠️ فیکس کرش: محافظت در برابر سیم‌های شکسته یا ترمینال‌های خالی
+    if (!startTerm || !endTerm) return {startPos, endPos};
+
     double stepSize = 10.0;
     int maxIterations = 10000;
 
@@ -88,7 +90,6 @@ QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, Q
         if (closedSet.contains(currentStr)) continue;
         closedSet.insert(currentStr);
 
-        // 🛠️ تضمین رسیدن به مقصد با بررسی تلرانس (حل مشکل متوقف شدن زودتر از موعد سیم)
         if (qAbs(current.pos.x() - endStub.x()) < 1.0 && qAbs(current.pos.y() - endStub.y()) < 1.0) {
             pathFound = true;
             finalPoint = current.pos;
@@ -126,7 +127,6 @@ QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, Q
             bool hitObstacle = false;
             double wirePenalty = 0.0;
 
-            // اگر نقطه بعدی دقیقاً همان مقصد ماست، آن را مجاز می‌شماریم
             bool isTarget = (qAbs(next.x() - endStub.x()) < 1.0 && qAbs(next.y() - endStub.y()) < 1.0);
 
             for (QGraphicsItem *item : itemsAtNext) {
@@ -142,7 +142,7 @@ QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, Q
                 QGraphicsItem *parent = item->parentItem() ? item->parentItem() : item;
 
                 if (parent == startTerm->parentItem() || parent == endTerm->parentItem()) {
-                    if (isTarget) continue; // نقطه مقصد را مانع در نظر نگیر!
+                    if (isTarget) continue;
                     if (QLineF(next, startStub).length() <= 15.0 || QLineF(next, endStub).length() <= 15.0) {
                         continue;
                     }
@@ -180,7 +180,6 @@ QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, Q
         rawPath.prepend(startStub);
         rawPath.prepend(startPos);
 
-        // اضافه کردن مستقیمِ نقطه پایانی برای حذف قطعی باگ "فاصله داشتن سیم"
         if (qAbs(rawPath.last().x() - endStub.x()) > 0.1 || qAbs(rawPath.last().y() - endStub.y()) > 0.1) {
             rawPath.append(endStub);
         }
@@ -196,7 +195,6 @@ QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, Q
             }
         }
 
-        // 🛠️ ایجاد زاویه ۹۰ درجه استاندارد در اتصال نهایی به گره
         if (rawPath.size() >= 2) {
             QPointF pLast = rawPath.last();
             QPointF pPrev = rawPath[rawPath.size() - 2];
@@ -217,7 +215,6 @@ QVector<QPointF> AutoRouter::findPath(QGraphicsScene *scene, QPointF startPos, Q
             }
         }
     } else {
-        // در صورت عدم یافتن مسیر، سیم را به صورت مستقیم متصل کن تا معلق نماند
         rawPath = {startPos, startStub, endStub, endPos};
     }
 

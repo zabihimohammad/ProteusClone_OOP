@@ -12,7 +12,10 @@ Resistor::Resistor() {
     (new Terminal(this))->setPos(-30, 0);
     (new Terminal(this))->setPos(30, 0);
 }
-QRectF Resistor::boundingRect() const { return QRectF(-35, -25, 70, 50); }
+QRectF Resistor::boundingRect() const
+{
+    return QRectF(-90, -55, 165, 110);
+}
 void Resistor::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(Qt::black, 2);
     if (isSelected()) pen.setColor(Qt::red);
@@ -474,24 +477,15 @@ void ClockGenerator::setProperties(const QMap<QString, QString>& props) {
     if (props.contains("Amplitude")) amplitude = props["Amplitude"];
 }
 
-
-// ============================================================================
+// ==========================================
 // ۱۲. پیاده‌سازی گره اتصال (Junction Node)
-// ============================================================================
+// ==========================================
 JunctionNode::JunctionNode() {
     term = new Terminal(this);
-    term->setPos(0, 0); // ترمینال دقیقاً در مرکز گره قرار می‌گیرد
+    term->setPos(0, 0);
 }
 JunctionNode::~JunctionNode() {
-    if (term) {
-        QList<Wire*> wiresToDelete = term->getConnectedWires();
-        for (Wire* wire : wiresToDelete) {
-            if (wire && wire->scene()) {
-                wire->scene()->removeItem(wire);
-                delete wire;
-            }
-        }
-    }
+    // 🛠️ رفع باگ کرش: کدهای مخرب پاک شدند. کلاس Terminal خودش هنگام حذف شدن، سیم‌ها را به درستی قطع (Disconnect) می‌کند و نیازی به پاک کردن دستی آن‌ها اینجا نیست.
 }
 QRectF JunctionNode::boundingRect() const {
     return QRectF(-6, -6, 12, 12);
@@ -502,7 +496,69 @@ void JunctionNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
     painter->drawEllipse(-4, -4, 8, 8);
 }
 void JunctionNode::process() {}
+// ==========================================
+// پیاده‌سازی ولت‌متر
+// ==========================================
+Voltmeter::Voltmeter() {
+    t1 = new Terminal(this); t1->setPos(-30, 0);
+    t2 = new Terminal(this); t2->setPos(30, 0);
+}
+QRectF Voltmeter::boundingRect() const { return QRectF(-35, -25, 70, 50); }
+void Voltmeter::process() { update(); }
+void Voltmeter::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+    painter->drawEllipse(-20, -20, 40, 40);
+    painter->drawLine(-30, 0, -20, 0);
+    painter->drawLine(20, 0, 30, 0);
+    painter->setFont(QFont("Consolas", 12, QFont::Bold));
+    painter->setPen(Qt::darkBlue);
+    drawReadableText(painter, QRectF(-20, -20, 40, 40), Qt::AlignCenter, "V");
 
+    // 🛠️ استفاده از ولتاژ دقیق فیزیکی
+    double diff = qAbs(t1->exactVoltage - t2->exactVoltage);
+    painter->setFont(QFont("Consolas", 8, QFont::Bold));
+    painter->setPen(QColor(0, 150, 0));
+    drawReadableText(painter, QRectF(-35, 25, 70, 15), Qt::AlignCenter, QString::number(diff, 'f', 2) + " V");
+}
+
+// ==========================================
+// پیاده‌سازی آمپرمتر
+// ==========================================
+Ammeter::Ammeter() {
+    t1 = new Terminal(this); t1->setPos(-30, 0);
+    t2 = new Terminal(this); t2->setPos(30, 0);
+}
+QRectF Ammeter::boundingRect() const { return QRectF(-35, -25, 70, 50); }
+void Ammeter::process() { update(); }
+void Ammeter::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2);
+    if (isSelected()) pen.setColor(Qt::red);
+    painter->setPen(pen);
+    painter->drawEllipse(-20, -20, 40, 40);
+    painter->drawLine(-30, 0, -20, 0);
+    painter->drawLine(20, 0, 30, 0);
+    painter->setFont(QFont("Consolas", 12, QFont::Bold));
+    painter->setPen(Qt::darkBlue);
+    drawReadableText(painter, QRectF(-20, -20, 40, 40), Qt::AlignCenter, "A");
+
+    // 🛠️ استفاده از ولتاژ دقیق برای محاسبه جریانی که از مقاومت داخلی ۱ میلی‌اهمی می‌گذرد
+    double v1 = t1->exactVoltage;
+    double v2 = t2->exactVoltage;
+    double current = qAbs(v1 - v2) / 0.001;
+
+    // 🛠️ مقیاس‌بندی هوشمند جریان برای نمایش
+    QString currentStr;
+    if (current < 1e-6) currentStr = "0.00 mA";
+    else if (current < 1e-3) currentStr = QString::number(current * 1e6, 'f', 1) + " µA";
+    else if (current < 1.0) currentStr = QString::number(current * 1e3, 'f', 1) + " mA";
+    else currentStr = QString::number(current, 'f', 2) + " A";
+
+    painter->setFont(QFont("Consolas", 8, QFont::Bold));
+    painter->setPen(QColor(150, 0, 0));
+    drawReadableText(painter, QRectF(-35, 25, 70, 15), Qt::AlignCenter, currentStr);
+}
 
 // ==========================================
 // ۱۳. اسیلوسکوپ گرافیکی پیشرفته
@@ -512,21 +568,27 @@ Oscilloscope::Oscilloscope() {
     inChannel->setPos(-80, 0);
     voltageHistory.fill(0.0, maxSamples);
 }
-QRectF Oscilloscope::boundingRect() const {
-    return QRectF(-75, -55, 150, 110);
-}
+QRectF Oscilloscope::boundingRect() const { return QRectF(-90, -55, 165, 110); }
+
 void Oscilloscope::process() {
-    double currentV = 0.0;
-    if (inChannel) {
-        QString vStr = inChannel->voltageLevel;
-        currentV = vStr.replace("V", "").toDouble();
-    }
+    double currentV = inChannel ? inChannel->exactVoltage : 0.0; // 🛠️ استفاده از دیتای دقیق
     voltageHistory.pop_front();
     voltageHistory.append(currentV);
+    update();
 }
+
 void Oscilloscope::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
+
+    QPen pinPen(Qt::black, 2);
+    if (isSelected()) pinPen.setColor(Qt::red);
+    painter->setPen(pinPen);
+    painter->drawLine(-80, 0, -70, 0);
+
+    painter->setFont(QFont("Consolas", 7, QFont::Bold));
+    painter->setPen(Qt::darkBlue);
+    drawReadableText(painter, QRectF(-85, -15, 20, 10), Qt::AlignLeft, "IN");
 
     QLinearGradient bgGrad(-70, -50, 70, 50);
     bgGrad.setColorAt(0.0, QColor("#2D3540"));
@@ -542,23 +604,21 @@ void Oscilloscope::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
     painter->setPen(QPen(QColor("#30363D"), 1.5));
     painter->drawRoundedRect(screenRect, 4, 4);
 
+    // 🛠️ محدود کردن کادر رسم به داخل صفحه نمایشگر (جلوگیری از بیرون زدن موج)
+    painter->setClipRect(screenRect);
+
     QColor gridColor("#00FFCC");
     gridColor.setAlpha(25);
     painter->setPen(QPen(gridColor, 1, Qt::DotLine));
-    for (int x = -50; x <= 50; x += 15) {
-        painter->drawLine(x, -42, x, 32);
-    }
-    for (int y = -30; y <= 30; y += 12) {
-        painter->drawLine(-60, y, 60, y);
-    }
+    for (int x = -50; x <= 50; x += 15) painter->drawLine(x, -42, x, 32);
+    for (int y = -30; y <= 30; y += 12) painter->drawLine(-60, y, 60, y);
 
     QPainterPath wavePath;
     double stepX = 120.0 / (maxSamples - 1);
     double startX = -60.0;
 
     auto voltageToY = [&](double v) {
-        double clampedV = qBound(0.0, v, 5.0);
-        return 26.0 - (clampedV / 5.0) * 56.0;
+        return 26.0 - (v / 5.0) * 56.0;
     };
 
     wavePath.moveTo(startX, voltageToY(voltageHistory[0]));
@@ -573,6 +633,8 @@ void Oscilloscope::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
 
     painter->setPen(QPen(QColor("#FFFFFF"), 1.5, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     painter->drawPath(wavePath);
+
+    painter->setClipping(false); // 🛠️ غیرفعال کردن ماسک برای کشیدن لیبل‌ها
 
     painter->setFont(QFont("Consolas", 7, QFont::Bold));
     QString liveVText = QString::number(voltageHistory.last(), 'f', 1) + "V";

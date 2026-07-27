@@ -61,7 +61,8 @@ static Element* createComponent(const QString &type) {
     if (type == "Ground (GND)") return new Ground();
     if (type == "DC Voltage Source") return new DCVoltageSource();
     if (type == "Clock Generator") return new ClockGenerator();
-
+    if (type == "Voltmeter") return new Voltmeter();
+    if (type == "Ammeter") return new Ammeter();
     // -- گیت‌های منطقی --
     if (type == "AND Gate") return new AndGate();
     if (type == "OR Gate") return new OrGate();
