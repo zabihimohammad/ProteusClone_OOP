@@ -26,6 +26,7 @@ ComponentLibrary::ComponentLibrary(QWidget *parent) : QFrame(parent)
     setMaximumWidth(340);
 
     m_components = {
+            {"BATTERY", "Battery", "Sources", "Real DC Battery with internal resistance", "─| |ı─"},
             {"VOLTMETER", "Voltmeter", "Measurement", "Digital DC Voltmeter", "( V )"},
             {"AMMETER", "Ammeter", "Measurement", "Digital DC Ammeter", "( A )"},
         {"RESISTOR", "Resistor", "Analog", "Limits current flow", R"(─/\/\/─)"},

@@ -38,20 +38,33 @@ void AndGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
     drawReadableText(painter,QRectF(-30, 25, 60, 15), Qt::AlignCenter, propagationDelay);
 }
 
-void AndGate::process() {
-    if (inA->isFloating() || inB->isFloating()) {
-        outY->setUndefined();
-        qWarning() << "DRC Warning: Floating input detected on AND Gate!";
-        return;
-    }
-    if (inA->isUndefinedState() || inB->isUndefinedState()) {
+void AndGate::process()
+{
+    if (inA->isFloating() || inB->isFloating() || inA->isUndefinedState() || inB->isUndefinedState()) {
         outY->setUndefined();
         return;
     }
-    bool stateA = inA->getLogicState();
-    bool stateB = inB->getLogicState();
-    bool result = stateA && stateB;
-    outY->setVoltage(result ? highVoltage.replace("V", "").toDouble() : 0.0);
+
+    bool result = inA->getLogicState() && inB->getLogicState(); // 💡 برای گیت OR اینجا را || کن
+
+    // 🛠️ سیستم تأخیر انتشار (Propagation Delay Event Queue)
+    double delayNs = propagationDelay.replace("ns", "").toDouble();
+    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک شبیه‌ساز را ۱۰ نانوثانیه فرض می‌کنیم
+
+    if (result != targetState) {
+        targetState = result;
+        delayTicks = requiredTicks; // استارت تایمر تأخیر
+    }
+
+    if (delayTicks > 0) {
+        delayTicks--; // شمارش معکوس تا اعمال تغییر
+    }
+
+    if (delayTicks == 0) {
+        // زمان تأخیر تمام شد، ولتاژ جدید اعمال می‌شود
+        outY->setVoltage(targetState ? highVoltage.replace("V", "").toDouble() : 0.0);
+        delayTicks = -1;
+    }
 }
 
 QMap<QString, QString> AndGate::getProperties() const {
@@ -100,19 +113,32 @@ void OrGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
 }
 
 void OrGate::process() {
-    if (inA->isFloating() || inB->isFloating()) {
-        outY->setUndefined();
-        qWarning() << "DRC Warning: Floating input detected on OR Gate!";
-        return;
-    }
-    if (inA->isUndefinedState() || inB->isUndefinedState()) {
+    if (inA->isFloating() || inB->isFloating() || inA->isUndefinedState() || inB->isUndefinedState()) {
         outY->setUndefined();
         return;
     }
-    bool result = inA->getLogicState() || inB->getLogicState();
-    outY->setVoltage(result ? highVoltage.replace("V", "").toDouble() : 0.0);
-}
 
+    bool result = inA->getLogicState() || inB->getLogicState(); // 💡 برای گیت OR اینجا را || کن
+
+    // 🛠️ سیستم تأخیر انتشار (Propagation Delay Event Queue)
+    double delayNs = propagationDelay.replace("ns", "").toDouble();
+    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک شبیه‌ساز را ۱۰ نانوثانیه فرض می‌کنیم
+
+    if (result != targetState) {
+        targetState = result;
+        delayTicks = requiredTicks; // استارت تایمر تأخیر
+    }
+
+    if (delayTicks > 0) {
+        delayTicks--; // شمارش معکوس تا اعمال تغییر
+    }
+
+    if (delayTicks == 0) {
+        // زمان تأخیر تمام شد، ولتاژ جدید اعمال می‌شود
+        outY->setVoltage(targetState ? highVoltage.replace("V", "").toDouble() : 0.0);
+        delayTicks = -1;
+    }
+}
 QMap<QString, QString> OrGate::getProperties() const {
     QMap<QString, QString> props;
     props["Propagation Delay"] = propagationDelay;
@@ -158,17 +184,31 @@ void NotGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 }
 
 void NotGate::process() {
-    if (inA->isFloating()) {
-        outY->setUndefined();
-        qWarning() << "DRC Warning: Floating input detected on NOT Gate!";
-        return;
-    }
-    if (inA->isUndefinedState()) {
+    if (inA->isFloating() || inA->isUndefinedState()) {
         outY->setUndefined();
         return;
     }
-    bool result = !inA->getLogicState();
-    outY->setVoltage(result ? highVoltage.replace("V", "").toDouble() : 0.0);
+
+    bool result = ! inA->getLogicState();
+
+    // 🛠️ سیستم تأخیر انتشار (Propagation Delay Event Queue)
+    double delayNs = propagationDelay.replace("ns", "").toDouble();
+    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک شبیه‌ساز را ۱۰ نانوثانیه فرض می‌کنیم
+
+    if (result != targetState) {
+        targetState = result;
+        delayTicks = requiredTicks; // استارت تایمر تأخیر
+    }
+
+    if (delayTicks > 0) {
+        delayTicks--; // شمارش معکوس تا اعمال تغییر
+    }
+
+    if (delayTicks == 0) {
+        // زمان تأخیر تمام شد، ولتاژ جدید اعمال می‌شود
+        outY->setVoltage(targetState ? highVoltage.replace("V", "").toDouble() : 0.0);
+        delayTicks = -1;
+    }
 }
 
 QMap<QString, QString> NotGate::getProperties() const {
@@ -223,17 +263,31 @@ void XorGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 }
 
 void XorGate::process() {
-    if (inA->isFloating() || inB->isFloating()) {
-        outY->setUndefined();
-        qWarning() << "DRC Warning: Floating input detected on XOR Gate!";
-        return;
-    }
-    if (inA->isUndefinedState() || inB->isUndefinedState()) {
+    if (inA->isFloating() || inB->isFloating() || inA->isUndefinedState() || inB->isUndefinedState()) {
         outY->setUndefined();
         return;
     }
+
     bool result = inA->getLogicState() ^ inB->getLogicState();
-    outY->setVoltage(result ? highVoltage.replace("V", "").toDouble() : 0.0);
+
+    // 🛠️ سیستم تأخیر انتشار (Propagation Delay Event Queue)
+    double delayNs = propagationDelay.replace("ns", "").toDouble();
+    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک شبیه‌ساز را ۱۰ نانوثانیه فرض می‌کنیم
+
+    if (result != targetState) {
+        targetState = result;
+        delayTicks = requiredTicks; // استارت تایمر تأخیر
+    }
+
+    if (delayTicks > 0) {
+        delayTicks--; // شمارش معکوس تا اعمال تغییر
+    }
+
+    if (delayTicks == 0) {
+        // زمان تأخیر تمام شد، ولتاژ جدید اعمال می‌شود
+        outY->setVoltage(targetState ? highVoltage.replace("V", "").toDouble() : 0.0);
+        delayTicks = -1;
+    }
 }
 
 QMap<QString, QString> XorGate::getProperties() const {
@@ -284,17 +338,31 @@ void NandGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 }
 
 void NandGate::process() {
-    if (inA->isFloating() || inB->isFloating()) {
-        outY->setUndefined();
-        qWarning() << "DRC Warning: Floating input detected on NAND Gate!";
-        return;
-    }
-    if (inA->isUndefinedState() || inB->isUndefinedState()) {
+    if (inA->isFloating() || inB->isFloating() || inA->isUndefinedState() || inB->isUndefinedState()) {
         outY->setUndefined();
         return;
     }
+
     bool result = !(inA->getLogicState() && inB->getLogicState());
-    outY->setVoltage(result ? highVoltage.replace("V", "").toDouble() : 0.0);
+
+    // 🛠️ سیستم تأخیر انتشار (Propagation Delay Event Queue)
+    double delayNs = propagationDelay.replace("ns", "").toDouble();
+    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک شبیه‌ساز را ۱۰ نانوثانیه فرض می‌کنیم
+
+    if (result != targetState) {
+        targetState = result;
+        delayTicks = requiredTicks; // استارت تایمر تأخیر
+    }
+
+    if (delayTicks > 0) {
+        delayTicks--; // شمارش معکوس تا اعمال تغییر
+    }
+
+    if (delayTicks == 0) {
+        // زمان تأخیر تمام شد، ولتاژ جدید اعمال می‌شود
+        outY->setVoltage(targetState ? highVoltage.replace("V", "").toDouble() : 0.0);
+        delayTicks = -1;
+    }
 }
 
 QMap<QString, QString> NandGate::getProperties() const {

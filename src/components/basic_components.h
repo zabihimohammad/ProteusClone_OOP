@@ -227,6 +227,25 @@ public:
     QString getComponentName() const override { return "Junction Node"; }
 };
 // ==========================================
+// باتری واقعی (Real Battery with Internal Resistance)
+// ==========================================
+class Battery : public Element {
+private:
+    QString voltage = "9V";
+    QString internalResistance = "1"; // 1 Ohm مقاومت داخلی
+    Terminal *outPos;
+    Terminal *outNeg;
+public:
+    Battery();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Battery"; }
+
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+// ==========================================
 // ولت‌متر دیجیتال (Voltmeter)
 // ==========================================
 class Voltmeter : public Element {

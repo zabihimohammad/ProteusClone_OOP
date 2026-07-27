@@ -11,6 +11,9 @@ private:
     QMap<int, int> RAM; // حافظه داخلی
     QStringList firmwareInstructions; // کدهای لود شده
 
+    QMap<int, uint8_t> rom; // 🛠️ حافظه فلش میکروکنترلر
+    void loadHexFile(const QString& path);
+
 public:
     MCUChip();
 
@@ -29,8 +32,6 @@ public:
         return props;
     }
 
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Hex File Path")) hexFilePath = props["Hex File Path"];
-        if (props.contains("Clock Frequency")) clockFrequency = props["Clock Frequency"];
-    }
+    // 🛠️ فیکس ارور: اینجا تابع را فقط معرفی می‌کنیم و بدنه‌اش در mcu.cpp می‌ماند
+    void setProperties(const QMap<QString, QString>& props) override;
 };

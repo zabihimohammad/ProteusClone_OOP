@@ -600,3 +600,35 @@ void Oscilloscope::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
     drawReadableText(painter, QRectF(-70, 37, 140, 12), Qt::AlignCenter, "DIGITAL OSCILLOSCOPE");
     painter->restore();
 }
+// ==========================================
+// پیاده‌سازی باتری واقعی (Battery)
+// ==========================================
+Battery::Battery() {
+    outPos = new Terminal(this); outPos->setPos(0, -20);
+    outNeg = new Terminal(this); outNeg->setPos(0, 20);
+}
+QRectF Battery::boundingRect() const { return QRectF(-25, -30, 50, 60); }
+void Battery::process() {}
+void Battery::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
+    QPen pen(Qt::black, 2); if (isSelected()) pen.setColor(Qt::red); painter->setPen(pen);
+
+    painter->drawLine(0, -20, 0, -5);
+    painter->drawLine(-15, -5, 15, -5); // قطب مثبت (خط بلند)
+    painter->drawLine(-8, 5, 8, 5);     // قطب منفی (خط کوتاه)
+    painter->drawLine(0, 5, 0, 20);
+
+    painter->setFont(QFont("Consolas", 8, QFont::Bold));
+    painter->setPen(Qt::darkBlue);
+    drawReadableText(painter, -20, -10, "+");
+    drawReadableText(painter, QRectF(-25, -30, 50, 15), Qt::AlignCenter, voltage);
+}
+QMap<QString, QString> Battery::getProperties() const {
+    QMap<QString, QString> props;
+    props["Voltage"] = voltage;
+    props["Internal Resistance"] = internalResistance;
+    return props;
+}
+void Battery::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Voltage")) voltage = props["Voltage"];
+    if (props.contains("Internal Resistance")) internalResistance = props["Internal Resistance"];
+}

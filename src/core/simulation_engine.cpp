@@ -131,7 +131,7 @@ void SimulationEngine::propagateVoltages() {
 
     for (Element *el : elements) {
         QString type = el->getComponentName();
-        if (type == "Resistor" || type == "Capacitor" || type == "Inductor" || type == "Switch" || type == "Push Button" || type == "Ammeter") {
+        if (type == "Resistor" || type == "Capacitor" || type == "Inductor" || type == "Switch" || type == "Push Button" || type == "Ammeter" || type == "Battery") {
             QList<Terminal*> terms;
             for (QGraphicsItem *child : el->childItems()) {
                 if (Terminal *t = dynamic_cast<Terminal*>(child)) terms.append(t);
@@ -152,6 +152,12 @@ void SimulationEngine::propagateVoltages() {
             } else if (type == "Inductor") {
                 g = dt / qMax(parseValue(el->getProperties()["Inductance"]), 1e-6);
                 Ieq = historicalState.value(el, 0.0);
+            } else if (type == "Battery") {
+                // 🛠️ مدل‌سازی فیزیکی باتری واقعی (منبع ولتاژ + مقاومت داخلی)
+                double v = parseValue(el->getProperties()["Voltage"]);
+                double r = parseValue(el->getProperties()["Internal Resistance"]);
+                g = 1.0 / qMax(r, 1e-3);
+                Ieq = v * g; // تبدیل سورس ولتاژ به سورس جریان نورتون
             }
 
             if (g > 0) {
@@ -164,7 +170,12 @@ void SimulationEngine::propagateVoltages() {
                     if (!isFixed[n1]) A[v][nodeToVar[n1]] -= g; else b[v] += g * fixedVoltage[n1];
                 }
             }
-            if (Ieq != 0.0) {
+
+            // 🛠️ تزریق جریان
+            if (type == "Battery") {
+                if (!isFixed[n1]) b[nodeToVar[n1]] += Ieq; // جریان از قطب مثبت خارج می‌شود
+                if (!isFixed[n2]) b[nodeToVar[n2]] -= Ieq; // جریان به قطب منفی وارد می‌شود
+            } else if (Ieq != 0.0) {
                 if (!isFixed[n1]) b[nodeToVar[n1]] += Ieq;
                 if (!isFixed[n2]) b[nodeToVar[n2]] -= Ieq;
             }

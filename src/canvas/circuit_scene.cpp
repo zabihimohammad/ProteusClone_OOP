@@ -406,6 +406,7 @@ void CircuitScene::keyPressEvent(QKeyEvent *event) {
 QGraphicsItem *CircuitScene::addComponent(const QString &componentType, const QPointF &position) {
     QGraphicsItem *item = nullptr;
     if (componentType == "MCU") item = new MCUChip();
+    else if (componentType == "BATTERY") item = new Battery();
     else if (componentType == "VOLTMETER") item = new Voltmeter();
     else if (componentType == "AMMETER") item = new Ammeter();
     else if (componentType == "RESISTOR") item = new Resistor();

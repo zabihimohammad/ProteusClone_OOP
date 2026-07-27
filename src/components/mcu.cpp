@@ -1,6 +1,7 @@
 #include "mcu.h"
 #include <QPainter>
 #include <QFont> // برای تنظیم فونت نوشته‌ها
+#include <QFile>
 #include "../core/terminal.h"
 
 // ==========================================
@@ -22,50 +23,69 @@ MCUChip::MCUChip() {
 QRectF MCUChip::boundingRect() const {
     return QRectF(-60, -60, 120, 120);
 }
+void MCUChip::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Clock Frequency")) clockFrequency = props["Clock Frequency"];
+    if (props.contains("Hex File Path")) {
+        QString newPath = props["Hex File Path"];
+        if (newPath != hexFilePath && !newPath.isEmpty() && newPath != "Not Loaded") {
+            hexFilePath = newPath;
+            loadHexFile(hexFilePath); // 🛠️ لود کردن اتوماتیک فایل هنگام تغییر آدرس
+        }
+    }
+}
+
+// 🛠️ مفسر استاندارد فایل Intel HEX
+void MCUChip::loadHexFile(const QString& path) {
+    rom.clear();
+    QFile file(path);
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream in(&file);
+        while (!in.atEnd()) {
+            QString line = in.readLine().trimmed();
+            if (line.startsWith(":")) {
+                int byteCount = line.mid(1, 2).toInt(nullptr, 16);
+                int addr = line.mid(3, 4).toInt(nullptr, 16);
+                int type = line.mid(7, 2).toInt(nullptr, 16);
+                if (type == 0) { // رکورد داده (Data Record)
+                    for (int i = 0; i < byteCount; i++) {
+                        rom[addr + i] = line.mid(9 + i * 2, 2).toInt(nullptr, 16);
+                    }
+                }
+            }
+        }
+    }
+}
 
 void MCUChip::process() {
-    // 🛠️ مفسر پایه‌ای دستورات اسمبلی (MCU Instruction Decoder)
-    if (firmwareInstructions.isEmpty()) return; // اگر فریمور لود نشده بود
-    if (PC >= firmwareInstructions.size()) PC = 0; // لوپ بی‌نهایت برنامه
+    if (rom.isEmpty()) return; // اگر فریمور لود نشده بود کاری نکن
 
-    QString instruction = firmwareInstructions[PC].trimmed().toUpper();
-    QStringList tokens = instruction.split(" ");
+    // 🛠️ واکشی (Fetch) کد باینری از حافظه رام
+    uint8_t opcode = rom.value(PC, 0x00);
 
-    if (tokens.isEmpty()) return;
-    QString opCode = tokens[0];
-
-    // ۱. انتقال داده
-    if (opCode == "MOV" && tokens.size() >= 3) {
-        int val = tokens[2].toInt();
-        if (tokens[1] == "A") accumulator = val;
-    }
-        // ۲. جمع ریاضی
-    else if (opCode == "ADD" && tokens.size() >= 2) {
-        accumulator += tokens[1].toInt();
-    }
-        // ۳. پرش به خط دیگر
-    else if (opCode == "JMP" && tokens.size() >= 2) {
-        PC = tokens[1].toInt() - 1; // -1 به خاطر اینکه در انتها PC پلاس پلاس می‌شود
-    }
-        // ۴. یک کردن پورت خروجی
-    else if (opCode == "SETB" && tokens.size() >= 2) {
-        int pinIndex = tokens[1].replace("P", "").toInt();
-        if (pinIndex >= 0 && pinIndex < childItems().size()) {
-            if (auto* term = dynamic_cast<Terminal*>(childItems()[pinIndex])) {
-                term->setVoltage(5.0);
-            }
+    // 🛠️ رمزگشایی و اجرا (Decode & Execute) - دستورات پایه‌ای ساده‌سازی شده
+    if (opcode == 0x74) { // MOV A, #data
+        accumulator = rom.value(PC + 1, 0);
+        PC += 2;
+    } else if (opcode == 0x24) { // ADD A, #data
+        accumulator += rom.value(PC + 1, 0);
+        PC += 2;
+    } else if (opcode == 0x02) { // JMP address
+        PC = (rom.value(PC + 1, 0) << 8) | rom.value(PC + 2, 0);
+    } else if (opcode == 0xD2) { // SETB P1.x (شبیه‌سازی روشن کردن پایه)
+        int bit = rom.value(PC + 1, 0);
+        if (bit < childItems().size()) {
+            if (auto* t = dynamic_cast<Terminal*>(childItems()[bit])) t->setVoltage(5.0);
         }
-    }
-        // ۵. صفر کردن پورت خروجی
-    else if (opCode == "CLR" && tokens.size() >= 2) {
-        int pinIndex = tokens[1].replace("P", "").toInt();
-        if (pinIndex >= 0 && pinIndex < childItems().size()) {
-            if (auto* term = dynamic_cast<Terminal*>(childItems()[pinIndex])) {
-                term->setVoltage(0.0);
-            }
+        PC += 2;
+    } else if (opcode == 0xC2) { // CLR P1.x (شبیه‌سازی خاموش کردن پایه)
+        int bit = rom.value(PC + 1, 0);
+        if (bit < childItems().size()) {
+            if (auto* t = dynamic_cast<Terminal*>(childItems()[bit])) t->setVoltage(0.0);
         }
+        PC += 2;
+    } else {
+        PC++; // NOP یا رد شدن از دستور ناشناخته
     }
-    PC++; // رفتن به دستور بعدی در سیکل بعدی شبیه‌سازی
 }
 // ==========================================
 // رسم گرافیکی میکروکنترلر روی بوم
