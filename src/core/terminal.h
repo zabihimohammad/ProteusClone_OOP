@@ -30,7 +30,8 @@ public:
     void resetState();
 
     QString voltageLevel = "Undefined";
-    double exactVoltage = 0.0; // 🛠️ این متغیر برای دقت اندازه‌گیری آمپرمتر و اسیلوسکوپ اضافه شد
+    double exactVoltage = 0.0; // 🛠️ ذخیره ولتاژ دقیق و بدون گرد شدن برای فیزیک
+
 protected:
     void hoverEnterEvent(QGraphicsSceneHoverEvent *event) override;
     void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
