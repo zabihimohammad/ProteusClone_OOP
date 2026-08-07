@@ -22,7 +22,6 @@ public:
     bool isProbeEnabled = false;
 
     int gridSpacing() const { return m_gridSize; }
-    bool snapEnabled() const { return m_snapEnabled; }
     QRectF canvasRect() const { return m_canvasRect; }
     void copySelectedComponents();
     void pasteCopiedComponents(const QPointF &targetScenePos);
@@ -30,7 +29,6 @@ public:
 public slots:
     void setWiringMode(bool mode); // 🛠️ این متد اضافه شد
     void setGridSize(int size);
-    void setSnapEnabled(bool enabled) { m_snapEnabled = enabled; }
     void setCanvasSize(const QSizeF &size);
     QGraphicsItem *addComponent(const QString &componentType, const QPointF &position);
 
@@ -64,7 +62,6 @@ private:
     QVector<CopiedComponent> m_clipboardComponents;
     QVector<CopiedWire> m_clipboardWires;
     int m_gridSize = 20;
-    bool m_snapEnabled = true;
     QRectF m_canvasRect{-800, -500, 1600, 1000};
     bool isWiring = false;
     Wire *tempWire = nullptr;
