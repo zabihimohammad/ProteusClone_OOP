@@ -1,13 +1,14 @@
 #include "circuit_view.h"
-
 #include "circuit_scene.h"
-
 #include <QMouseEvent>
 #include <QPainter>
 #include <QResizeEvent>
 #include <QScrollBar>
+#include <QCoreApplication> // 🛠️ این خط برای رفع ارور اضافه شد
 #include <QWheelEvent>
-
+#include <QMenu>
+#include <QAction>
+#include "../core/element.h"
 namespace {
 constexpr qreal kMinimumZoom = 0.10;
 constexpr qreal kMaximumZoom = 4.0;
@@ -24,6 +25,7 @@ CircuitView::CircuitView(QWidget *parent) : QGraphicsView(parent)
     setMouseTracking(true);
     setFrameShape(QFrame::NoFrame);
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    setDragMode(QGraphicsView::RubberBandDrag);
 }
 
 void CircuitView::setZoom(qreal zoom)
@@ -60,12 +62,77 @@ void CircuitView::wheelEvent(QWheelEvent *event)
 
 void CircuitView::mousePressEvent(QMouseEvent *event)
 {
+    // 🛠️ سیستم پیشرفته منوی راست‌کلیک (Context Menu)
+    if (event->button() == Qt::RightButton) {
+        auto *circuitScene = qobject_cast<CircuitScene *>(scene());
+        if (circuitScene) {
+            QPointF scenePos = mapToScene(event->pos());
+            QGraphicsItem *clickedItem = circuitScene->itemAt(scenePos, QTransform());
+
+            QMenu contextMenu(this);
+            // استایل‌دهی مدرن به منوی راست‌کلیک برای هماهنگی با تم پروژه
+            contextMenu.setStyleSheet(R"(
+                QMenu { background-color: #ffffff; border: 1px solid #DDE2E8; border-radius: 8px; padding: 4px; }
+                QMenu::item { padding: 6px 24px 6px 20px; border-radius: 4px; color: #253143; font-weight: 500; }
+                QMenu::item:selected { background-color: #E8F2FF; color: #0A66D3; }
+                QMenu::separator { height: 1px; background: #E6E9ED; margin: 4px 0; }
+            )");
+
+            // سناریو آ: کلیک روی یک قطعه
+            if (clickedItem && dynamic_cast<Element*>(clickedItem)) {
+                // مطمئن می‌شویم قطعه کلیک شده در حالت انتخاب قرار بگیرد
+                if (!clickedItem->isSelected()) {
+                    circuitScene->clearSelection();
+                    clickedItem->setSelected(true);
+                }
+
+                QAction *actCopy = contextMenu.addAction(tr("Copy (Ctrl+C)"));
+                contextMenu.addSeparator();
+                QAction *actRotate = contextMenu.addAction(tr("Rotate (Ctrl+R)"));
+                QAction *actMirror = contextMenu.addAction(tr("Mirror (Ctrl+M)"));
+                contextMenu.addSeparator();
+                QAction *actDelete = contextMenu.addAction(tr("Delete"));
+
+                // نمایش منو در موقعیت زنده موس روی دسکتاپ (استفاده از globalPos برای رفع ارور Qt5)
+                QAction *selectedAction = contextMenu.exec(event->globalPos());
+
+                // اجرای دستورات بر اساس انتخاب کاربر (منوی قطعه)
+                if (selectedAction == actCopy) {
+                    circuitScene->copySelectedComponents();
+                } else if (selectedAction == actRotate) {
+                    clickedItem->setRotation(clickedItem->rotation() + 90);
+                    circuitScene->update();
+                } else if (selectedAction == actMirror) {
+                    QTransform t = clickedItem->transform();
+                    clickedItem->setTransform(QTransform(-t.m11(), t.m12(), t.m21(), t.m22(), t.dx(), t.dy()));
+                    circuitScene->update();
+                } else if (selectedAction == actDelete) {
+                    QKeyEvent delEvent(QEvent::KeyPress, Qt::Key_Delete, Qt::NoModifier);
+                    QCoreApplication::sendEvent(circuitScene, &delEvent);
+                }
+            }
+                // سناریو ب: کلیک روی فضای خالی بوم
+            else {
+                QAction *actPaste = contextMenu.addAction(tr("Paste Here (Ctrl+V)"));
+
+                QAction *selectedAction = contextMenu.exec(event->globalPos());
+                if (selectedAction == actPaste) {
+                    QPointF clickScenePos = mapToScene(event->pos());
+                    circuitScene->pasteCopiedComponents(clickScenePos);
+                }
+            }
+            event->accept();
+            return;
+        }
+    }
+
     if (event->button() == Qt::LeftButton && navigatorToggleRect().contains(event->pos())) {
         m_navigatorCollapsed = !m_navigatorCollapsed;
         viewport()->update();
         event->accept();
         return;
     }
+
     if (!m_navigatorCollapsed && event->button() == Qt::LeftButton &&
         navigatorCanvasRect().contains(event->pos())) {
         m_isNavigating = true;
@@ -74,16 +141,24 @@ void CircuitView::mousePressEvent(QMouseEvent *event)
         event->accept();
         return;
     }
+
+    // 🛠️ مدیریت Panning: اگر دکمه وسط فشرده شد یا Shift+Click چپ انجام شد
     if (event->button() == Qt::MiddleButton ||
         (event->button() == Qt::LeftButton && (event->modifiers() & Qt::ShiftModifier))) {
+
+        // موقتاً درگ مود انتخابی را خاموش می‌کنیم تا کادر مستطیلی مزاحم حرکت روی بوم نشود
+        setDragMode(QGraphicsView::NoDrag);
         m_isPanning = true;
         m_lastMousePos = event->pos();
         setCursor(Qt::ClosedHandCursor);
         event->accept();
         return;
     }
+
+    // در حالت عادی کلیک چپ روی فضای خالی، کادر انتخاب مستطیلی باز می‌کند
+    setDragMode(QGraphicsView::RubberBandDrag);
     QGraphicsView::mousePressEvent(event);
-}
+} // <--- این آکولاد همان چیزی بود که در کدهای شما گم شده بود!
 
 void CircuitView::mouseMoveEvent(QMouseEvent *event)
 {
@@ -112,6 +187,9 @@ void CircuitView::mouseReleaseEvent(QMouseEvent *event)
     if (m_isPanning && (event->button() == Qt::MiddleButton || event->button() == Qt::LeftButton)) {
         m_isPanning = false;
         setCursor(Qt::ArrowCursor);
+
+        // 🛠️ پس از اتمام حرکت روی بوم، دوباره درگ مود را روی کادر انتخابی تنظیم می‌کنیم
+        setDragMode(QGraphicsView::RubberBandDrag);
         event->accept();
         return;
     }

@@ -1,6 +1,7 @@
 #include "mcu.h"
 #include <QPainter>
 #include <QFont> // برای تنظیم فونت نوشته‌ها
+#include <QFile>
 #include "../core/terminal.h"
 
 // ==========================================
@@ -22,11 +23,70 @@ MCUChip::MCUChip() {
 QRectF MCUChip::boundingRect() const {
     return QRectF(-60, -60, 120, 120);
 }
-
-void MCUChip::process() {
-    // منطق اجرای کدهای هگز در موتور شبیه‌ساز (مرحله بک‌اند)
+void MCUChip::setProperties(const QMap<QString, QString>& props) {
+    if (props.contains("Clock Frequency")) clockFrequency = props["Clock Frequency"];
+    if (props.contains("Hex File Path")) {
+        QString newPath = props["Hex File Path"];
+        if (newPath != hexFilePath && !newPath.isEmpty() && newPath != "Not Loaded") {
+            hexFilePath = newPath;
+            loadHexFile(hexFilePath); // 🛠️ لود کردن اتوماتیک فایل هنگام تغییر آدرس
+        }
+    }
 }
 
+// 🛠️ مفسر استاندارد فایل Intel HEX
+void MCUChip::loadHexFile(const QString& path) {
+    rom.clear();
+    QFile file(path);
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream in(&file);
+        while (!in.atEnd()) {
+            QString line = in.readLine().trimmed();
+            if (line.startsWith(":")) {
+                int byteCount = line.mid(1, 2).toInt(nullptr, 16);
+                int addr = line.mid(3, 4).toInt(nullptr, 16);
+                int type = line.mid(7, 2).toInt(nullptr, 16);
+                if (type == 0) { // رکورد داده (Data Record)
+                    for (int i = 0; i < byteCount; i++) {
+                        rom[addr + i] = line.mid(9 + i * 2, 2).toInt(nullptr, 16);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void MCUChip::process() {
+    if (rom.isEmpty()) return; // اگر فریمور لود نشده بود کاری نکن
+
+    // 🛠️ واکشی (Fetch) کد باینری از حافظه رام
+    uint8_t opcode = rom.value(PC, 0x00);
+
+    // 🛠️ رمزگشایی و اجرا (Decode & Execute) - دستورات پایه‌ای ساده‌سازی شده
+    if (opcode == 0x74) { // MOV A, #data
+        accumulator = rom.value(PC + 1, 0);
+        PC += 2;
+    } else if (opcode == 0x24) { // ADD A, #data
+        accumulator += rom.value(PC + 1, 0);
+        PC += 2;
+    } else if (opcode == 0x02) { // JMP address
+        PC = (rom.value(PC + 1, 0) << 8) | rom.value(PC + 2, 0);
+    } else if (opcode == 0xD2) { // SETB P1.x (شبیه‌سازی روشن کردن پایه)
+        int bit = rom.value(PC + 1, 0);
+        if (bit < childItems().size()) {
+            if (auto* t = dynamic_cast<Terminal*>(childItems()[bit])) t->setVoltage(5.0);
+        }
+        PC += 2;
+    } else if (opcode == 0xC2) { // CLR P1.x (شبیه‌سازی خاموش کردن پایه)
+        int bit = rom.value(PC + 1, 0);
+        if (bit < childItems().size()) {
+            if (auto* t = dynamic_cast<Terminal*>(childItems()[bit])) t->setVoltage(0.0);
+        }
+        PC += 2;
+    } else {
+        PC++; // NOP یا رد شدن از دستور ناشناخته
+    }
+}
 // ==========================================
 // رسم گرافیکی میکروکنترلر روی بوم
 // ==========================================
@@ -59,7 +119,7 @@ void MCUChip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
     // چاپ نام تراشه
     painter->setPen(Qt::white);
     painter->setFont(QFont("Consolas", 10, QFont::Bold));
-    painter->drawText(QRectF(-40, -30, 80, 20), Qt::AlignCenter, "MCU");
+    drawReadableText(painter,QRectF(-40, -30, 80, 20), Qt::AlignCenter, "MCU");
 
     // چاپ فرکانس کاری
     painter->setFont(QFont("Consolas", 7));

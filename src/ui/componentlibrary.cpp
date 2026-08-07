@@ -8,7 +8,17 @@
 #include <QPushButton>
 #include <QTreeWidget>
 #include <QVBoxLayout>
-
+#include <QDrag>
+#include <QMimeData>
+#include <QMouseEvent>
+#include <QApplication>
+#include <QPixmap>
+#include <QPainter>
+#include <QGraphicsScene>
+#include "../components/basic_components.h"
+#include "../components/logic_gates.h"
+#include "../components/mcu.h"
+#include "../components/peripherals.h"
 ComponentLibrary::ComponentLibrary(QWidget *parent) : QFrame(parent)
 {
     setObjectName("libraryPanel");
@@ -16,6 +26,9 @@ ComponentLibrary::ComponentLibrary(QWidget *parent) : QFrame(parent)
     setMaximumWidth(340);
 
     m_components = {
+            {"BATTERY", "Battery", "Sources", "Real DC Battery with internal resistance", "─| |ı─"},
+            {"VOLTMETER", "Voltmeter", "Measurement", "Digital DC Voltmeter", "( V )"},
+            {"AMMETER", "Ammeter", "Measurement", "Digital DC Ammeter", "( A )"},
         {"RESISTOR", "Resistor", "Analog", "Limits current flow", R"(─/\/\/─)"},
         {"CAPACITOR", "Capacitor", "Analog", "Stores electrical charge", "─| |─"},
         {"INDUCTOR", "Inductor", "Analog", "Stores energy in a magnetic field", "─((((─"},
@@ -37,7 +50,9 @@ ComponentLibrary::ComponentLibrary(QWidget *parent) : QFrame(parent)
         {"MEMORY", "Memory", "Advanced", "External memory chip", "[ RAM ]"},
         {"KEYPAD", "Keypad", "Advanced", "Matrix keypad", "[ # ]"},
         {"ADC", "ADC", "Converters", "Analog-to-digital converter", "[ A→D ]"},
-        {"DAC", "DAC", "Converters", "Digital-to-analog converter", "[ D→A ]"}
+        {"DAC", "DAC", "Converters", "Digital-to-analog converter", "[ D→A ]"},
+        {"OSCILLOSCOPE", "Oscilloscope", "Outputs", "Real-time voltage waveform scope", "[ ∿ SCOPE ]"}
+
     };
 
     auto *layout = new QVBoxLayout(this);
@@ -54,7 +69,7 @@ ComponentLibrary::ComponentLibrary(QWidget *parent) : QFrame(parent)
     m_tree->setHeaderHidden(true);
     m_tree->setIndentation(16);
     m_tree->setRootIsDecorated(true);
-
+    m_tree->viewport()->installEventFilter(this);
     auto *preview = new QFrame;
     preview->setObjectName("previewCard");
     auto *previewLayout = new QVBoxLayout(preview);
@@ -160,4 +175,111 @@ void ComponentLibrary::updatePreview(QTreeWidgetItem *current, QTreeWidgetItem *
     m_symbol->setText(component.symbol);
     m_name->setText(component.name);
     m_description->setText(component.description + "  •  " + component.category);
+}
+// ==========================================================
+// منطق آغاز Drag & Drop از منو به بوم طراحی
+// ==========================================================
+// ==========================================================
+// منطق آغاز Drag & Drop به همراه شبح گرافیکی قطعه (Ghosting)
+// ==========================================================
+// ==========================================================
+// منطق آغاز Drag & Drop با رندر شکل واقعی قطعه (Real Ghosting)
+// ==========================================================
+bool ComponentLibrary::eventFilter(QObject *obj, QEvent *event) {
+    if (obj == m_tree->viewport()) {
+
+        if (event->type() == QEvent::MouseButtonPress) {
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+            if (mouseEvent->button() == Qt::LeftButton) {
+                m_dragStartPos = mouseEvent->pos();
+            }
+        }
+        else if (event->type() == QEvent::MouseMove) {
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+
+            if ((mouseEvent->buttons() & Qt::LeftButton) &&
+                (mouseEvent->pos() - m_dragStartPos).manhattanLength() > QApplication::startDragDistance()) {
+
+                QTreeWidgetItem *item = m_tree->itemAt(m_dragStartPos);
+
+                if (item && item->data(0, Qt::UserRole).isValid()) {
+                    int index = item->data(0, Qt::UserRole).toInt();
+                    QString componentId = m_components.at(index).id;
+
+                    QDrag *drag = new QDrag(this);
+                    QMimeData *mimeData = new QMimeData;
+                    mimeData->setText(componentId);
+                    drag->setMimeData(mimeData);
+
+                    // ==========================================
+                    // ۱. ساخت موقت قطعه برای گرفتن عکس از آن
+                    // ==========================================
+                    QGraphicsItem *tempItem = nullptr;
+                    if (componentId == "MCU") tempItem = new MCUChip();
+                    else if (componentId == "RESISTOR") tempItem = new Resistor();
+                    else if (componentId == "CAPACITOR") tempItem = new Capacitor();
+                    else if (componentId == "INDUCTOR") tempItem = new Inductor();
+                    else if (componentId == "DC_SOURCE") tempItem = new DCVoltageSource();
+                    else if (componentId == "GROUND") tempItem = new Ground();
+                    else if (componentId == "AND_GATE") tempItem = new AndGate();
+                    else if (componentId == "OR_GATE") tempItem = new OrGate();
+                    else if (componentId == "NOT_GATE") tempItem = new NotGate();
+                    else if (componentId == "XOR_GATE") tempItem = new XorGate();
+                    else if (componentId == "NAND_GATE") tempItem = new NandGate();
+                    else if (componentId == "D_FLIP_FLOP") tempItem = new DFlipFlop();
+                    else if (componentId == "LED") tempItem = new LED();
+                    else if (componentId == "SWITCH") tempItem = new Switch();
+                    else if (componentId == "PUSH_BUTTON") tempItem = new PushButton();
+                    else if (componentId == "SEVEN_SEGMENT") tempItem = new SevenSegment();
+                    else if (componentId == "PULSE_GENERATOR") tempItem = new PulseGenerator();
+                    else if (componentId == "MEMORY") tempItem = new MemoryChip();
+                    else if (componentId == "LCD") tempItem = new LCD16x2();
+                    else if (componentId == "KEYPAD") tempItem = new Keypad();
+                    else if (componentId == "ADC") tempItem = new ADC_Chip();
+                    else if (componentId == "DAC") tempItem = new DAC_Chip();
+                    else if (componentId == "OSCILLOSCOPE") tempItem = new Oscilloscope();
+                    if (tempItem) {
+                        // ۲. ایجاد یک بوم موقت و انداختن قطعه درون آن
+                        QGraphicsScene tempScene;
+                        tempScene.addItem(tempItem);
+
+                        // پیدا کردن دقیق ابعاد قطعه به همراه تمام پایه‌های متصل به آن
+                        QRectF rect = tempScene.itemsBoundingRect();
+                        rect.adjust(-2, -2, 2, 2); // کمی حاشیه برای جلوگیری از برش لبه‌ها
+
+                        // ۳. ایجاد بوم عکاسی کاملاً شفاف
+                        QPixmap pixmap(rect.size().toSize());
+                        pixmap.fill(Qt::transparent);
+
+                        QPainter painter(&pixmap);
+                        painter.setRenderHint(QPainter::Antialiasing);
+
+                        // رندر کردن گرافیک قطعه روی عکس
+                        tempScene.render(&painter, QRectF(), rect);
+                        painter.end();
+
+                        // ۴. کم‌رنگ کردن عکس برای افکت "شبح" (Ghosting)
+                        QPixmap ghostPixmap(pixmap.size());
+                        ghostPixmap.fill(Qt::transparent);
+                        QPainter ghostPainter(&ghostPixmap);
+                        ghostPainter.setOpacity(0.6); // شفافیت ۶۰ درصدی
+                        ghostPainter.drawPixmap(0, 0, pixmap);
+                        ghostPainter.end();
+
+                        drag->setPixmap(ghostPixmap);
+
+                        // ۵. تنظیم نقطه اتصال موس دقیقاً به مرکز قطعه
+                        drag->setHotSpot(QPoint(-rect.left(), -rect.top()));
+
+                        // توجه: با اتمام این بلوک if، متغیر tempScene از بین می‌رود
+                        // و به طور خودکار tempItem را نیز از حافظه پاک می‌کند (جلوگیری از Memory Leak)
+                    }
+
+                    drag->exec(Qt::CopyAction);
+                    return true;
+                }
+            }
+        }
+    }
+    return QFrame::eventFilter(obj, event);
 }

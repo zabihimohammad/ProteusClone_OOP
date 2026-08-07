@@ -10,7 +10,7 @@
 #include "../core/terminal.h"
 
 class Wire;
-
+class Element;
 class CircuitScene : public QGraphicsScene
 {
     Q_OBJECT
@@ -24,8 +24,11 @@ public:
     int gridSpacing() const { return m_gridSize; }
     bool snapEnabled() const { return m_snapEnabled; }
     QRectF canvasRect() const { return m_canvasRect; }
+    void copySelectedComponents();
+    void pasteCopiedComponents(const QPointF &targetScenePos);
 
 public slots:
+    void setWiringMode(bool mode); // 🛠️ این متد اضافه شد
     void setGridSize(int size);
     void setSnapEnabled(bool enabled) { m_snapEnabled = enabled; }
     void setCanvasSize(const QSizeF &size);
@@ -33,6 +36,7 @@ public slots:
 
 protected:
     void drawBackground(QPainter *painter, const QRectF &rect) override;
+    void drawForeground(QPainter *painter, const QRectF &rect) override;
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
@@ -42,10 +46,30 @@ protected:
     void dropEvent(QGraphicsSceneDragDropEvent *event) override;
 
 private:
+    // 🛠️ ساختار پیشرفته کلیپ‌بورد برای ذخیره همزمان قطعات و اتصالات بین آن‌ها
+    struct CopiedComponent {
+        QString type;
+        QMap<QString, QString> properties;
+        QPointF relativePos;
+        Element* originalAddress; // برای ردیابی اتصالات در زمان کپی
+    };
+
+    struct CopiedWire {
+        int startComponentIndex;
+        int startTerminalIndex;
+        int endComponentIndex;
+        int endTerminalIndex;
+    };
+
+    QVector<CopiedComponent> m_clipboardComponents;
+    QVector<CopiedWire> m_clipboardWires;
     int m_gridSize = 20;
     bool m_snapEnabled = true;
     QRectF m_canvasRect{-800, -500, 1600, 1000};
     bool isWiring = false;
     Wire *tempWire = nullptr;
     Terminal *startTerminal = nullptr;
+
+    bool m_wiringMode = false;
+    QPointF m_crosshairPos;
 };

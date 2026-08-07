@@ -13,6 +13,8 @@ private:
     Terminal *inA;
     Terminal *inB;
     Terminal *outY;
+    bool targetState = false;
+    int delayTicks = -1;
 
 public:
     AndGate();
@@ -36,6 +38,8 @@ private:
     Terminal *inA;
     Terminal *inB;
     Terminal *outY;
+    bool targetState = false;
+    int delayTicks = -1;
 
 public:
     OrGate();
@@ -58,6 +62,8 @@ private:
 
     Terminal *inA;
     Terminal *outY;
+    bool targetState = false;
+    int delayTicks = -1;
 
 public:
     NotGate();
@@ -81,6 +87,8 @@ private:
     Terminal *inA;
     Terminal *inB;
     Terminal *outY;
+    bool targetState = false;
+    int delayTicks = -1;
 
 public:
     XorGate();
@@ -104,6 +112,8 @@ private:
     Terminal *inA;
     Terminal *inB;
     Terminal *outY;
+    bool targetState = false;
+    int delayTicks = -1;
 
 public:
     NandGate();
@@ -131,6 +141,8 @@ private:
 
     bool lastClockState = false; // ذخیره وضعیت قبلی کلاک برای تشخیص لبه بالارونده
     bool currentInternalQ = false;
+    bool targetState = false;
+    int delayTicks = -1;
 
 public:
     DFlipFlop();

@@ -6,7 +6,8 @@
 #include "../components/logic_gates.h"
 #include "../components/mcu.h"
 #include "../components/peripherals.h"
-
+#include "../core/probe_item.h"
+#include "../canvas/circuit_scene.h"
 #include <QFile>
 #include <QTextStream>
 #include <QDebug>
@@ -49,6 +50,7 @@ static Element* createComponent(const QString &type) {
     if (type == "Microcontroller (MCU)") return new MCUChip();
 
     // -- قطعات پایه --
+    if (type == "Battery") return new Battery();
     if (type == "Resistor") return new Resistor();
     if (type == "Capacitor") return new Capacitor();
     if (type == "Inductor") return new Inductor();
@@ -60,7 +62,8 @@ static Element* createComponent(const QString &type) {
     if (type == "Ground (GND)") return new Ground();
     if (type == "DC Voltage Source") return new DCVoltageSource();
     if (type == "Clock Generator") return new ClockGenerator();
-
+    if (type == "Voltmeter") return new Voltmeter();
+    if (type == "Ammeter") return new Ammeter();
     // -- گیت‌های منطقی --
     if (type == "AND Gate") return new AndGate();
     if (type == "OR Gate") return new OrGate();
@@ -75,7 +78,12 @@ static Element* createComponent(const QString &type) {
     if (type == "Matrix Keypad 4x4") return new Keypad();
     if (type == "Analog to Digital Converter (ADC)") return new ADC_Chip();
     if (type == "Digital to Analog Converter (DAC)") return new DAC_Chip();
+    if (type == "Digital to Analog Converter (DAC)") return new DAC_Chip();
 
+    // اضافه کردن این خط برای شناسایی گره‌ها
+    if (type == "Junction Node") return new JunctionNode();
+    if (type == "Oscilloscope") return new Oscilloscope();
+    // اگر نام قطعه‌ای در لیست نبود...
     // اگر نام قطعه‌ای در لیست نبود، ارور را در کنسول چاپ کن تا سریع پیدایش کنیم
     qWarning() << "[FileManager] ERROR: Unknown component type in Factory:" << type;
     return nullptr;
@@ -97,20 +105,24 @@ QByteArray FileManager::captureSceneState(QGraphicsScene *scene) {
     rootObject["wires"] = serializeWires(scene, elementsList);
 
     QJsonDocument doc(rootObject);
-    return doc.toJson(QJsonDocument::Compact); // فشرده ذخیره می‌کنیم تا رم اشغال نشود
+    return doc.toJson(QJsonDocument::Compact);
 }
 
 void FileManager::restoreSceneState(const QByteArray &stateData, QGraphicsScene *scene) {
     if (stateData.isEmpty()) return;
-
     QJsonDocument doc = QJsonDocument::fromJson(stateData);
     if (doc.isNull() || !doc.isObject()) return;
 
     scene->clear();
+    if (auto *circuitScene = dynamic_cast<CircuitScene*>(scene)) {
+        circuitScene->voltageProbe = new ProbeItem();
+        circuitScene->addItem(circuitScene->voltageProbe);
+        circuitScene->voltageProbe->hide();
+    }
+
     QJsonObject rootObject = doc.object();
     QList<Element*> loadedElements;
 
-    // بازیابی قطعات
     QJsonArray elementsArray = rootObject["elements"].toArray();
     for (const QJsonValue &value : elementsArray) {
         QJsonObject elObj = value.toObject();
@@ -127,6 +139,11 @@ void FileManager::restoreSceneState(const QByteArray &stateData, QGraphicsScene 
             }
             newElement->setProperties(props);
 
+            // 🛠️ بخش امتیازی: بازیابی وضعیت زمان اجرا
+            if (elObj.contains("dynamic_state")) {
+                newElement->setDynamicState(elObj["dynamic_state"].toObject());
+            }
+
             scene->addItem(newElement);
             loadedElements.append(newElement);
         } else {
@@ -134,7 +151,6 @@ void FileManager::restoreSceneState(const QByteArray &stateData, QGraphicsScene 
         }
     }
 
-    // بازیابی سیم‌ها و مسیریابی خودکار
     QJsonArray wiresArray = rootObject["wires"].toArray();
     for (const QJsonValue &value : wiresArray) {
         QJsonObject wireObj = value.toObject();
@@ -164,7 +180,6 @@ void FileManager::restoreSceneState(const QByteArray &stateData, QGraphicsScene 
         }
     }
 }
-
 // =========================================
 // سیستم کنترل فایل (Save / Load)
 // =========================================
@@ -255,12 +270,20 @@ QJsonArray FileManager::serializeElements(const QList<Element*> &elementsList) {
             propsObj[it.key()] = it.value();
         }
         elementObj["properties"] = propsObj;
+
+        // 🛠️ بخش امتیازی: ذخیره وضعیت زمان اجرا
+        QJsonObject stateObj = element->getDynamicState();
+        if (!stateObj.isEmpty()) {
+            elementObj["dynamic_state"] = stateObj;
+        }
+
         elementsArray.append(elementObj);
     }
     return elementsArray;
 }
 
-QJsonArray FileManager::serializeWires(QGraphicsScene *scene, const QList<Element*> &elementsList) {
+QJsonArray FileManager::serializeWires(QGraphicsScene *scene, const QList<Element*> &elementsList)
+{
     QJsonArray wiresArray;
     for (QGraphicsItem *item : scene->items()) {
         if (Wire *wire = dynamic_cast<Wire*>(item)) {

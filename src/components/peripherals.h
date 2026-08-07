@@ -8,26 +8,21 @@ class MemoryChip : public Element {
 private:
     QString memorySize = "64 KB";
     QString initialHexPath = "Not Loaded";
+    QMap<int, int> memoryData; // 🛠️ آرایه داخلی حافظه
 
 public:
     MemoryChip();
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
-    void process() override;
+    void process() override; // 🛠️ پیاده‌سازی منطق Read/Write
 
     QString getComponentName() const override { return "External Memory Chip"; }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
 
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["Memory Size"] = memorySize;
-        props["Storage Firmware (.hex)"] = initialHexPath;
-        return props;
-    }
-
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Memory Size")) memorySize = props["Memory Size"];
-        if (props.contains("Storage Firmware (.hex)")) initialHexPath = props["Storage Firmware (.hex)"];
-    }
+    // 🛠️ ذخیره محتوای RAM هنگام Save
+    QJsonObject getDynamicState() const override;
+    void setDynamicState(const QJsonObject& state) override;
 };
 
 // ==========================================
@@ -35,28 +30,22 @@ public:
 // ==========================================
 class LCD16x2 : public Element {
 private:
-    QString busMode = "4-Bit Parallel";
+    QString busMode = "8-Bit Parallel";
     QString i2cAddress = "0x27";
+    QString displayText[2] = {"", ""}; // 🛠️ بافر خطوط LCD
+    int cursorRow = 0;
+    int cursorCol = 0;
+    bool lastE = false; // ذخیره وضعیت کلاک (لبه بالارونده)
 
 public:
     LCD16x2();
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
-    void process() override;
+    void process() override; // 🛠️ منطق ۸-بیت
 
     QString getComponentName() const override { return "LCD 16x2 Display"; }
-
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["Bus Interface Mode"] = busMode;
-        props["I2C Address (If Used)"] = i2cAddress;
-        return props;
-    }
-
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Bus Interface Mode")) busMode = props["Bus Interface Mode"];
-        if (props.contains("I2C Address (If Used)")) i2cAddress = props["I2C Address (If Used)"];
-    }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
 };
 
 // ==========================================
@@ -65,26 +54,24 @@ public:
 class Keypad : public Element {
 private:
     QString debounceTimeMs = "20ms";
+    int pressedRow = -1; // 🛠️ ذخیره سطر فشرده شده موس
+    int pressedCol = -1; // 🛠️ ذخیره ستون فشرده شده موس
 
 public:
     Keypad();
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
-    void process() override;
+    void process() override; // 🛠️ اسکن ماتریسی
 
     QString getComponentName() const override { return "Matrix Keypad 4x4"; }
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
 
-    QMap<QString, QString> getProperties() const override {
-        QMap<QString, QString> props;
-        props["Debounce Delay"] = debounceTimeMs;
-        return props;
-    }
-
-    void setProperties(const QMap<QString, QString>& props) override {
-        if (props.contains("Debounce Delay")) debounceTimeMs = props["Debounce Delay"];
-    }
+protected:
+    // 🛠️ تشخیص تعامل موس
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
 };
-
 // ==========================================
 // مبدل آنالوگ به دیجیتال (ADC)
 // ==========================================

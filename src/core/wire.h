@@ -8,6 +8,7 @@ class Terminal;
 
 class Wire : public QGraphicsItem {
 public:
+    QPainterPath shape() const override;
     Wire(Terminal *startTerm, QPointF startPos);
 
     void setEndPoint(QPointF endPos);
@@ -28,7 +29,7 @@ public:
     // توابع کمکی برای خواندن پایه‌های متصل به سیم در سیستم ذخیره‌سازی
     Terminal* getStartTerminal() const { return startTerminal; }
     Terminal* getEndTerminal() const { return endTerminal; }
-
+    QVector<QPointF> getPoints() const { return points; }
     // قطع اتصال ترمینال (اضافه شده از سمت رابط کاربری)
     void disconnectTerminal(Terminal *term);
 
@@ -36,8 +37,15 @@ private:
     Terminal *startTerminal;
     Terminal *endTerminal;
     QVector<QPointF> points; // جایگزین p1 و p2 شد تا بتواند چندین شکستگی را ذخیره کند
-
+// متغیرهای سیستم درگ دستی سیم
+    int m_draggedSegmentIndex = -1;
+    bool m_isDraggingHorizontal = false;
+    bool m_isDraggingVertical = false;
+    QPointF m_lastDragPos;
 protected:
     //void hoverMoveEvent(QGraphicsSceneHoverEvent *event) override;
     // void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
 };

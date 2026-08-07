@@ -91,6 +91,12 @@ public:
 
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
+
+    // تابع اضافه شده برای موتور فیزیک
+    bool isClosed() const { return initialState == "Closed"; }
+
+protected:
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 };
 
 // ==========================================
@@ -99,6 +105,7 @@ public:
 class PushButton : public Element {
 private:
     QString type = "NO"; // Normally Open
+    bool isPressed = false;
 public:
     PushButton();
     QRectF boundingRect() const override;
@@ -108,6 +115,13 @@ public:
 
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
+
+    // تابع اضافه شده برای موتور فیزیک
+    bool isClosed() const { return (type == "NO") ? isPressed : !isPressed; }
+
+protected:
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
 };
 
 // ==========================================
@@ -116,6 +130,7 @@ public:
 class LED : public Element {
 private:
     QString color = "Red";
+    bool isOn = false;
 public:
     LED();
     QRectF boundingRect() const override;
@@ -195,4 +210,80 @@ public:
 
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
+};
+
+// ==========================================
+// ۱۲. گره اتصال سیم به سیم (Junction Node)
+// ==========================================
+class JunctionNode : public Element {
+public:
+    Terminal *term; // تنها پایه این گره که سیم‌ها به آن وصل می‌شوند
+
+    JunctionNode();
+    ~JunctionNode() override;
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Junction Node"; }
+};
+// ==========================================
+// باتری واقعی (Real Battery with Internal Resistance)
+// ==========================================
+class Battery : public Element {
+private:
+    QString voltage = "9V";
+    QString internalResistance = "1"; // 1 Ohm مقاومت داخلی
+    Terminal *outPos;
+    Terminal *outNeg;
+public:
+    Battery();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Battery"; }
+
+    QMap<QString, QString> getProperties() const override;
+    void setProperties(const QMap<QString, QString>& props) override;
+};
+// ==========================================
+// ولت‌متر دیجیتال (Voltmeter)
+// ==========================================
+class Voltmeter : public Element {
+private: Terminal *t1; Terminal *t2;
+public:
+    Voltmeter();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Voltmeter"; }
+};
+
+// ==========================================
+// آمپرمتر دیجیتال (Ammeter)
+// ==========================================
+class Ammeter : public Element {
+private: Terminal *t1; Terminal *t2;
+public:
+    Ammeter();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Ammeter"; }
+};
+// ==========================================
+// ۱۳. اسیلوسکوپ گرافیکی پیشرفته (Oscilloscope)
+// ==========================================
+class Oscilloscope : public Element {
+private:
+    Terminal *inChannel;          // پین ورودی کانال اسیلوسکوپ
+    QVector<double> voltageHistory; // بافر ذخیره ولتاژهای قبلی برای رسم نمودار
+    const int maxSamples = 60;    // تعداد نمونه‌های روی صفحه نمایش
+    int updateCounter = 0;
+
+public:
+    Oscilloscope();
+    QRectF boundingRect() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void process() override;
+    QString getComponentName() const override { return "Oscilloscope"; }
 };

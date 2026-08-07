@@ -1,108 +1,90 @@
-//element.h
+// 🛠️ فایل: src/core/element.h
 #pragma once
 #include <QGraphicsItem>
 #include <QGraphicsSceneMouseEvent>
 #include <QDebug>
-#include <QMap> // اضافه شد برای سیستم داینامیک
+#include <QMap>
+#include <QJsonObject> // 🛠️ برای سریالایز و دی‌سریالایز
 #include "terminal.h"
 #include "wire.h"
 #include "../gui/properties_dialog.h"
+#include <QPainter>
+#include <QFontMetrics>
 
-// کلاس مجازی مادر که تمام قطعات از آن ارث‌بری می‌کنند
 class Element : public QGraphicsItem {
 public:
     Element() {
-        // فلگ جدید ItemSendsGeometryChanges به موتور Qt می‌گوید که تغییرات مختصات را قبل از اعمال نهایی به ما گزارش دهد
         setFlags(ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
     }
-
     virtual ~Element() = default;
 
-    // این تابع برای هم‌تیمی شماست که بعداً منطق ریاضی مدار را بنویسد
     virtual void process() = 0;
+    virtual QString getComponentName() const { return "Component"; }
+    virtual QMap<QString, QString> getProperties() const { return QMap<QString, QString>(); }
+    virtual void setProperties(const QMap<QString, QString>& props) {}
 
-    // ==========================================
-    // توابع سیستم داینامیک تنظیمات (مخصوص ارث‌بری قطعات)
-    // ==========================================
-
-    // ۱. برگرداندن نام قطعه جهت نمایش در هدر پنجره
-    virtual QString getComponentName() const {
-        return "Component";
-    }
-
-    // ۲. ارسال لیست ویژگی‌ها و مقادیر پیش‌فرض آن‌ها به دیالوگ
-    virtual QMap<QString, QString> getProperties() const {
-        return QMap<QString, QString>(); // پیش‌فرض: بدون تنظیمات
-    }
-
-    // ۳. دریافت مقادیر جدید تایپ‌شده توسط کاربر و ذخیره آن‌ها در قطعه
-    virtual void setProperties(const QMap<QString, QString>& props) {
-        // قطعات فرزند، کدهای ذخیره‌سازی خود را اینجا می‌نویسند
-    }
+    // 🛠️ قابلیت امتیازی: ذخیره و بازیابی وضعیت داینامیک مدار (رجیسترها، RAM و...)
+    virtual QJsonObject getDynamicState() const { return QJsonObject(); }
+    virtual void setDynamicState(const QJsonObject& state) {}
 
 protected:
-    // تابعی از Qt که مختصات را هنگام کشیدن با موس، رهگیری و اصلاح می‌کند
+    void drawReadableText(QPainter *painter, const QRectF &rect, int flags, const QString &text) {
+        painter->save();
+        bool isMirrored = (transform().m11() < 0);
+        qreal currentRotation = rotation();
+        QPointF center = rect.center();
+        painter->translate(center);
+        if (currentRotation != 0.0) painter->rotate(-currentRotation);
+        if (isMirrored) painter->scale(-1, 1);
+        QRectF localRect(-rect.width() / 2.0, -rect.height() / 2.0, rect.width(), rect.height());
+        painter->drawText(localRect, flags, text);
+        painter->restore();
+    }
+
+    void drawReadableText(QPainter *painter, double x, double y, const QString &text) {
+        painter->save();
+        bool isMirrored = (transform().m11() < 0);
+        qreal currentRotation = rotation();
+        painter->translate(x, y);
+        if (currentRotation != 0.0) painter->rotate(-currentRotation);
+        if (isMirrored) {
+            painter->scale(-1, 1);
+            QFontMetrics fm(painter->font());
+            double textWidth = fm.horizontalAdvance(text);
+            if (x > 0) painter->drawText(QPointF(-textWidth, 0), text);
+            else painter->drawText(QPointF(0, 0), text);
+        } else {
+            painter->drawText(QPointF(0, 0), text);
+        }
+        painter->restore();
+    }
+
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override {
-        // اگر قطعه در حال جابجایی روی بوم است
         if (change == ItemPositionHasChanged) {
-
-            // ۱. روی تمام فرزندان این قطعه (که همان ترمینال‌ها/پایه‌ها هستند) حلقه می‌زنیم
             for (QGraphicsItem *child : childItems()) {
-
-                // ۲. بررسی می‌کنیم که آیا این فرزند واقعاً یک "ترمینال" است؟
                 Terminal *term = dynamic_cast<Terminal*>(child);
                 if (term) {
-
-                    // ۳. اگر ترمینال بود، به تمام سیم‌های متصل به آن می‌گوییم مسیرشان را دوباره محاسبه کنند
                     for (Wire *wire : term->getConnectedWires()) {
-                        if (wire) {
-                            wire->updateRoute(); // فراخوانی مجدد الگوریتم A*
-                        }
+                        if (wire) wire->updateRoute();
                     }
                 }
             }
         }
-
-        // در نهایت، اجازه می‌دهیم Qt کار اصلی خودش (جابجا کردن قطعه) را انجام دهد
         return QGraphicsItem::itemChange(change, value);
     }
 
-    // رهگیری دابل‌کلیک جهت باز کردن تنظیمات
     void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) override {
-        // ۱. وقتی کاربر دابل‌کلیک کرد، فقط کلیک چپ را قبول کن
         if (event->button() == Qt::LeftButton) {
-
-            // ۲. دریافت ویژگی‌های قطعه از توابع مجازی
             QMap<QString, QString> currentProps = getProperties();
-
-            // اگر این قطعه هیچ ویژگی‌ای برای تنظیم ندارد، بی‌خیال شو
-            if (currentProps.isEmpty()) {
-                qDebug() << "No properties defined for this component.";
-                event->accept();
-                return;
-            }
-
-            // ۳. ساخت دیالوگ داینامیک با ارسال نام و ویژگی‌های قطعه
+            if (currentProps.isEmpty()) { event->accept(); return; }
             PropertiesDialog dialog(getComponentName(), currentProps);
-
-            // ۴. اگر کاربر تغییرات را ذخیره کرد (Save Changes)
             if (dialog.exec() == QDialog::Accepted) {
-
-                // لیست جدید ویژگی‌ها را بگیر و به قطعه تزریق کن
                 setProperties(dialog.getUpdatedProperties());
-
-                // به بوم بگو قطعه را دوباره رسم کند (تا اگر متنی روی قطعه هست آپدیت شود)
                 update();
-
-                qDebug() << "Properties successfully updated for" << getComponentName();
             }
-
-            // رویداد مصرف شد
             event->accept();
             return;
         }
-
-        // اجرای رفتار پیش‌فرض در صورت نیاز
         QGraphicsItem::mouseDoubleClickEvent(event);
     }
 };

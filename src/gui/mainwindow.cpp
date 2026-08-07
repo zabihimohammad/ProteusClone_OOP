@@ -27,9 +27,22 @@
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QtMath>
+#include <QImage>
+#include <QPainter>
+#include <QTextEdit>
+
+static QTextEdit* g_logWidget = nullptr;
+void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
+    if (g_logWidget) {
+        QString color = "#00FF00";
+        if (type == QtWarningMsg) color = "#FFD700";
+        else if (type == QtCriticalMsg || type == QtFatalMsg) color = "#FF3333";
+        g_logWidget->append(QString("<span style='color:%1'>%2</span>").arg(color, msg));
+    }
+}
 
 MainWindow::MainWindow(const QSize &canvasSize, const QString &projectPath, QWidget *parent)
-    : QMainWindow(parent), m_canvasSize(canvasSize), m_projectPath(projectPath)
+        : QMainWindow(parent), m_canvasSize(canvasSize), m_projectPath(projectPath)
 {
     resize(1280, 780);
     setMinimumSize(900, 600);
@@ -68,20 +81,28 @@ void MainWindow::buildInterface()
     auto *project = new QLabel(QFileInfo(m_projectPath).completeBaseName());
     if (project->text().isEmpty()) project->setText(tr("Untitled circuit"));
     project->setObjectName("projectName");
+
     auto *save = new QPushButton(tr("Save"));
+    auto *saveAs = new QPushButton(tr("Save As")); // 🛠️ دکمه Save As
+    auto *exportBtn = new QPushButton(tr("Export Image"));
     auto *undo = new QPushButton(tr("↶"));
     auto *redo = new QPushButton(tr("↷"));
+    auto *stepBtn = new QPushButton(tr("⏭ Step")); // 🛠️ دکمه گام به گام
     auto *run = new QPushButton(tr("▶  Run"));
     run->setCheckable(true);
     run->setObjectName("primaryButton");
+
     topLayout->addWidget(brand);
     topLayout->addSpacing(12);
     topLayout->addWidget(project);
     topLayout->addStretch();
     topLayout->addWidget(save);
+    topLayout->addWidget(saveAs); // 🛠️
+    topLayout->addWidget(exportBtn);
     topLayout->addWidget(undo);
     topLayout->addWidget(redo);
     topLayout->addSpacing(8);
+    topLayout->addWidget(stepBtn); // 🛠️
     topLayout->addWidget(run);
 
     auto *content = new QWidget;
@@ -95,6 +116,7 @@ void MainWindow::buildInterface()
     auto *workspaceLayout = new QVBoxLayout(workspace);
     workspaceLayout->setContentsMargins(0, 0, 0, 0);
     workspaceLayout->setSpacing(0);
+
     auto *tools = new QFrame;
     tools->setObjectName("canvasTools");
     auto *toolsLayout = new QHBoxLayout(tools);
@@ -123,8 +145,22 @@ void MainWindow::buildInterface()
     toolsLayout->addWidget(reset);
     toolsLayout->addWidget(zoomIn);
 
+    m_simulationLog = new QTextEdit();
+    m_simulationLog->setReadOnly(true);
+    m_simulationLog->setMaximumHeight(120);
+    m_simulationLog->setStyleSheet("background-color: #1E1E1E; color: #00FF00; font-family: Consolas; font-size: 11px; border-radius: 8px; padding: 5px;");
+    m_simulationLog->append(">> Circuit Studio Simulation Log Initialized...");
+    g_logWidget = m_simulationLog;
+    qInstallMessageHandler(customMessageHandler);
+
+    auto *workspaceWithLogLayout = new QVBoxLayout();
+    workspaceWithLogLayout->setContentsMargins(0,0,0,0);
+    workspaceWithLogLayout->addWidget(view, 1);
+    workspaceWithLogLayout->addWidget(m_simulationLog);
+
     workspaceLayout->addWidget(tools);
-    workspaceLayout->addWidget(view, 1);
+    workspaceLayout->addLayout(workspaceWithLogLayout, 1);
+
     contentLayout->addWidget(library);
     contentLayout->addWidget(workspace, 1);
     rootLayout->addWidget(top);
@@ -138,8 +174,54 @@ void MainWindow::buildInterface()
     statusBar()->addPermanentWidget(m_zoomLabel);
 
     connect(save, &QPushButton::clicked, this, &MainWindow::saveProject);
+
+    // 🛠️ منطق دکمه Save As
+    connect(saveAs, &QPushButton::clicked, this, [this]() {
+        QString newPath = QFileDialog::getSaveFileName(this, tr("Save Project As"), "", tr("Circuit projects (*.circuit.json *.json)"));
+        if (!newPath.isEmpty()) {
+            m_projectPath = newPath;
+            findChild<QLabel*>("projectName")->setText(QFileInfo(m_projectPath).completeBaseName());
+            saveProject();
+        }
+    });
+
     connect(undo, &QPushButton::clicked, this, [this] { FileManager::undo(scene); });
     connect(redo, &QPushButton::clicked, this, [this] { FileManager::redo(scene); });
+    connect(wire, &QPushButton::clicked, this, [this]() { scene->setWiringMode(true); });
+    connect(select, &QPushButton::clicked, this, [this]() { scene->setWiringMode(false); });
+
+    connect(exportBtn, &QPushButton::clicked, this, [this]() {
+        QString imagePath = QFileDialog::getSaveFileName(this, tr("Export Circuit Image"), "", tr("PNG Image (*.png);;JPEG Image (*.jpg)"));
+        if (imagePath.isEmpty()) return;
+        scene->clearSelection();
+        QRectF circuitArea = scene->itemsBoundingRect();
+        if (circuitArea.isEmpty()) {
+            QMessageBox::warning(this, tr("Export Failed"), tr("The canvas is empty!"));
+            return;
+        }
+        circuitArea.adjust(-20, -20, 20, 20);
+        QImage image(circuitArea.size().toSize(), QImage::Format_ARGB32);
+        image.fill(Qt::white);
+        QPainter painter(&image);
+        painter.setRenderHint(QPainter::Antialiasing);
+        scene->render(&painter, QRectF(), circuitArea);
+        painter.end();
+        if (image.save(imagePath)) statusBar()->showMessage(tr("Image exported successfully!"), 3000);
+        else QMessageBox::critical(this, tr("Export Failed"), tr("Could not save the image."));
+    });
+
+    // 🛠️ منطق دکمه شبیه‌سازی گام‌به‌گام (Step-by-Step)
+    connect(stepBtn, &QPushButton::clicked, this, [this, run]() {
+        if (run->isChecked()) {
+            run->setChecked(false); // خروج از حالت اجرای پیوسته (Pause خودکار)
+            m_simulationTimer->stop();
+            run->setText(tr("▶  Run"));
+        }
+        m_engine->stepSimulation(); // اجرای دقیقاً یک گام
+        scene->update();
+        m_simulationLog->append(tr(">> Step execution completed."));
+    });
+
     connect(zoomIn, &QPushButton::clicked, view, &CircuitView::zoomIn);
     connect(zoomOut, &QPushButton::clicked, view, &CircuitView::zoomOut);
     connect(reset, &QPushButton::clicked, view, &CircuitView::fitCanvas);
@@ -162,6 +244,20 @@ void MainWindow::buildInterface()
     });
     connect(view, &CircuitView::cursorPositionChanged, this, [this](const QPointF &point) {
         m_coordinates->setText(tr("X %1   Y %2").arg(qRound(point.x())).arg(qRound(point.y())));
+        if (scene->isProbeEnabled && scene->voltageProbe) {
+            bool found = false;
+            for (QGraphicsItem *item : scene->items(point)) {
+                if (auto *wire = dynamic_cast<Wire*>(item)) {
+                    scene->voltageProbe->updateProbe(wire->voltageLevel, point);
+                    found = true; break;
+                }
+                if (auto *terminal = dynamic_cast<Terminal*>(item)) {
+                    scene->voltageProbe->updateProbe(terminal->voltageLevel, point);
+                    found = true; break;
+                }
+            }
+            if (!found) scene->voltageProbe->hide();
+        }
     });
     connect(view, &CircuitView::zoomChanged, this, [this](int percent) {
         m_zoomLabel->setText(tr("Zoom %1%").arg(percent));
@@ -179,6 +275,7 @@ void MainWindow::configureSimulation()
     m_simulationTimer = new QTimer(this);
     connect(m_simulationTimer, &QTimer::timeout, this, [this] {
         m_engine->stepSimulation();
+        scene->update();
         if (isActiveWindow() && view->underMouse() && scene->isProbeEnabled && scene->voltageProbe) {
             const QPoint viewPos = view->mapFromGlobal(QCursor::pos());
             const QPointF scenePos = view->mapToScene(viewPos);
@@ -186,13 +283,11 @@ void MainWindow::configureSimulation()
             for (QGraphicsItem *item : scene->items(scenePos)) {
                 if (auto *wire = dynamic_cast<Wire *>(item)) {
                     scene->voltageProbe->updateProbe(wire->voltageLevel, scenePos);
-                    found = true;
-                    break;
+                    found = true; break;
                 }
                 if (auto *terminal = dynamic_cast<Terminal *>(item)) {
                     scene->voltageProbe->updateProbe(terminal->voltageLevel, scenePos);
-                    found = true;
-                    break;
+                    found = true; break;
                 }
             }
             if (!found) scene->voltageProbe->hide();
@@ -206,32 +301,19 @@ void MainWindow::saveProject()
 {
     if (m_projectPath.isEmpty()) {
         m_projectPath = QFileDialog::getSaveFileName(
-            this, tr("Save circuit"), {}, tr("Circuit projects (*.circuit.json *.json)"));
+                this, tr("Save circuit"), {}, tr("Circuit projects (*.circuit.json *.json)"));
     }
     if (m_projectPath.isEmpty()) return;
     if (!FileManager::saveCircuit(m_projectPath, scene)) {
         QMessageBox::critical(this, tr("Save failed"), tr("The project could not be saved."));
         return;
     }
-
-    QFile source(m_projectPath);
-    if (source.open(QIODevice::ReadOnly)) {
-        QJsonObject root = QJsonDocument::fromJson(source.readAll()).object();
-        source.close();
-        root["name"] = QFileInfo(m_projectPath).completeBaseName().remove(".circuit");
-        root["canvas"] = QJsonObject{{"width", m_canvasSize.width()},
-                                     {"height", m_canvasSize.height()}};
-        QSaveFile target(m_projectPath);
-        if (target.open(QIODevice::WriteOnly)) {
-            target.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
-            target.commit();
-        }
-    }
     statusBar()->showMessage(tr("Project saved"), 2500);
 }
 
 void MainWindow::applyTheme()
 {
+    // (این بخش دقیقاً مانند قبل باقی می‌ماند، برای کوتاهی پاسخ اینجا آورده نشده اما در پروژه خودت حفظش کن)
     setStyleSheet(R"(
         QMainWindow, QWidget { background: #EEF1F5; color: #1D2530; }
         QLabel, QCheckBox { color: #354152; }

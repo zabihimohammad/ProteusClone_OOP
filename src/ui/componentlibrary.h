@@ -3,7 +3,7 @@
 #include <QFrame>
 #include <QString>
 #include <QVector>
-
+#include <QPoint>
 class QLabel;
 class QLineEdit;
 class QListWidget;
@@ -32,7 +32,8 @@ signals:
 private slots:
     void rebuildTree(const QString &query = {});
     void updatePreview(QTreeWidgetItem *current, QTreeWidgetItem *previous);
-
+protected:
+    bool eventFilter(QObject *obj, QEvent *event) override;
 private:
     QVector<ComponentInfo> m_components;
     QLineEdit *m_search = nullptr;
@@ -42,4 +43,5 @@ private:
     QLabel *m_description = nullptr;
     QLabel *m_empty = nullptr;
     QListWidget *m_active = nullptr;
+    QPoint m_dragStartPos; // ذخیره مختصات اولیه کلیک موس
 };

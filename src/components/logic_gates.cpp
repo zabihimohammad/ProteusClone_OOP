@@ -35,21 +35,36 @@ void AndGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 
     painter->setFont(QFont("Consolas", 6));
     painter->setPen(Qt::darkGray);
-    painter->drawText(QRectF(-30, 25, 60, 15), Qt::AlignCenter, propagationDelay);
+    drawReadableText(painter,QRectF(-30, 25, 60, 15), Qt::AlignCenter, propagationDelay);
 }
 
-void AndGate::process() {
-    if (inA->getConnectedWires().isEmpty() || inB->getConnectedWires().isEmpty()) {
-        qWarning() << "DRC Warning: Floating input detected on AND Gate!";
+void AndGate::process()
+{
+    if (inA->isFloating() || inB->isFloating() || inA->isUndefinedState() || inB->isUndefinedState()) {
+        outY->setUndefined();
         return;
     }
-    // گیت‌های دیجیتال وضعیت فلوتینگ/نامشخص بودن را به این صورت بررسی می‌کنند
-    bool stateA = (inA->getConnectedWires().first()->boundingRect().width() > 0); // منطق پیش‌فرض شما
-    bool stateB = (inB->getConnectedWires().first()->boundingRect().width() > 0);
 
-    bool result = stateA && stateB;
-    double vMax = highVoltage.replace("V", "").toDouble();
-    // در گام بعدی با توسعه موتور شبیه‌ساز، ولتاژهای حقیقی را به ترمینال‌ها پاس می‌دهیم
+    bool result = inA->getLogicState() && inB->getLogicState(); // 💡 برای گیت OR اینجا را || کن
+
+    // 🛠️ سیستم تأخیر انتشار (Propagation Delay Event Queue)
+    double delayNs = propagationDelay.replace("ns", "").toDouble();
+    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک شبیه‌ساز را ۱۰ نانوثانیه فرض می‌کنیم
+
+    if (result != targetState) {
+        targetState = result;
+        delayTicks = requiredTicks; // استارت تایمر تأخیر
+    }
+
+    if (delayTicks > 0) {
+        delayTicks--; // شمارش معکوس تا اعمال تغییر
+    }
+
+    if (delayTicks == 0) {
+        // زمان تأخیر تمام شد، ولتاژ جدید اعمال می‌شود
+        outY->setVoltage(targetState ? highVoltage.replace("V", "").toDouble() : 0.0);
+        delayTicks = -1;
+    }
 }
 
 QMap<QString, QString> AndGate::getProperties() const {
@@ -94,16 +109,36 @@ void OrGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
 
     painter->setFont(QFont("Consolas", 6));
     painter->setPen(Qt::darkGray);
-    painter->drawText(QRectF(-30, 25, 60, 15), Qt::AlignCenter, propagationDelay);
+    drawReadableText(painter,QRectF(-30, 25, 60, 15), Qt::AlignCenter, propagationDelay);
 }
 
 void OrGate::process() {
-    if (inA->getConnectedWires().isEmpty() || inB->getConnectedWires().isEmpty()) {
-        qWarning() << "DRC Warning: Floating input detected on OR Gate!";
+    if (inA->isFloating() || inB->isFloating() || inA->isUndefinedState() || inB->isUndefinedState()) {
+        outY->setUndefined();
         return;
     }
-}
 
+    bool result = inA->getLogicState() || inB->getLogicState(); // 💡 برای گیت OR اینجا را || کن
+
+    // 🛠️ سیستم تأخیر انتشار (Propagation Delay Event Queue)
+    double delayNs = propagationDelay.replace("ns", "").toDouble();
+    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک شبیه‌ساز را ۱۰ نانوثانیه فرض می‌کنیم
+
+    if (result != targetState) {
+        targetState = result;
+        delayTicks = requiredTicks; // استارت تایمر تأخیر
+    }
+
+    if (delayTicks > 0) {
+        delayTicks--; // شمارش معکوس تا اعمال تغییر
+    }
+
+    if (delayTicks == 0) {
+        // زمان تأخیر تمام شد، ولتاژ جدید اعمال می‌شود
+        outY->setVoltage(targetState ? highVoltage.replace("V", "").toDouble() : 0.0);
+        delayTicks = -1;
+    }
+}
 QMap<QString, QString> OrGate::getProperties() const {
     QMap<QString, QString> props;
     props["Propagation Delay"] = propagationDelay;
@@ -145,13 +180,34 @@ void NotGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 
     painter->setFont(QFont("Consolas", 6));
     painter->setPen(Qt::darkGray);
-    painter->drawText(QRectF(-25, 25, 50, 15), Qt::AlignCenter, propagationDelay);
+    drawReadableText(painter,QRectF(-25, 25, 50, 15), Qt::AlignCenter, propagationDelay);
 }
 
 void NotGate::process() {
-    if (inA->getConnectedWires().isEmpty()) {
-        qWarning() << "DRC Warning: Floating input detected on NOT Gate!";
+    if (inA->isFloating() || inA->isUndefinedState()) {
+        outY->setUndefined();
         return;
+    }
+
+    bool result = ! inA->getLogicState();
+
+    // 🛠️ سیستم تأخیر انتشار (Propagation Delay Event Queue)
+    double delayNs = propagationDelay.replace("ns", "").toDouble();
+    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک شبیه‌ساز را ۱۰ نانوثانیه فرض می‌کنیم
+
+    if (result != targetState) {
+        targetState = result;
+        delayTicks = requiredTicks; // استارت تایمر تأخیر
+    }
+
+    if (delayTicks > 0) {
+        delayTicks--; // شمارش معکوس تا اعمال تغییر
+    }
+
+    if (delayTicks == 0) {
+        // زمان تأخیر تمام شد، ولتاژ جدید اعمال می‌شود
+        outY->setVoltage(targetState ? highVoltage.replace("V", "").toDouble() : 0.0);
+        delayTicks = -1;
     }
 }
 
@@ -203,13 +259,34 @@ void XorGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 
     painter->setFont(QFont("Consolas", 6));
     painter->setPen(Qt::darkGray);
-    painter->drawText(QRectF(-35, 25, 70, 15), Qt::AlignCenter, propagationDelay);
+    drawReadableText(painter,QRectF(-35, 25, 70, 15), Qt::AlignCenter, propagationDelay);
 }
 
 void XorGate::process() {
-    if (inA->getConnectedWires().isEmpty() || inB->getConnectedWires().isEmpty()) {
-        qWarning() << "DRC Warning: Floating input detected on XOR Gate!";
+    if (inA->isFloating() || inB->isFloating() || inA->isUndefinedState() || inB->isUndefinedState()) {
+        outY->setUndefined();
         return;
+    }
+
+    bool result = inA->getLogicState() ^ inB->getLogicState();
+
+    // 🛠️ سیستم تأخیر انتشار (Propagation Delay Event Queue)
+    double delayNs = propagationDelay.replace("ns", "").toDouble();
+    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک شبیه‌ساز را ۱۰ نانوثانیه فرض می‌کنیم
+
+    if (result != targetState) {
+        targetState = result;
+        delayTicks = requiredTicks; // استارت تایمر تأخیر
+    }
+
+    if (delayTicks > 0) {
+        delayTicks--; // شمارش معکوس تا اعمال تغییر
+    }
+
+    if (delayTicks == 0) {
+        // زمان تأخیر تمام شد، ولتاژ جدید اعمال می‌شود
+        outY->setVoltage(targetState ? highVoltage.replace("V", "").toDouble() : 0.0);
+        delayTicks = -1;
     }
 }
 
@@ -257,13 +334,34 @@ void NandGate::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
     painter->setFont(QFont("Consolas", 6));
     painter->setPen(Qt::darkGray);
-    painter->drawText(QRectF(-35, 25, 70, 15), Qt::AlignCenter, propagationDelay);
+    drawReadableText(painter,QRectF(-35, 25, 70, 15), Qt::AlignCenter, propagationDelay);
 }
 
 void NandGate::process() {
-    if (inA->getConnectedWires().isEmpty() || inB->getConnectedWires().isEmpty()) {
-        qWarning() << "DRC Warning: Floating input detected on NAND Gate!";
+    if (inA->isFloating() || inB->isFloating() || inA->isUndefinedState() || inB->isUndefinedState()) {
+        outY->setUndefined();
         return;
+    }
+
+    bool result = !(inA->getLogicState() && inB->getLogicState());
+
+    // 🛠️ سیستم تأخیر انتشار (Propagation Delay Event Queue)
+    double delayNs = propagationDelay.replace("ns", "").toDouble();
+    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک شبیه‌ساز را ۱۰ نانوثانیه فرض می‌کنیم
+
+    if (result != targetState) {
+        targetState = result;
+        delayTicks = requiredTicks; // استارت تایمر تأخیر
+    }
+
+    if (delayTicks > 0) {
+        delayTicks--; // شمارش معکوس تا اعمال تغییر
+    }
+
+    if (delayTicks == 0) {
+        // زمان تأخیر تمام شد، ولتاژ جدید اعمال می‌شود
+        outY->setVoltage(targetState ? highVoltage.replace("V", "").toDouble() : 0.0);
+        delayTicks = -1;
     }
 }
 
@@ -306,9 +404,9 @@ void DFlipFlop::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
 
     // لیبل‌های داخلی پایه‌ها
     painter->setFont(QFont("Consolas", 8, QFont::Bold));
-    painter->drawText(QRectF(-25, -23, 20, 15), Qt::AlignLeft, "D");
-    painter->drawText(QRectF(10, -23, 20, 15), Qt::AlignRight, "Q");
-    painter->drawText(QRectF(5, 7, 25, 15), Qt::AlignRight, "Q'");
+    drawReadableText(painter,QRectF(-25, -23, 20, 15), Qt::AlignLeft, "D");
+    drawReadableText(painter,QRectF(10, -23, 20, 15), Qt::AlignRight, "Q");
+    drawReadableText(painter,QRectF(5, 7, 25, 15), Qt::AlignRight, "Q'");
 
     // رسم نماد کلاک (مثلث لبه)
     painter->drawLine(-30, 7, -23, 15);
@@ -316,15 +414,31 @@ void DFlipFlop::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
 
     painter->setFont(QFont("Consolas", 6));
     painter->setPen(Qt::darkGray);
-    painter->drawText(QRectF(-40, 40, 80, 15), Qt::AlignCenter, propagationDelay);
+    drawReadableText(painter,QRectF(-40, 40, 80, 15), Qt::AlignCenter, propagationDelay);
 }
 
 void DFlipFlop::process() {
-    if (inD->getConnectedWires().isEmpty() || clk->getConnectedWires().isEmpty()) {
+    if (inD->isFloating() || clk->isFloating()) {
+        outQ->setUndefined();
+        outQBar->setUndefined();
         qWarning() << "DRC Warning: Floating input detected on D-FlipFlop!";
         return;
     }
-    // منطق تشخیص لبه بالارونده کلاک (Sequential Logic) در استپ بعدی شبیه‌ساز فعال خواهد شد
+    if (inD->isUndefinedState() || clk->isUndefinedState()) {
+        outQ->setUndefined();
+        outQBar->setUndefined();
+        return;
+    }
+
+    bool currentClockState = clk->getLogicState();
+    // تشخیص لبه بالارونده کلاک
+    if (currentClockState && !lastClockState) {
+        currentInternalQ = inD->getLogicState();
+    }
+    lastClockState = currentClockState;
+
+    outQ->setVoltage(currentInternalQ ? 5.0 : 0.0);
+    outQBar->setVoltage(!currentInternalQ ? 5.0 : 0.0);
 }
 
 QMap<QString, QString> DFlipFlop::getProperties() const {
