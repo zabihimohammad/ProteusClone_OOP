@@ -153,4 +153,7 @@ public:
     QString getComponentName() const override { return "D-Type Flip-Flop"; }
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
+    QJsonObject getDynamicState() const override;
+    void setDynamicState(const QJsonObject& state) override;
+    void resetSimulationState() override;
 };

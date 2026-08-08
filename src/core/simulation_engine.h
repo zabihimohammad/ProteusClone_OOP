@@ -1,6 +1,5 @@
 #pragma once
 #include <QObject>
-#include <QMap>
 #include "../canvas/circuit_scene.h"
 
 class SimulationEngine : public QObject {
@@ -10,12 +9,10 @@ public:
 
     // اجرای یک گام کامل از محاسبات مدار
     void stepSimulation();
+    void resetSimulation();
 
 private:
     CircuitScene *m_scene;
-
-    // 🛠️ حافظه برای ذخیره ولتاژ/جریان قبلی خازن‌ها و سلف‌ها
-    QMap<Element*, double> historicalState;
 
     void propagateVoltages(); // این متد حالا تحلیل گره (Nodal Analysis) را انجام می‌دهد
 };

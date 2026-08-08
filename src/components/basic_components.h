@@ -28,6 +28,7 @@ public:
 class Capacitor : public Element {
 private:
     QString capacitance = "10uF";
+    double storedVoltage = 0.0;
 public:
     Capacitor();
     QRectF boundingRect() const override;
@@ -37,6 +38,11 @@ public:
 
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
+    QJsonObject getDynamicState() const override;
+    void setDynamicState(const QJsonObject& state) override;
+    void resetSimulationState() override;
+    double previousVoltage() const { return storedVoltage; }
+    void setPreviousVoltage(double voltage) { storedVoltage = voltage; }
 };
 
 // ==========================================
@@ -45,6 +51,7 @@ public:
 class Inductor : public Element {
 private:
     QString inductance = "1mH";
+    double storedCurrent = 0.0;
 public:
     Inductor();
     QRectF boundingRect() const override;
@@ -54,6 +61,11 @@ public:
 
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
+    QJsonObject getDynamicState() const override;
+    void setDynamicState(const QJsonObject& state) override;
+    void resetSimulationState() override;
+    double previousCurrent() const { return storedCurrent; }
+    void setPreviousCurrent(double current) { storedCurrent = current; }
 };
 
 // ==========================================
@@ -74,6 +86,9 @@ public:
 
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
+    QJsonObject getDynamicState() const override;
+    void setDynamicState(const QJsonObject& state) override;
+    void resetSimulationState() override;
 };
 
 // ==========================================
@@ -210,6 +225,9 @@ public:
 
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
+    QJsonObject getDynamicState() const override;
+    void setDynamicState(const QJsonObject& state) override;
+    void resetSimulationState() override;
 };
 
 // ==========================================
@@ -286,4 +304,7 @@ public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void process() override;
     QString getComponentName() const override { return "Oscilloscope"; }
+    QJsonObject getDynamicState() const override;
+    void setDynamicState(const QJsonObject& state) override;
+    void resetSimulationState() override;
 };

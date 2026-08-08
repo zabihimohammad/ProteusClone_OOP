@@ -34,4 +34,7 @@ public:
 
     // 🛠️ فیکس ارور: اینجا تابع را فقط معرفی می‌کنیم و بدنه‌اش در mcu.cpp می‌ماند
     void setProperties(const QMap<QString, QString>& props) override;
+    QJsonObject getDynamicState() const override;
+    void setDynamicState(const QJsonObject& state) override;
+    void resetSimulationState() override;
 };

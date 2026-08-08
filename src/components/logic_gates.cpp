@@ -452,3 +452,24 @@ void DFlipFlop::setProperties(const QMap<QString, QString>& props) {
     if (props.contains("Propagation Delay")) propagationDelay = props["Propagation Delay"];
     if (props.contains("Initial Q State (0/1)")) initialQState = props["Initial Q State (0/1)"];
 }
+QJsonObject DFlipFlop::getDynamicState() const {
+    QJsonObject state;
+    state["q"] = currentInternalQ;
+    state["last_clock"] = lastClockState;
+    state["target"] = targetState;
+    state["delay_ticks"] = delayTicks;
+    return state;
+}
+void DFlipFlop::setDynamicState(const QJsonObject& state) {
+    currentInternalQ = state["q"].toBool();
+    lastClockState = state["last_clock"].toBool();
+    targetState = state["target"].toBool();
+    delayTicks = state["delay_ticks"].toInt(-1);
+}
+void DFlipFlop::resetSimulationState() {
+    Element::resetSimulationState();
+    currentInternalQ = initialQState == "1";
+    lastClockState = false;
+    targetState = currentInternalQ;
+    delayTicks = -1;
+}
