@@ -160,10 +160,8 @@ void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     if (event->button() == Qt::LeftButton) {
         QPointF rawPos = event->scenePos();
         QPointF dropPos = rawPos;
-        if (m_snapEnabled) {
-            dropPos.setX(qRound(dropPos.x() / m_gridSize) * m_gridSize);
-            dropPos.setY(qRound(dropPos.y() / m_gridSize) * m_gridSize);
-        }
+        dropPos.setX(qRound(dropPos.x() / m_gridSize) * m_gridSize);
+        dropPos.setY(qRound(dropPos.y() / m_gridSize) * m_gridSize);
 
         QGraphicsItem *targetItem = nullptr;
         QList<QGraphicsItem*> exactItems = items(rawPos);
@@ -199,7 +197,7 @@ void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
             } else if (clickedWire) {
                 JunctionNode *junction = new JunctionNode();
                 addItem(junction);
-                QPointF exactPos = splitWireExactly(clickedWire, m_snapEnabled ? dropPos : rawPos, junction, this);
+                QPointF exactPos = splitWireExactly(clickedWire, dropPos, junction, this);
                 isWiring = true;
                 startTerminal = junction->term;
                 tempWire = new Wire(startTerminal, exactPos);
@@ -220,7 +218,7 @@ void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
             } else if (clickedWire) {
                 JunctionNode *junction = new JunctionNode();
                 addItem(junction);
-                QPointF exactPos = splitWireExactly(clickedWire, m_snapEnabled ? dropPos : rawPos, junction, this);
+                QPointF exactPos = splitWireExactly(clickedWire, dropPos, junction, this);
                 tempWire->confirmConnection(junction->term);
                 QVector<QPointF> smartPath = AutoRouter::findPath(this, startTerminal->sceneBoundingRect().center(), exactPos, startTerminal, junction->term, tempWire);
                 tempWire->setFullRoute(smartPath);
@@ -258,6 +256,17 @@ void CircuitScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
 
 void CircuitScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     QGraphicsScene::mouseReleaseEvent(event);
+
+    for (QGraphicsItem *selectedItem : selectedItems()) {
+        Element *element = dynamic_cast<Element *>(selectedItem);
+        if (!element) continue;
+
+        QPointF position = element->pos();
+        position.setX(qRound(position.x() / m_gridSize) * m_gridSize);
+        position.setY(qRound(position.y() / m_gridSize) * m_gridSize);
+        element->setPos(position);
+    }
+
     if (!isWiring && selectedItems().count() > 0) {
         FileManager::recordState(this);
     }
@@ -433,10 +442,8 @@ QGraphicsItem *CircuitScene::addComponent(const QString &componentType, const QP
     else if (componentType == "OSCILLOSCOPE") item = new Oscilloscope();
     if (!item) return nullptr;
     QPointF finalPosition = position;
-    if (m_snapEnabled) {
-        finalPosition.setX(qRound(finalPosition.x() / m_gridSize) * m_gridSize);
-        finalPosition.setY(qRound(finalPosition.y() / m_gridSize) * m_gridSize);
-    }
+    finalPosition.setX(qRound(finalPosition.x() / m_gridSize) * m_gridSize);
+    finalPosition.setY(qRound(finalPosition.y() / m_gridSize) * m_gridSize);
     item->setPos(finalPosition);
     addItem(item);
     FileManager::recordState(this);
@@ -565,10 +572,8 @@ void CircuitScene::pasteCopiedComponents(const QPointF &targetScenePos) {
     QVector<Element*> pastedElements;
 
     QPointF targetOrigin = targetScenePos;
-    if (m_snapEnabled) {
-        targetOrigin.setX(qRound(targetOrigin.x() / m_gridSize) * m_gridSize);
-        targetOrigin.setY(qRound(targetOrigin.y() / m_gridSize) * m_gridSize);
-    }
+    targetOrigin.setX(qRound(targetOrigin.x() / m_gridSize) * m_gridSize);
+    targetOrigin.setY(qRound(targetOrigin.y() / m_gridSize) * m_gridSize);
 
     for (const CopiedComponent &comp : m_clipboardComponents) {
         QPointF finalPos = targetOrigin + comp.relativePos;

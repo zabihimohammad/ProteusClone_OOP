@@ -9,7 +9,6 @@
 #include "../io/file_manager.h"
 #include "../ui/componentlibrary.h"
 
-#include <QCheckBox>
 #include <QComboBox>
 #include <QCursor>
 #include <QFileDialog>
@@ -132,14 +131,11 @@ void MainWindow::buildInterface()
     auto *gridSize = new QComboBox;
     gridSize->addItems({tr("Grid 10"), tr("Grid 20"), tr("Grid 40")});
     gridSize->setCurrentIndex(1);
-    auto *snap = new QCheckBox(tr("Snap"));
-    snap->setChecked(true);
     toolsLayout->addWidget(select);
     toolsLayout->addWidget(wire);
     toolsLayout->addWidget(probe);
     toolsLayout->addStretch();
     toolsLayout->addWidget(gridSize);
-    toolsLayout->addWidget(snap);
     toolsLayout->addSpacing(8);
     toolsLayout->addWidget(zoomOut);
     toolsLayout->addWidget(reset);
@@ -225,7 +221,6 @@ void MainWindow::buildInterface()
     connect(zoomIn, &QPushButton::clicked, view, &CircuitView::zoomIn);
     connect(zoomOut, &QPushButton::clicked, view, &CircuitView::zoomOut);
     connect(reset, &QPushButton::clicked, view, &CircuitView::fitCanvas);
-    connect(snap, &QCheckBox::toggled, scene, &CircuitScene::setSnapEnabled);
     connect(gridSize, qOverload<int>(&QComboBox::currentIndexChanged), this, [scene = scene, gridSize] {
         scene->setGridSize(gridSize->currentText().section(' ', 1).toInt());
     });
