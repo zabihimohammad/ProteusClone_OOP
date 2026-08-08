@@ -120,6 +120,20 @@ void CircuitScene::setGridSize(int size) {
     invalidate(sceneRect(), QGraphicsScene::BackgroundLayer);
 }
 
+void CircuitScene::setGridVisible(bool visible) {
+    m_gridVisible = visible;
+    invalidate(sceneRect(), QGraphicsScene::BackgroundLayer);
+}
+
+void CircuitScene::setSnapEnabled(bool enabled) {
+    m_snapEnabled = enabled;
+}
+
+void CircuitScene::setGridStyle(GridStyle style) {
+    m_gridStyle = style;
+    invalidate(sceneRect(), QGraphicsScene::BackgroundLayer);
+}
+
 void CircuitScene::setCanvasSize(const QSizeF &size) {
     if (size.width() < 1 || size.height() < 1) return;
     m_canvasRect = QRectF(-size.width() / 2.0, -size.height() / 2.0,
@@ -132,17 +146,26 @@ void CircuitScene::setCanvasSize(const QSizeF &size) {
 void CircuitScene::drawBackground(QPainter *painter, const QRectF &rect) {
     painter->fillRect(rect, QColor("#E9EDF2"));
     painter->fillRect(m_canvasRect, QColor("#FBFCFD"));
-    QPen pen;
-    pen.setColor(QColor(199, 207, 218, 180));
-    pen.setWidth(1);
-    painter->setPen(pen);
+    if (m_gridVisible) {
+        QPen gridPen(QColor(199, 207, 218, 180), 1);
+        painter->setPen(gridPen);
 
-    int left = int(rect.left()) - (int(rect.left()) % m_gridSize);
-    int top = int(rect.top()) - (int(rect.top()) % m_gridSize);
+        int left = int(rect.left()) - (int(rect.left()) % m_gridSize);
+        int top = int(rect.top()) - (int(rect.top()) % m_gridSize);
 
-    for (int x = left; x < rect.right(); x += m_gridSize) {
-        for (int y = top; y < rect.bottom(); y += m_gridSize) {
-            painter->drawPoint(x, y);
+        if (m_gridStyle == GridStyle::Dots) {
+            for (int x = left; x < rect.right(); x += m_gridSize) {
+                for (int y = top; y < rect.bottom(); y += m_gridSize) {
+                    painter->drawPoint(x, y);
+                }
+            }
+        } else {
+            for (int x = left; x < rect.right(); x += m_gridSize) {
+                painter->drawLine(x, int(rect.top()), x, int(rect.bottom()));
+            }
+            for (int y = top; y < rect.bottom(); y += m_gridSize) {
+                painter->drawLine(int(rect.left()), y, int(rect.right()), y);
+            }
         }
     }
     painter->setPen(QPen(QColor("#1473E6"), 2));
@@ -160,8 +183,10 @@ void CircuitScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     if (event->button() == Qt::LeftButton) {
         QPointF rawPos = event->scenePos();
         QPointF dropPos = rawPos;
-        dropPos.setX(qRound(dropPos.x() / m_gridSize) * m_gridSize);
-        dropPos.setY(qRound(dropPos.y() / m_gridSize) * m_gridSize);
+        if (m_snapEnabled) {
+            dropPos.setX(qRound(dropPos.x() / m_gridSize) * m_gridSize);
+            dropPos.setY(qRound(dropPos.y() / m_gridSize) * m_gridSize);
+        }
 
         QGraphicsItem *targetItem = nullptr;
         QList<QGraphicsItem*> exactItems = items(rawPos);
@@ -257,14 +282,16 @@ void CircuitScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
 void CircuitScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     QGraphicsScene::mouseReleaseEvent(event);
 
-    for (QGraphicsItem *selectedItem : selectedItems()) {
-        Element *element = dynamic_cast<Element *>(selectedItem);
-        if (!element) continue;
+    if (m_snapEnabled) {
+        for (QGraphicsItem *selectedItem : selectedItems()) {
+            Element *element = dynamic_cast<Element *>(selectedItem);
+            if (!element) continue;
 
-        QPointF position = element->pos();
-        position.setX(qRound(position.x() / m_gridSize) * m_gridSize);
-        position.setY(qRound(position.y() / m_gridSize) * m_gridSize);
-        element->setPos(position);
+            QPointF position = element->pos();
+            position.setX(qRound(position.x() / m_gridSize) * m_gridSize);
+            position.setY(qRound(position.y() / m_gridSize) * m_gridSize);
+            element->setPos(position);
+        }
     }
 
     if (!isWiring && selectedItems().count() > 0) {
@@ -442,8 +469,10 @@ QGraphicsItem *CircuitScene::addComponent(const QString &componentType, const QP
     else if (componentType == "OSCILLOSCOPE") item = new Oscilloscope();
     if (!item) return nullptr;
     QPointF finalPosition = position;
-    finalPosition.setX(qRound(finalPosition.x() / m_gridSize) * m_gridSize);
-    finalPosition.setY(qRound(finalPosition.y() / m_gridSize) * m_gridSize);
+    if (m_snapEnabled) {
+        finalPosition.setX(qRound(finalPosition.x() / m_gridSize) * m_gridSize);
+        finalPosition.setY(qRound(finalPosition.y() / m_gridSize) * m_gridSize);
+    }
     item->setPos(finalPosition);
     addItem(item);
     FileManager::recordState(this);
@@ -572,8 +601,10 @@ void CircuitScene::pasteCopiedComponents(const QPointF &targetScenePos) {
     QVector<Element*> pastedElements;
 
     QPointF targetOrigin = targetScenePos;
-    targetOrigin.setX(qRound(targetOrigin.x() / m_gridSize) * m_gridSize);
-    targetOrigin.setY(qRound(targetOrigin.y() / m_gridSize) * m_gridSize);
+    if (m_snapEnabled) {
+        targetOrigin.setX(qRound(targetOrigin.x() / m_gridSize) * m_gridSize);
+        targetOrigin.setY(qRound(targetOrigin.y() / m_gridSize) * m_gridSize);
+    }
 
     for (const CopiedComponent &comp : m_clipboardComponents) {
         QPointF finalPos = targetOrigin + comp.relativePos;

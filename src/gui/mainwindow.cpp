@@ -3,13 +3,15 @@
 #include "../canvas/circuit_scene.h"
 #include "../canvas/circuit_view.h"
 #include "../core/probe_item.h"
+#include "../core/element.h"
 #include "../core/simulation_engine.h"
 #include "../core/terminal.h"
 #include "../core/wire.h"
 #include "../io/file_manager.h"
 #include "../ui/componentlibrary.h"
 
-#include <QComboBox>
+#include <QActionGroup>
+#include <QCoreApplication>
 #include <QCursor>
 #include <QFileDialog>
 #include <QFile>
@@ -20,9 +22,12 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMessageBox>
+#include <QMenu>
+#include <QMenuBar>
 #include <QPushButton>
 #include <QSaveFile>
 #include <QStatusBar>
+#include <QSettings>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QtMath>
@@ -81,11 +86,6 @@ void MainWindow::buildInterface()
     if (project->text().isEmpty()) project->setText(tr("Untitled circuit"));
     project->setObjectName("projectName");
 
-    auto *save = new QPushButton(tr("Save"));
-    auto *saveAs = new QPushButton(tr("Save As")); // 🛠️ دکمه Save As
-    auto *exportBtn = new QPushButton(tr("Export Image"));
-    auto *undo = new QPushButton(tr("↶"));
-    auto *redo = new QPushButton(tr("↷"));
     auto *stepBtn = new QPushButton(tr("⏭ Step")); // 🛠️ دکمه گام به گام
     auto *restartBtn = new QPushButton(tr("↻ Restart"));
     auto *run = new QPushButton(tr("▶  Run"));
@@ -96,12 +96,6 @@ void MainWindow::buildInterface()
     topLayout->addSpacing(12);
     topLayout->addWidget(project);
     topLayout->addStretch();
-    topLayout->addWidget(save);
-    topLayout->addWidget(saveAs); // 🛠️
-    topLayout->addWidget(exportBtn);
-    topLayout->addWidget(undo);
-    topLayout->addWidget(redo);
-    topLayout->addSpacing(8);
     topLayout->addWidget(restartBtn);
     topLayout->addWidget(stepBtn); // 🛠️
     topLayout->addWidget(run);
@@ -130,15 +124,10 @@ void MainWindow::buildInterface()
     auto *zoomOut = new QPushButton(tr("−"));
     auto *zoomIn = new QPushButton(tr("+"));
     auto *reset = new QPushButton(tr("Fit"));
-    auto *gridSize = new QComboBox;
-    gridSize->addItems({tr("Grid 10"), tr("Grid 20"), tr("Grid 40")});
-    gridSize->setCurrentIndex(1);
     toolsLayout->addWidget(select);
     toolsLayout->addWidget(wire);
     toolsLayout->addWidget(probe);
     toolsLayout->addStretch();
-    toolsLayout->addWidget(gridSize);
-    toolsLayout->addSpacing(8);
     toolsLayout->addWidget(zoomOut);
     toolsLayout->addWidget(reset);
     toolsLayout->addWidget(zoomIn);
@@ -171,24 +160,16 @@ void MainWindow::buildInterface()
     statusBar()->addPermanentWidget(m_coordinates);
     statusBar()->addPermanentWidget(m_zoomLabel);
 
-    connect(save, &QPushButton::clicked, this, &MainWindow::saveProject);
-
-    // 🛠️ منطق دکمه Save As
-    connect(saveAs, &QPushButton::clicked, this, [this]() {
+    auto saveAsProject = [this]() {
         QString newPath = QFileDialog::getSaveFileName(this, tr("Save Project As"), "", tr("Circuit projects (*.circuit.json *.json)"));
         if (!newPath.isEmpty()) {
             m_projectPath = newPath;
             findChild<QLabel*>("projectName")->setText(QFileInfo(m_projectPath).completeBaseName());
             saveProject();
         }
-    });
+    };
 
-    connect(undo, &QPushButton::clicked, this, [this] { FileManager::undo(scene); });
-    connect(redo, &QPushButton::clicked, this, [this] { FileManager::redo(scene); });
-    connect(wire, &QPushButton::clicked, this, [this]() { scene->setWiringMode(true); });
-    connect(select, &QPushButton::clicked, this, [this]() { scene->setWiringMode(false); });
-
-    connect(exportBtn, &QPushButton::clicked, this, [this]() {
+    auto exportImage = [this]() {
         QString imagePath = QFileDialog::getSaveFileName(this, tr("Export Circuit Image"), "", tr("PNG Image (*.png);;JPEG Image (*.jpg)"));
         if (imagePath.isEmpty()) return;
         scene->clearSelection();
@@ -206,7 +187,143 @@ void MainWindow::buildInterface()
         painter.end();
         if (image.save(imagePath)) statusBar()->showMessage(tr("Image exported successfully!"), 3000);
         else QMessageBox::critical(this, tr("Export Failed"), tr("Could not save the image."));
+    };
+
+    QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
+    QAction *saveAction = fileMenu->addAction(tr("Save"));
+    saveAction->setShortcut(QKeySequence::Save);
+    connect(saveAction, &QAction::triggered, this, &MainWindow::saveProject);
+    QAction *saveAsAction = fileMenu->addAction(tr("Save As..."));
+    saveAsAction->setShortcut(QKeySequence::SaveAs);
+    connect(saveAsAction, &QAction::triggered, this, saveAsProject);
+    QAction *exportAction = fileMenu->addAction(tr("Export Image..."));
+    connect(exportAction, &QAction::triggered, this, exportImage);
+    fileMenu->addSeparator();
+    QAction *exitAction = fileMenu->addAction(tr("Exit"));
+    exitAction->setShortcut(QKeySequence::Quit);
+    connect(exitAction, &QAction::triggered, this, &QWidget::close);
+
+    QMenu *editMenu = menuBar()->addMenu(tr("&Edit"));
+    QAction *undoAction = editMenu->addAction(tr("Undo"));
+    undoAction->setShortcut(QKeySequence::Undo);
+    connect(undoAction, &QAction::triggered, this, [this] { FileManager::undo(scene); });
+    QAction *redoAction = editMenu->addAction(tr("Redo"));
+    redoAction->setShortcut(QKeySequence::Redo);
+    connect(redoAction, &QAction::triggered, this, [this] { FileManager::redo(scene); });
+    editMenu->addSeparator();
+    QAction *copyAction = editMenu->addAction(tr("Copy"));
+    copyAction->setShortcut(QKeySequence::Copy);
+    connect(copyAction, &QAction::triggered, scene, &CircuitScene::copySelectedComponents);
+    QAction *pasteAction = editMenu->addAction(tr("Paste"));
+    pasteAction->setShortcut(QKeySequence::Paste);
+    connect(pasteAction, &QAction::triggered, this, [this] {
+        scene->pasteCopiedComponents(view->mapToScene(view->viewport()->rect().center()));
     });
+    QAction *selectAllAction = editMenu->addAction(tr("Select All"));
+    selectAllAction->setShortcut(QKeySequence::SelectAll);
+    connect(selectAllAction, &QAction::triggered, this, [this] {
+        for (QGraphicsItem *item : scene->items()) {
+            if (dynamic_cast<Element *>(item)) item->setSelected(true);
+        }
+    });
+
+    QSettings settings;
+    scene->setGridVisible(settings.value("view/gridVisible", true).toBool());
+    scene->setSnapEnabled(settings.value("view/snapEnabled", true).toBool());
+    scene->setGridSize(settings.value("view/gridSize", 20).toInt());
+    const QString savedGridStyle = settings.value("view/gridStyle", "dots").toString();
+    scene->setGridStyle(savedGridStyle == "lines" ? CircuitScene::GridStyle::Lines
+                                                   : CircuitScene::GridStyle::Dots);
+
+    QMenu *viewMenu = menuBar()->addMenu(tr("&View"));
+    QAction *showGridAction = viewMenu->addAction(tr("Show Grid"));
+    showGridAction->setCheckable(true);
+    showGridAction->setChecked(scene->isGridVisible());
+    showGridAction->setShortcut(Qt::Key_G);
+    connect(showGridAction, &QAction::toggled, this, [this](bool visible) {
+        scene->setGridVisible(visible);
+        QSettings().setValue("view/gridVisible", visible);
+    });
+
+    QAction *snapAction = viewMenu->addAction(tr("Snap to Grid"));
+    snapAction->setCheckable(true);
+    snapAction->setChecked(scene->isSnapEnabled());
+    connect(snapAction, &QAction::toggled, this, [this](bool enabled) {
+        scene->setSnapEnabled(enabled);
+        QSettings().setValue("view/snapEnabled", enabled);
+    });
+
+    QMenu *gridStyleMenu = viewMenu->addMenu(tr("Grid Style"));
+    QActionGroup *gridStyleGroup = new QActionGroup(this);
+    QAction *dotsAction = gridStyleMenu->addAction(tr("Dots"));
+    QAction *linesAction = gridStyleMenu->addAction(tr("Lines"));
+    for (QAction *action : {dotsAction, linesAction}) {
+        action->setCheckable(true);
+        gridStyleGroup->addAction(action);
+    }
+    dotsAction->setChecked(scene->gridStyle() == CircuitScene::GridStyle::Dots);
+    linesAction->setChecked(scene->gridStyle() == CircuitScene::GridStyle::Lines);
+    connect(dotsAction, &QAction::triggered, this, [this] {
+        scene->setGridStyle(CircuitScene::GridStyle::Dots);
+        QSettings().setValue("view/gridStyle", "dots");
+    });
+    connect(linesAction, &QAction::triggered, this, [this] {
+        scene->setGridStyle(CircuitScene::GridStyle::Lines);
+        QSettings().setValue("view/gridStyle", "lines");
+    });
+
+    QMenu *gridSizeMenu = viewMenu->addMenu(tr("Grid Size"));
+    QActionGroup *gridSizeGroup = new QActionGroup(this);
+    for (int size : {10, 20, 40}) {
+        QAction *sizeAction = gridSizeMenu->addAction(tr("%1 px").arg(size));
+        sizeAction->setCheckable(true);
+        sizeAction->setChecked(scene->gridSpacing() == size);
+        gridSizeGroup->addAction(sizeAction);
+        connect(sizeAction, &QAction::triggered, this, [this, size] {
+            scene->setGridSize(size);
+            QSettings().setValue("view/gridSize", size);
+        });
+    }
+
+    viewMenu->addSeparator();
+    QAction *showLibraryAction = viewMenu->addAction(tr("Component Library"));
+    showLibraryAction->setCheckable(true);
+    showLibraryAction->setChecked(true);
+    connect(showLibraryAction, &QAction::toggled, library, &QWidget::setVisible);
+    QAction *showLogAction = viewMenu->addAction(tr("Simulation Log"));
+    showLogAction->setCheckable(true);
+    showLogAction->setChecked(true);
+    connect(showLogAction, &QAction::toggled, m_simulationLog, &QWidget::setVisible);
+    viewMenu->addSeparator();
+    QAction *zoomInAction = viewMenu->addAction(tr("Zoom In"));
+    zoomInAction->setShortcut(QKeySequence::ZoomIn);
+    connect(zoomInAction, &QAction::triggered, view, &CircuitView::zoomIn);
+    QAction *zoomOutAction = viewMenu->addAction(tr("Zoom Out"));
+    zoomOutAction->setShortcut(QKeySequence::ZoomOut);
+    connect(zoomOutAction, &QAction::triggered, view, &CircuitView::zoomOut);
+    QAction *fitAction = viewMenu->addAction(tr("Fit Canvas"));
+    connect(fitAction, &QAction::triggered, view, &CircuitView::fitCanvas);
+
+    QMenu *simulationMenu = menuBar()->addMenu(tr("&Simulation"));
+    QAction *runAction = simulationMenu->addAction(tr("Run / Pause"));
+    runAction->setShortcut(Qt::Key_F5);
+    connect(runAction, &QAction::triggered, run, &QPushButton::click);
+    QAction *stepAction = simulationMenu->addAction(tr("Single Step"));
+    stepAction->setShortcut(Qt::Key_F10);
+    connect(stepAction, &QAction::triggered, stepBtn, &QPushButton::click);
+    QAction *restartAction = simulationMenu->addAction(tr("Restart"));
+    restartAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_F5));
+    connect(restartAction, &QAction::triggered, restartBtn, &QPushButton::click);
+
+    QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
+    QAction *aboutAction = helpMenu->addAction(tr("About Circuit Studio"));
+    connect(aboutAction, &QAction::triggered, this, [this] {
+        QMessageBox::about(this, tr("About Circuit Studio"),
+                           tr("Circuit Studio\nOOP circuit design and simulation project."));
+    });
+
+    connect(wire, &QPushButton::clicked, this, [this]() { scene->setWiringMode(true); });
+    connect(select, &QPushButton::clicked, this, [this]() { scene->setWiringMode(false); });
 
     // 🛠️ منطق دکمه شبیه‌سازی گام‌به‌گام (Step-by-Step)
     connect(stepBtn, &QPushButton::clicked, this, [this, run]() {
@@ -232,9 +349,6 @@ void MainWindow::buildInterface()
     connect(zoomIn, &QPushButton::clicked, view, &CircuitView::zoomIn);
     connect(zoomOut, &QPushButton::clicked, view, &CircuitView::zoomOut);
     connect(reset, &QPushButton::clicked, view, &CircuitView::fitCanvas);
-    connect(gridSize, qOverload<int>(&QComboBox::currentIndexChanged), this, [scene = scene, gridSize] {
-        scene->setGridSize(gridSize->currentText().section(' ', 1).toInt());
-    });
     connect(probe, &QPushButton::toggled, this, [this](bool checked) {
         scene->isProbeEnabled = checked;
         if (!checked && scene->voltageProbe) scene->voltageProbe->hide();
@@ -322,6 +436,16 @@ void MainWindow::applyTheme()
     // (این بخش دقیقاً مانند قبل باقی می‌ماند، برای کوتاهی پاسخ اینجا آورده نشده اما در پروژه خودت حفظش کن)
     setStyleSheet(R"(
         QMainWindow, QWidget { background: #EEF1F5; color: #1D2530; }
+        QMenuBar {
+            background: #FFFFFF; color: #253143; border-bottom: 1px solid #DDE2E8;
+            padding: 3px 8px;
+        }
+        QMenuBar::item { padding: 6px 10px; border-radius: 6px; }
+        QMenuBar::item:selected { background: #E8F2FF; color: #0A66D3; }
+        QMenu { background: #FFFFFF; color: #253143; border: 1px solid #DDE2E8; padding: 5px; }
+        QMenu::item { padding: 7px 28px 7px 22px; border-radius: 5px; }
+        QMenu::item:selected { background: #E8F2FF; color: #0A66D3; }
+        QMenu::separator { height: 1px; background: #E6E9ED; margin: 5px 8px; }
         QLabel, QCheckBox { color: #354152; }
         QFrame#topBar, QFrame#libraryPanel, QFrame#workspace {
             background: #FFFFFF; border: 1px solid #DDE2E8; border-radius: 15px;
