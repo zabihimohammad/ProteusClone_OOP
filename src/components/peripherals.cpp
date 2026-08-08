@@ -95,6 +95,10 @@ void MemoryChip::setDynamicState(const QJsonObject& state) {
         memoryData[cell["addr"].toInt()] = cell["val"].toInt();
     }
 }
+void MemoryChip::resetSimulationState() {
+    Element::resetSimulationState();
+    memoryData.clear();
+}
 
 // ==========================================
 // ۲. نمایشگر کاراکتری (LCD 16x2)
@@ -172,6 +176,32 @@ QMap<QString, QString> LCD16x2::getProperties() const {
 }
 void LCD16x2::setProperties(const QMap<QString, QString>& props) {
     if (props.contains("Bus Interface Mode")) busMode = props["Bus Interface Mode"];
+}
+QJsonObject LCD16x2::getDynamicState() const {
+    QJsonObject state;
+    state["line_1"] = displayText[0];
+    state["line_2"] = displayText[1];
+    state["cursor_row"] = cursorRow;
+    state["cursor_column"] = cursorCol;
+    state["last_enable"] = lastE;
+    return state;
+}
+void LCD16x2::setDynamicState(const QJsonObject& state) {
+    displayText[0] = state["line_1"].toString();
+    displayText[1] = state["line_2"].toString();
+    cursorRow = state["cursor_row"].toInt();
+    cursorCol = state["cursor_column"].toInt();
+    lastE = state["last_enable"].toBool();
+    update();
+}
+void LCD16x2::resetSimulationState() {
+    Element::resetSimulationState();
+    displayText[0].clear();
+    displayText[1].clear();
+    cursorRow = 0;
+    cursorCol = 0;
+    lastE = false;
+    update();
 }
 
 // ==========================================

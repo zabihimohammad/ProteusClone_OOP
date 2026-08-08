@@ -2,6 +2,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QFont>
+#include <QJsonArray>
 #include "../core/terminal.h"
 #include <QGraphicsScene>
 
@@ -75,6 +76,18 @@ QMap<QString, QString> Capacitor::getProperties() const {
 void Capacitor::setProperties(const QMap<QString, QString>& props) {
     if (props.contains("Capacitance")) capacitance = props["Capacitance"];
 }
+QJsonObject Capacitor::getDynamicState() const {
+    QJsonObject state;
+    state["voltage"] = storedVoltage;
+    return state;
+}
+void Capacitor::setDynamicState(const QJsonObject& state) {
+    storedVoltage = state["voltage"].toDouble();
+}
+void Capacitor::resetSimulationState() {
+    Element::resetSimulationState();
+    storedVoltage = 0.0;
+}
 
 
 // ==========================================
@@ -108,6 +121,18 @@ QMap<QString, QString> Inductor::getProperties() const {
 }
 void Inductor::setProperties(const QMap<QString, QString>& props) {
     if (props.contains("Inductance")) inductance = props["Inductance"];
+}
+QJsonObject Inductor::getDynamicState() const {
+    QJsonObject state;
+    state["current"] = storedCurrent;
+    return state;
+}
+void Inductor::setDynamicState(const QJsonObject& state) {
+    storedCurrent = state["current"].toDouble();
+}
+void Inductor::resetSimulationState() {
+    Element::resetSimulationState();
+    storedCurrent = 0.0;
 }
 
 
@@ -163,6 +188,21 @@ QMap<QString, QString> PulseGenerator::getProperties() const {
 }
 void PulseGenerator::setProperties(const QMap<QString, QString>& props) {
     if (props.contains("Frequency")) frequency = props["Frequency"];
+}
+QJsonObject PulseGenerator::getDynamicState() const {
+    QJsonObject state;
+    state["tick"] = tickCount;
+    state["voltage"] = currentMockVoltage;
+    return state;
+}
+void PulseGenerator::setDynamicState(const QJsonObject& state) {
+    tickCount = state["tick"].toInt();
+    currentMockVoltage = state["voltage"].toString("0.0V");
+}
+void PulseGenerator::resetSimulationState() {
+    Element::resetSimulationState();
+    tickCount = 0;
+    currentMockVoltage = "0.0V";
 }
 
 
@@ -483,6 +523,18 @@ void ClockGenerator::setProperties(const QMap<QString, QString>& props) {
     if (props.contains("Frequency")) frequency = props["Frequency"];
     if (props.contains("Amplitude")) amplitude = props["Amplitude"];
 }
+QJsonObject ClockGenerator::getDynamicState() const {
+    QJsonObject state;
+    state["high"] = currentState;
+    return state;
+}
+void ClockGenerator::setDynamicState(const QJsonObject& state) {
+    currentState = state["high"].toBool();
+}
+void ClockGenerator::resetSimulationState() {
+    Element::resetSimulationState();
+    currentState = false;
+}
 // ==========================================
 // گره اتصال (Junction Node)
 // ==========================================
@@ -599,6 +651,26 @@ void Oscilloscope::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
     painter->setPen(QColor("#9AA6B5")); painter->setFont(QFont("Segoe UI", 7, QFont::DemiBold));
     drawReadableText(painter, QRectF(-70, 37, 140, 12), Qt::AlignCenter, "DIGITAL OSCILLOSCOPE");
     painter->restore();
+}
+QJsonObject Oscilloscope::getDynamicState() const {
+    QJsonObject state;
+    QJsonArray samples;
+    for (double voltage : voltageHistory) samples.append(voltage);
+    state["samples"] = samples;
+    return state;
+}
+void Oscilloscope::setDynamicState(const QJsonObject& state) {
+    QJsonArray samples = state["samples"].toArray();
+    voltageHistory.clear();
+    for (const QJsonValue& value : samples) voltageHistory.append(value.toDouble());
+    while (voltageHistory.size() < maxSamples) voltageHistory.prepend(0.0);
+    while (voltageHistory.size() > maxSamples) voltageHistory.removeFirst();
+    update();
+}
+void Oscilloscope::resetSimulationState() {
+    Element::resetSimulationState();
+    voltageHistory.fill(0.0, maxSamples);
+    updateCounter = 0;
 }
 // ==========================================
 // پیاده‌سازی باتری واقعی (Battery)

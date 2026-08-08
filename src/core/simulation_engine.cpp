@@ -70,6 +70,21 @@ void SimulationEngine::stepSimulation() {
     propagateVoltages();
 }
 
+void SimulationEngine::resetSimulation() {
+    if (!m_scene) return;
+
+    for (QGraphicsItem *item : m_scene->items()) {
+        if (Element *element = dynamic_cast<Element *>(item)) {
+            element->resetSimulationState();
+        } else if (Wire *wire = dynamic_cast<Wire *>(item)) {
+            wire->voltageLevel = "Undefined";
+            wire->update();
+        }
+    }
+
+    m_scene->update();
+}
+
 void SimulationEngine::propagateVoltages() {
     QList<Wire*> wires; QList<Element*> elements;
     for (QGraphicsItem *item : m_scene->items()) {
@@ -147,11 +162,13 @@ void SimulationEngine::propagateVoltages() {
             else if (type == "Push Button") { g = dynamic_cast<PushButton*>(el)->isClosed() ? 1000.0 : 0.0; }
             else if (type == "Ammeter") { g = 1000.0; }
             else if (type == "Capacitor") {
+                Capacitor *capacitor = dynamic_cast<Capacitor *>(el);
                 g = parseValue(el->getProperties()["Capacitance"]) / dt;
-                Ieq = g * historicalState.value(el, 0.0);
+                Ieq = g * capacitor->previousVoltage();
             } else if (type == "Inductor") {
+                Inductor *inductor = dynamic_cast<Inductor *>(el);
                 g = dt / qMax(parseValue(el->getProperties()["Inductance"]), 1e-6);
-                Ieq = historicalState.value(el, 0.0);
+                Ieq = inductor->previousCurrent();
             } else if (type == "Battery") {
                 // 🛠️ مدل‌سازی فیزیکی باتری واقعی (منبع ولتاژ + مقاومت داخلی)
                 double v = parseValue(el->getProperties()["Voltage"]);
@@ -207,10 +224,14 @@ void SimulationEngine::propagateVoltages() {
             }
             if (terms.size() >= 2) {
                 double vDiff = terms[0]->exactVoltage - terms[1]->exactVoltage;
-                if (type == "Capacitor") historicalState[el] = vDiff;
+                if (type == "Capacitor") {
+                    dynamic_cast<Capacitor *>(el)->setPreviousVoltage(vDiff);
+                }
                 else {
                     double l = parseValue(el->getProperties()["Inductance"]);
-                    historicalState[el] = historicalState.value(el, 0.0) + (dt / qMax(l, 1e-6)) * vDiff;
+                    Inductor *inductor = dynamic_cast<Inductor *>(el);
+                    double current = inductor->previousCurrent() + (dt / qMax(l, 1e-6)) * vDiff;
+                    inductor->setPreviousCurrent(current);
                 }
             }
         }

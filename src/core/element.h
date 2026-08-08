@@ -26,6 +26,14 @@ public:
     // 🛠️ قابلیت امتیازی: ذخیره و بازیابی وضعیت داینامیک مدار (رجیسترها، RAM و...)
     virtual QJsonObject getDynamicState() const { return QJsonObject(); }
     virtual void setDynamicState(const QJsonObject& state) {}
+    virtual void resetSimulationState() {
+        for (QGraphicsItem *child : childItems()) {
+            if (Terminal *terminal = dynamic_cast<Terminal *>(child)) {
+                terminal->resetState();
+            }
+        }
+        update();
+    }
 
 protected:
     void drawReadableText(QPainter *painter, const QRectF &rect, int flags, const QString &text) {

@@ -87,6 +87,7 @@ void MainWindow::buildInterface()
     auto *undo = new QPushButton(tr("↶"));
     auto *redo = new QPushButton(tr("↷"));
     auto *stepBtn = new QPushButton(tr("⏭ Step")); // 🛠️ دکمه گام به گام
+    auto *restartBtn = new QPushButton(tr("↻ Restart"));
     auto *run = new QPushButton(tr("▶  Run"));
     run->setCheckable(true);
     run->setObjectName("primaryButton");
@@ -101,6 +102,7 @@ void MainWindow::buildInterface()
     topLayout->addWidget(undo);
     topLayout->addWidget(redo);
     topLayout->addSpacing(8);
+    topLayout->addWidget(restartBtn);
     topLayout->addWidget(stepBtn); // 🛠️
     topLayout->addWidget(run);
 
@@ -216,6 +218,15 @@ void MainWindow::buildInterface()
         m_engine->stepSimulation(); // اجرای دقیقاً یک گام
         scene->update();
         m_simulationLog->append(tr(">> Step execution completed."));
+    });
+
+    connect(restartBtn, &QPushButton::clicked, this, [this, run]() {
+        run->setChecked(false);
+        m_simulationTimer->stop();
+        run->setText(tr("▶  Run"));
+        m_engine->resetSimulation();
+        m_simulationLog->append(tr(">> Simulation restarted."));
+        statusBar()->showMessage(tr("Simulation restarted"), 2500);
     });
 
     connect(zoomIn, &QPushButton::clicked, view, &CircuitView::zoomIn);

@@ -2,6 +2,7 @@
 #include <QPainter>
 #include <QFont> // برای تنظیم فونت نوشته‌ها
 #include <QFile>
+#include <QJsonArray>
 #include "../core/terminal.h"
 
 // ==========================================
@@ -86,6 +87,39 @@ void MCUChip::process() {
     } else {
         PC++; // NOP یا رد شدن از دستور ناشناخته
     }
+}
+
+QJsonObject MCUChip::getDynamicState() const {
+    QJsonObject state;
+    state["program_counter"] = PC;
+    state["accumulator"] = accumulator;
+
+    QJsonArray ramData;
+    for (auto it = RAM.constBegin(); it != RAM.constEnd(); ++it) {
+        QJsonObject cell;
+        cell["address"] = it.key();
+        cell["value"] = it.value();
+        ramData.append(cell);
+    }
+    state["ram"] = ramData;
+    return state;
+}
+
+void MCUChip::setDynamicState(const QJsonObject& state) {
+    PC = state["program_counter"].toInt();
+    accumulator = state["accumulator"].toInt();
+    RAM.clear();
+    for (const QJsonValue& value : state["ram"].toArray()) {
+        QJsonObject cell = value.toObject();
+        RAM[cell["address"].toInt()] = cell["value"].toInt();
+    }
+}
+
+void MCUChip::resetSimulationState() {
+    Element::resetSimulationState();
+    PC = 0;
+    accumulator = 0;
+    RAM.clear();
 }
 // ==========================================
 // رسم گرافیکی میکروکنترلر روی بوم
