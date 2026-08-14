@@ -7,6 +7,7 @@ class QLineEdit;
 class QListWidget;
 class QComboBox;
 class QSpinBox;
+class QPushButton;
 
 class StartDialog final : public QDialog
 {
@@ -17,6 +18,11 @@ public:
     QString projectName() const;
     QString projectFilePath() const;
     QSize canvasSize() const;
+    void refreshRecentProjects();
+    void setBackAvailable(bool available);
+
+signals:
+    void backRequested();
 
 private:
     void createProject();
@@ -31,5 +37,6 @@ private:
     QSpinBox *m_width = nullptr;
     QSpinBox *m_height = nullptr;
     QListWidget *m_recent = nullptr;
+    QPushButton *m_back = nullptr;
     QString m_projectFilePath;
 };

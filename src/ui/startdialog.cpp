@@ -1,4 +1,5 @@
 #include "startdialog.h"
+#include "helpdialog.h"
 
 #include <QComboBox>
 #include <QDir>
@@ -52,12 +53,15 @@ StartDialog::StartDialog(QWidget *parent) : QDialog(parent)
     headingText->addWidget(title);
     headingText->addWidget(subtitle);
 
+    m_back = new QPushButton(tr("Back to editor"));
+    m_back->setVisible(false);
     auto *open = new QPushButton(tr("Open project…"));
     open->setObjectName("openButton");
     auto *create = new QPushButton(tr("Create project  →"));
     create->setObjectName("createButton");
     auto *topActions = new QHBoxLayout;
     topActions->setSpacing(9);
+    topActions->addWidget(m_back);
     topActions->addWidget(open);
     topActions->addWidget(create);
     headingRow->addLayout(headingText, 1);
@@ -79,6 +83,9 @@ StartDialog::StartDialog(QWidget *parent) : QDialog(parent)
     m_recent = new QListWidget;
     m_recent->setObjectName("recentProjects");
     m_recent->setSpacing(3);
+    m_recent->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    m_recent->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_recent->setTextElideMode(Qt::ElideMiddle);
     recentLayout->addWidget(recentTitle);
     recentLayout->addWidget(recentHint);
     recentLayout->addSpacing(5);
@@ -191,6 +198,7 @@ StartDialog::StartDialog(QWidget *parent) : QDialog(parent)
 
     connect(create, &QPushButton::clicked, this, &StartDialog::createProject);
     connect(open, &QPushButton::clicked, this, &StartDialog::openProject);
+    connect(m_back, &QPushButton::clicked, this, &StartDialog::backRequested);
     connect(browse, &QPushButton::clicked, this, [this] {
         const QString directory = QFileDialog::getExistingDirectory(
             this, tr("Choose project location"), m_location->text());
@@ -226,19 +234,12 @@ StartDialog::StartDialog(QWidget *parent) : QDialog(parent)
         accept();
     });
     connect(gettingStarted, &QPushButton::clicked, this, [this] {
-        QMessageBox::information(
-            this, tr("Getting started"),
-            tr("1. Enter a project name.\n"
-               "2. Choose a save location.\n"
-               "3. Select a standard canvas size or Custom.\n"
-               "4. Click Create project.\n\n"
-               "In the editor, use the component library on the left and double-click a component to activate it."));
+        auto *help = new HelpDialog(HelpDialog::Overview, this);
+        help->show();
     });
     connect(shortcuts, &QPushButton::clicked, this, [this] {
-        QMessageBox::information(
-            this, tr("Keyboard shortcuts"),
-            tr("Zoom in:  +\nZoom out:  −\nReset zoom:  0\n"
-               "Pan canvas:  Middle mouse drag or Shift + drag"));
+        auto *help = new HelpDialog(HelpDialog::Shortcuts, this);
+        help->show();
     });
     connect(aboutDetails, &QPushButton::clicked, this, [this] {
         QMessageBox::about(
@@ -277,6 +278,17 @@ StartDialog::StartDialog(QWidget *parent) : QDialog(parent)
         QListWidget#recentProjects::item { color: #253143; padding: 9px; border-radius: 9px; }
         QListWidget#recentProjects::item:hover { background: #F0F5FB; }
         QListWidget#recentProjects::item:selected { color: #0A66D3; background: #E8F2FF; }
+        QListWidget#recentProjects QScrollBar:vertical {
+            background: transparent; width: 7px; margin: 4px 0;
+        }
+        QListWidget#recentProjects QScrollBar::handle:vertical {
+            background: #C5CEDA; border-radius: 3px; min-height: 28px;
+        }
+        QListWidget#recentProjects QScrollBar::handle:vertical:hover { background: #9EABBA; }
+        QListWidget#recentProjects QScrollBar::add-line:vertical,
+        QListWidget#recentProjects QScrollBar::sub-line:vertical { height: 0; }
+        QListWidget#recentProjects QScrollBar::add-page:vertical,
+        QListWidget#recentProjects QScrollBar::sub-page:vertical { background: transparent; }
         QPushButton {
             color: #253143; background: white; border: 1px solid #D9DFE7;
             border-radius: 10px; padding: 10px 16px; font-weight: 600;
@@ -368,6 +380,7 @@ void StartDialog::applyProjectMetadata(const QString &path)
 
 void StartDialog::loadRecentProjects()
 {
+    m_recent->clear();
     const QStringList paths = QSettings().value("recentProjects").toStringList();
     for (int i = 0; i < kRecentProjectCount; ++i) {
         if (i < paths.size()) {
@@ -385,6 +398,16 @@ void StartDialog::loadRecentProjects()
             m_recent->addItem(item);
         }
     }
+}
+
+void StartDialog::refreshRecentProjects()
+{
+    loadRecentProjects();
+}
+
+void StartDialog::setBackAvailable(bool available)
+{
+    m_back->setVisible(available);
 }
 
 void StartDialog::rememberProject(const QString &path)

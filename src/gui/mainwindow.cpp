@@ -9,8 +9,10 @@
 #include "../core/wire.h"
 #include "../io/file_manager.h"
 #include "../ui/componentlibrary.h"
+#include "../ui/helpdialog.h"
 
 #include <QActionGroup>
+#include <QApplication>
 #include <QCoreApplication>
 #include <QCursor>
 #include <QFileDialog>
@@ -55,6 +57,14 @@ MainWindow::MainWindow(const QSize &canvasSize, const QString &projectPath, QWid
     buildInterface();
     applyTheme();
     configureSimulation();
+}
+
+MainWindow::~MainWindow()
+{
+    if (g_logWidget == m_simulationLog) {
+        qInstallMessageHandler(nullptr);
+        g_logWidget = nullptr;
+    }
 }
 
 void MainWindow::buildInterface()
@@ -165,6 +175,7 @@ void MainWindow::buildInterface()
         if (!newPath.isEmpty()) {
             m_projectPath = newPath;
             findChild<QLabel*>("projectName")->setText(QFileInfo(m_projectPath).completeBaseName());
+            setWindowTitle(QFileInfo(m_projectPath).completeBaseName() + tr(" — Circuit Studio"));
             saveProject();
         }
     };
@@ -190,6 +201,15 @@ void MainWindow::buildInterface()
     };
 
     QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
+    QAction *newAction = fileMenu->addAction(tr("New Project..."));
+    newAction->setShortcut(QKeySequence::New);
+    connect(newAction, &QAction::triggered, this, &MainWindow::newProjectRequested);
+    QAction *openAction = fileMenu->addAction(tr("Open Project..."));
+    openAction->setShortcut(QKeySequence::Open);
+    connect(openAction, &QAction::triggered, this, &MainWindow::openProjectRequested);
+    QAction *homeAction = fileMenu->addAction(tr("Back to Welcome"));
+    connect(homeAction, &QAction::triggered, this, &MainWindow::homeRequested);
+    fileMenu->addSeparator();
     QAction *saveAction = fileMenu->addAction(tr("Save"));
     saveAction->setShortcut(QKeySequence::Save);
     connect(saveAction, &QAction::triggered, this, &MainWindow::saveProject);
@@ -200,8 +220,7 @@ void MainWindow::buildInterface()
     connect(exportAction, &QAction::triggered, this, exportImage);
     fileMenu->addSeparator();
     QAction *exitAction = fileMenu->addAction(tr("Exit"));
-    exitAction->setShortcut(QKeySequence::Quit);
-    connect(exitAction, &QAction::triggered, this, &QWidget::close);
+    connect(exitAction, &QAction::triggered, qApp, &QCoreApplication::quit);
 
     QMenu *editMenu = menuBar()->addMenu(tr("&Edit"));
     QAction *undoAction = editMenu->addAction(tr("Undo"));
@@ -316,6 +335,29 @@ void MainWindow::buildInterface()
     connect(restartAction, &QAction::triggered, restartBtn, &QPushButton::click);
 
     QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
+    auto showHelp = [this](HelpDialog::Topic topic) {
+        if (!m_helpDialog) {
+            m_helpDialog = new HelpDialog(topic, this);
+            connect(m_helpDialog, &QObject::destroyed, this, [this] {
+                m_helpDialog = nullptr;
+            });
+        } else {
+            m_helpDialog->selectTopic(topic);
+        }
+        m_helpDialog->show();
+        m_helpDialog->raise();
+        m_helpDialog->activateWindow();
+    };
+    QAction *helpCenterAction = helpMenu->addAction(tr("Help Center..."));
+    helpCenterAction->setShortcut(Qt::Key_F1);
+    connect(helpCenterAction, &QAction::triggered, this, [showHelp] {
+        showHelp(HelpDialog::Overview);
+    });
+    QAction *shortcutsAction = helpMenu->addAction(tr("Keyboard Shortcuts"));
+    connect(shortcutsAction, &QAction::triggered, this, [showHelp] {
+        showHelp(HelpDialog::Shortcuts);
+    });
+    helpMenu->addSeparator();
     QAction *aboutAction = helpMenu->addAction(tr("About Circuit Studio"));
     connect(aboutAction, &QAction::triggered, this, [this] {
         QMessageBox::about(this, tr("About Circuit Studio"),
