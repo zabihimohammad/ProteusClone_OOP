@@ -9,6 +9,7 @@ class CircuitView;
 class QLabel;
 class QTimer;
 class SimulationEngine;
+class HelpDialog;
 
 class MainWindow final : public QMainWindow
 {
@@ -17,7 +18,12 @@ class MainWindow final : public QMainWindow
 public:
     explicit MainWindow(const QSize &canvasSize = QSize(1600, 1000),
                         const QString &projectPath = {}, QWidget *parent = nullptr);
-    ~MainWindow() override = default;
+    ~MainWindow() override;
+
+signals:
+    void newProjectRequested();
+    void openProjectRequested();
+    void homeRequested();
 
 private:
     void buildInterface();
@@ -32,6 +38,7 @@ private:
     QLabel *m_coordinates = nullptr;
     QLabel *m_zoomLabel = nullptr;
     QTextEdit *m_simulationLog = nullptr;
+    HelpDialog *m_helpDialog = nullptr;
     QSize m_canvasSize;
     QString m_projectPath;
 };

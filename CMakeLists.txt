@@ -23,6 +23,8 @@ set(PROJECT_SOURCES
         src/gui/mainwindow.h
         src/ui/startdialog.cpp
         src/ui/startdialog.h
+        src/ui/helpdialog.cpp
+        src/ui/helpdialog.h
         src/ui/componentlibrary.cpp
         src/ui/componentlibrary.h
         src/canvas/circuit_scene.cpp
