@@ -2,9 +2,7 @@
 #include "../core/element.h"
 #include "../core/terminal.h"
 
-// ==========================================
 // گیت AND (دو ورودی)
-// ==========================================
 class AndGate : public Element {
 private:
     QString propagationDelay = "10ns";
@@ -27,9 +25,7 @@ public:
     void setProperties(const QMap<QString, QString>& props) override;
 };
 
-// ==========================================
 // گیت OR (دو ورودی)
-// ==========================================
 class OrGate : public Element {
 private:
     QString propagationDelay = "10ns";
@@ -52,9 +48,7 @@ public:
     void setProperties(const QMap<QString, QString>& props) override;
 };
 
-// ==========================================
 // گیت NOT (وارون‌گر)
-// ==========================================
 class NotGate : public Element {
 private:
     QString propagationDelay = "5ns";
@@ -76,9 +70,7 @@ public:
     void setProperties(const QMap<QString, QString>& props) override;
 };
 
-// ==========================================
 // گیت XOR (دو ورودی)
-// ==========================================
 class XorGate : public Element {
 private:
     QString propagationDelay = "12ns";
@@ -101,9 +93,7 @@ public:
     void setProperties(const QMap<QString, QString>& props) override;
 };
 
-// ==========================================
 // گیت NAND (دو ورودی)
-// ==========================================
 class NandGate : public Element {
 private:
     QString propagationDelay = "10ns";
@@ -126,9 +116,7 @@ public:
     void setProperties(const QMap<QString, QString>& props) override;
 };
 
-// ==========================================
 // فلیپ‌فلاپ لبه‌بالارونده D (D-FlipFlop)
-// ==========================================
 class DFlipFlop : public Element {
 private:
     QString propagationDelay = "15ns";

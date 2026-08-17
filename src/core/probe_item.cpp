@@ -8,7 +8,7 @@ ProbeItem::ProbeItem(QGraphicsItem *parent) : QGraphicsItem(parent) {
 }
 
 void ProbeItem::updateProbe(const QString &voltage, const QPointF &pos) {
-    currentVoltage = voltage; // اینجا فقط متن کپی می‌شود، پس کاملاً امن است
+    currentVoltage = voltage; // متن ولتاژ را نگه دار.
     setPos(pos + QPointF(15, 15));
     show();
     update();

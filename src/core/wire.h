@@ -12,39 +12,36 @@ public:
     Wire(Terminal *startTerm, QPointF startPos);
 
     void setEndPoint(QPointF endPos);
-    void addWaypoint(QPointF point); // برای گره‌گذاری دستی
-    void setFullRoute(const QVector<QPointF> &route); // برای مسیریاب هوشمند
+    void addWaypoint(QPointF point);
+    void setFullRoute(const QVector<QPointF> &route);
     void confirmConnection(Terminal *endTerm);
 
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
 
-    // در بخش public اضافه کنید:
     void updateRoute();
-    ~Wire() override; // مخرب برای پاک کردن تمیز از حافظه
+    ~Wire() override;
 
-    // این متغیر بعداً توسط موتور شبیه‌ساز آپدیت می‌شود (مثلاً "5.0V" یا "0.0V")
+    // ولتاژ نمایشی سیم
     QString voltageLevel = "Undefined";
 
-    // توابع کمکی برای خواندن پایه‌های متصل به سیم در سیستم ذخیره‌سازی
+    // پایه‌ها و مسیر سیم
     Terminal* getStartTerminal() const { return startTerminal; }
     Terminal* getEndTerminal() const { return endTerminal; }
     QVector<QPointF> getPoints() const { return points; }
-    // قطع اتصال ترمینال (اضافه شده از سمت رابط کاربری)
+    // قطع یک پایه
     void disconnectTerminal(Terminal *term);
 
 private:
     Terminal *startTerminal;
     Terminal *endTerminal;
-    QVector<QPointF> points; // جایگزین p1 و p2 شد تا بتواند چندین شکستگی را ذخیره کند
-// متغیرهای سیستم درگ دستی سیم
+    QVector<QPointF> points;
+    // جابه‌جایی دستی سیم
     int m_draggedSegmentIndex = -1;
     bool m_isDraggingHorizontal = false;
     bool m_isDraggingVertical = false;
     QPointF m_lastDragPos;
 protected:
-    //void hoverMoveEvent(QGraphicsSceneHoverEvent *event) override;
-    // void hoverLeaveEvent(QGraphicsSceneHoverEvent *event) override;
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;

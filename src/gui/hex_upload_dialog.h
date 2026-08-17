@@ -9,11 +9,11 @@ Q_OBJECT
 public:
     explicit HexUploadDialog(QWidget *parent = nullptr);
 
-    // تابعی برای گرفتن مسیر فایلی که کاربر انتخاب کرده است
+    // مسیر فایل انتخاب‌شده
     QString getSelectedFilePath() const;
 
 private slots:
-    // اسلات (تابع) اختصاصی برای مدیریت کلیک روی دکمه Browse
+    // انتخاب فایل HEX
     void onBrowseClicked();
 
 private:

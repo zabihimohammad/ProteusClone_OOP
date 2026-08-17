@@ -170,7 +170,7 @@ void SimulationEngine::propagateVoltages() {
                 g = dt / qMax(parseValue(el->getProperties()["Inductance"]), 1e-6);
                 Ieq = inductor->previousCurrent();
             } else if (type == "Battery") {
-                // 🛠️ مدل‌سازی فیزیکی باتری واقعی (منبع ولتاژ + مقاومت داخلی)
+                // مدل‌سازی فیزیکی باتری واقعی (منبع ولتاژ + مقاومت داخلی)
                 double v = parseValue(el->getProperties()["Voltage"]);
                 double r = parseValue(el->getProperties()["Internal Resistance"]);
                 g = 1.0 / qMax(r, 1e-3);
@@ -188,7 +188,7 @@ void SimulationEngine::propagateVoltages() {
                 }
             }
 
-            // 🛠️ تزریق جریان
+            // تزریق جریان
             if (type == "Battery") {
                 if (!isFixed[n1]) b[nodeToVar[n1]] += Ieq; // جریان از قطب مثبت خارج می‌شود
                 if (!isFixed[n2]) b[nodeToVar[n2]] -= Ieq; // جریان به قطب منفی وارد می‌شود
@@ -206,7 +206,7 @@ void SimulationEngine::propagateVoltages() {
         for (Terminal *term : nodes[i]) {
             if (!term->isDriven()) {
                 term->voltageLevel = QString::number(vFinal, 'f', 1) + "V";
-                term->exactVoltage = vFinal; // 🛠️ اعمال ولتاژ دقیق فیزیکی
+                term->exactVoltage = vFinal; // اعمال ولتاژ دقیق فیزیکی
             }
         }
     }

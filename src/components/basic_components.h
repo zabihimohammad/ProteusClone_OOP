@@ -5,9 +5,7 @@
 // پیش‌تعریف کلاس ترمینال
 class Terminal;
 
-// ==========================================
 // ۱. مقاومت (Resistor)
-// ==========================================
 class Resistor : public Element {
 private:
     QString resistance = "10k";
@@ -22,9 +20,7 @@ public:
     void setProperties(const QMap<QString, QString>& props) override;
 };
 
-// ==========================================
 // ۲. خازن (Capacitor)
-// ==========================================
 class Capacitor : public Element {
 private:
     QString capacitance = "10uF";
@@ -45,9 +41,7 @@ public:
     void setPreviousVoltage(double voltage) { storedVoltage = voltage; }
 };
 
-// ==========================================
 // ۳. سلف (Inductor)
-// ==========================================
 class Inductor : public Element {
 private:
     QString inductance = "1mH";
@@ -68,9 +62,7 @@ public:
     void setPreviousCurrent(double current) { storedCurrent = current; }
 };
 
-// ==========================================
 // ۴. پالس کلاک (Pulse Generator)
-// ==========================================
 class PulseGenerator : public Element {
 private:
     int tickCount = 0; // شمارنده زمان
@@ -91,9 +83,7 @@ public:
     void resetSimulationState() override;
 };
 
-// ==========================================
 // ۵. کلید قطع و وصل (Switch)
-// ==========================================
 class Switch : public Element {
 private:
     QString initialState = "Open";
@@ -107,16 +97,14 @@ public:
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
 
-    // تابع اضافه شده برای موتور فیزیک
+    // وضعیت رسانایی
     bool isClosed() const { return initialState == "Closed"; }
 
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 };
 
-// ==========================================
 // ۶. دکمه فشاری (Push Button)
-// ==========================================
 class PushButton : public Element {
 private:
     QString type = "NO"; // Normally Open
@@ -131,7 +119,7 @@ public:
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
 
-    // تابع اضافه شده برای موتور فیزیک
+    // وضعیت رسانایی
     bool isClosed() const { return (type == "NO") ? isPressed : !isPressed; }
 
 protected:
@@ -139,9 +127,7 @@ protected:
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
 };
 
-// ==========================================
 // ۷. دیود نورانی (LED)
-// ==========================================
 class LED : public Element {
 private:
     QString color = "Red";
@@ -157,9 +143,7 @@ public:
     void setProperties(const QMap<QString, QString>& props) override;
 };
 
-// ==========================================
 // ۸. سون‌سگمنت (7-Segment)
-// ==========================================
 class SevenSegment : public Element {
 private:
     QString color = "Red";
@@ -174,9 +158,7 @@ public:
     void setProperties(const QMap<QString, QString>& props) override;
 };
 
-// ==========================================
 // ۹. منبع تغذیه زمین (Ground / GND)
-// ==========================================
 class Ground : public Element {
 private:
     Terminal *outGnd; // پایه‌ی خروجی زمین
@@ -188,9 +170,7 @@ public:
     QString getComponentName() const override { return "Ground (GND)"; }
 };
 
-// ==========================================
 // ۱۰. منبع ولتاژ مستقیم (DC Voltage Source)
-// ==========================================
 class DCVoltageSource : public Element {
 private:
     QString voltage = "5V";
@@ -206,9 +186,7 @@ public:
     void setProperties(const QMap<QString, QString>& props) override;
 };
 
-// ==========================================
 // ۱۱. تولیدکننده کلاک (Clock Generator)
-// ==========================================
 class ClockGenerator : public Element {
 private:
     QString frequency = "1Hz";
@@ -230,9 +208,7 @@ public:
     void resetSimulationState() override;
 };
 
-// ==========================================
 // ۱۲. گره اتصال سیم به سیم (Junction Node)
-// ==========================================
 class JunctionNode : public Element {
 public:
     Terminal *term; // تنها پایه این گره که سیم‌ها به آن وصل می‌شوند
@@ -244,9 +220,7 @@ public:
     void process() override;
     QString getComponentName() const override { return "Junction Node"; }
 };
-// ==========================================
 // باتری واقعی (Real Battery with Internal Resistance)
-// ==========================================
 class Battery : public Element {
 private:
     QString voltage = "9V";
@@ -263,9 +237,7 @@ public:
     QMap<QString, QString> getProperties() const override;
     void setProperties(const QMap<QString, QString>& props) override;
 };
-// ==========================================
 // ولت‌متر دیجیتال (Voltmeter)
-// ==========================================
 class Voltmeter : public Element {
 private: Terminal *t1; Terminal *t2;
 public:
@@ -276,9 +248,7 @@ public:
     QString getComponentName() const override { return "Voltmeter"; }
 };
 
-// ==========================================
 // آمپرمتر دیجیتال (Ammeter)
-// ==========================================
 class Ammeter : public Element {
 private: Terminal *t1; Terminal *t2;
 public:
@@ -288,14 +258,12 @@ public:
     void process() override;
     QString getComponentName() const override { return "Ammeter"; }
 };
-// ==========================================
-// ۱۳. اسیلوسکوپ گرافیکی پیشرفته (Oscilloscope)
-// ==========================================
+// ۱۳. اسیلوسکوپ (Oscilloscope)
 class Oscilloscope : public Element {
 private:
     Terminal *inChannel;          // پین ورودی کانال اسیلوسکوپ
-    QVector<double> voltageHistory; // بافر ذخیره ولتاژهای قبلی برای رسم نمودار
-    const int maxSamples = 60;    // تعداد نمونه‌های روی صفحه نمایش
+    QVector<double> voltageHistory; // نمونه‌های قبلی
+    const int maxSamples = 60;    // تعداد نمونه‌ها
     int updateCounter = 0;
 
 public:

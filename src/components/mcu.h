@@ -11,7 +11,7 @@ private:
     QMap<int, int> RAM; // حافظه داخلی
     QStringList firmwareInstructions; // کدهای لود شده
 
-    QMap<int, uint8_t> rom; // 🛠️ حافظه فلش میکروکنترلر
+    QMap<int, uint8_t> rom; // حافظه فلش میکروکنترلر
     void loadHexFile(const QString& path);
 
 public:
@@ -32,7 +32,7 @@ public:
         return props;
     }
 
-    // 🛠️ فیکس ارور: اینجا تابع را فقط معرفی می‌کنیم و بدنه‌اش در mcu.cpp می‌ماند
+    // بارگذاری فایل HEX
     void setProperties(const QMap<QString, QString>& props) override;
     QJsonObject getDynamicState() const override;
     void setDynamicState(const QJsonObject& state) override;

@@ -1,10 +1,9 @@
-// 🛠️ فایل: src/core/element.h
 #pragma once
 #include <QGraphicsItem>
 #include <QGraphicsSceneMouseEvent>
 #include <QDebug>
 #include <QMap>
-#include <QJsonObject> // 🛠️ برای سریالایز و دی‌سریالایز
+#include <QJsonObject>
 #include "terminal.h"
 #include "wire.h"
 #include "../gui/properties_dialog.h"
@@ -23,7 +22,7 @@ public:
     virtual QMap<QString, QString> getProperties() const { return QMap<QString, QString>(); }
     virtual void setProperties(const QMap<QString, QString>& props) {}
 
-    // 🛠️ قابلیت امتیازی: ذخیره و بازیابی وضعیت داینامیک مدار (رجیسترها، RAM و...)
+    // وضعیت زمان اجرای قطعه
     virtual QJsonObject getDynamicState() const { return QJsonObject(); }
     virtual void setDynamicState(const QJsonObject& state) {}
     virtual void resetSimulationState() {

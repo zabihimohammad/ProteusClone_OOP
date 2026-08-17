@@ -30,7 +30,7 @@ public:
     void resetState();
 
     QString voltageLevel = "Undefined";
-    double exactVoltage = 0.0; // 🛠️ ذخیره ولتاژ دقیق و بدون گرد شدن برای فیزیک
+    double exactVoltage = 0.0; // ذخیره ولتاژ دقیق و بدون گرد شدن برای فیزیک
 
 protected:
     void hoverEnterEvent(QGraphicsSceneHoverEvent *event) override;

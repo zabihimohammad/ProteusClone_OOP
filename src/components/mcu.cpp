@@ -5,11 +5,9 @@
 #include <QJsonArray>
 #include "../core/terminal.h"
 
-// ==========================================
 // سازنده (Constructor) میکروکنترلر
-// ==========================================
 MCUChip::MCUChip() {
-    // ایجاد پایه‌ها (پین‌ها) در ۴ طرف میکروکنترلر (شبیه پکیج‌های QFP یا DIP)
+    // پایه‌های چهار طرف تراشه
     for (int i = -20; i <= 20; i += 20) {
         (new Terminal(this))->setPos(-50, i); // پایه‌های سمت چپ
         (new Terminal(this))->setPos(50, i);  // پایه‌های سمت راست
@@ -18,9 +16,7 @@ MCUChip::MCUChip() {
     }
 }
 
-// ==========================================
 // تعیین محدوده کلیک و رسم قطعه
-// ==========================================
 QRectF MCUChip::boundingRect() const {
     return QRectF(-60, -60, 120, 120);
 }
@@ -30,12 +26,12 @@ void MCUChip::setProperties(const QMap<QString, QString>& props) {
         QString newPath = props["Hex File Path"];
         if (newPath != hexFilePath && !newPath.isEmpty() && newPath != "Not Loaded") {
             hexFilePath = newPath;
-            loadHexFile(hexFilePath); // 🛠️ لود کردن اتوماتیک فایل هنگام تغییر آدرس
+            loadHexFile(hexFilePath); // لود کردن اتوماتیک فایل هنگام تغییر آدرس
         }
     }
 }
 
-// 🛠️ مفسر استاندارد فایل Intel HEX
+// مفسر استاندارد فایل Intel HEX
 void MCUChip::loadHexFile(const QString& path) {
     rom.clear();
     QFile file(path);
@@ -60,10 +56,10 @@ void MCUChip::loadHexFile(const QString& path) {
 void MCUChip::process() {
     if (rom.isEmpty()) return; // اگر فریمور لود نشده بود کاری نکن
 
-    // 🛠️ واکشی (Fetch) کد باینری از حافظه رام
+    // واکشی (Fetch) کد باینری از حافظه رام
     uint8_t opcode = rom.value(PC, 0x00);
 
-    // 🛠️ رمزگشایی و اجرا (Decode & Execute) - دستورات پایه‌ای ساده‌سازی شده
+    // رمزگشایی و اجرای دستور
     if (opcode == 0x74) { // MOV A, #data
         accumulator = rom.value(PC + 1, 0);
         PC += 2;
@@ -121,16 +117,14 @@ void MCUChip::resetSimulationState() {
     accumulator = 0;
     RAM.clear();
 }
-// ==========================================
-// رسم گرافیکی میکروکنترلر روی بوم
-// ==========================================
+// رسم میکروکنترلر
 void MCUChip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     QPen pen(Qt::black, 2);
     if (isSelected()) pen.setColor(Qt::red);
     painter->setPen(pen);
 
     // ۱. رسم بدنه اصلی IC
-    painter->setBrush(QColor(40, 40, 40)); // رنگ خاکستری تیره (شبیه پلاستیک IC)
+    painter->setBrush(QColor(40, 40, 40)); // بدنه تراشه
     painter->drawRect(-40, -40, 80, 80);
 
     // ۲. رسم نقطه راهنمای پایه شماره 1 (بالا سمت چپ)
@@ -146,9 +140,7 @@ void MCUChip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
         painter->drawLine(i, 40, i, 50);   // پایه‌های پایین
     }
 
-    // ==========================================
     // ۴. نمایش اطلاعات داینامیک روی بدنه تراشه
-    // ==========================================
 
     // چاپ نام تراشه
     painter->setPen(Qt::white);
@@ -166,7 +158,7 @@ void MCUChip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
         painter->setPen(QColor(255, 100, 100)); // رنگ قرمز (هشدار: کد ندارد)
         hexStatusText = "NO HEX";
     } else {
-        painter->setPen(QColor(100, 255, 100)); // رنگ سبز (آماده اجرا)
+        painter->setPen(QColor(100, 255, 100)); // آماده اجرا
         hexStatusText = "HEX OK";
     }
     painter->drawText(QRectF(-40, 10, 80, 20), Qt::AlignCenter, hexStatusText);

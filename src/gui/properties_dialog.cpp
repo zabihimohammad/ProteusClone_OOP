@@ -17,25 +17,23 @@ void PropertiesDialog::setupUI(const QString &title, const QMap<QString, QString
     QLabel *subTitleLabel = new QLabel("Adjust the technical parameters below:", this);
     subTitleLabel->setObjectName("subTitleLabel");
 
-    // ==========================================
-    // سیستم ساخت فرم داینامیک بر اساس ویژگی‌های قطعه
-    // ==========================================
+    // فرم ویژگی‌های قطعه
     QFormLayout *formLayout = new QFormLayout();
 
-    // حلقه زدن روی تمام ویژگی‌های ارسالی از قطعه (مثلاً مقاومت، ولتاژ و...)
+    // هر ویژگی یک ورودی دارد.
     for (auto it = properties.constBegin(); it != properties.constEnd(); ++it) {
         QLabel *fieldLabel = new QLabel(it.key() + ":", this);
         fieldLabel->setObjectName("fieldLabel");
 
         QLineEdit *edit = new QLineEdit(this);
-        edit->setText(it.value()); // قرار دادن مقدار فعلی
+        edit->setText(it.value()); // مقدار فعلی
         edit->setObjectName("valueInput");
 
-        // 🛠️ رفع باگ گرافیکی: تضمین ارتفاع کافی برای فونت Consolas
+        // ارتفاع مناسب ورودی
         edit->setMinimumHeight(35);
 
         formLayout->addRow(fieldLabel, edit);
-        inputFields.insert(it.key(), edit); // ذخیره اشاره‌گر برای خواندن مقدار در آینده
+        inputFields.insert(it.key(), edit); // نگهداری ورودی
     }
 
     btnSave = new QPushButton("Save Changes", this);
@@ -50,7 +48,7 @@ void PropertiesDialog::setupUI(const QString &title, const QMap<QString, QString
     connect(btnCancel, &QPushButton::clicked, this, &QDialog::reject);
 
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->addStretch(); // هول دادن دکمه‌ها به سمت راست
+    buttonLayout->addStretch(); // تراز راست
     buttonLayout->addWidget(btnCancel);
     buttonLayout->addSpacing(10);
     buttonLayout->addWidget(btnSave);
@@ -62,12 +60,12 @@ void PropertiesDialog::setupUI(const QString &title, const QMap<QString, QString
     mainLayout->addWidget(titleLabel);
     mainLayout->addWidget(subTitleLabel);
     mainLayout->addSpacing(10);
-    mainLayout->addLayout(formLayout); // اضافه کردن فرم داینامیک
+    mainLayout->addLayout(formLayout); // افزودن فرم
     mainLayout->addStretch();
     mainLayout->addLayout(buttonLayout);
 }
 
-// تابع خواندن مقادیر جدید
+// خواندن مقادیر تازه
 QMap<QString, QString> PropertiesDialog::getUpdatedProperties() const {
     QMap<QString, QString> updatedProps;
     for (auto it = inputFields.constBegin(); it != inputFields.constEnd(); ++it) {
@@ -83,13 +81,13 @@ void PropertiesDialog::applyStyles() {
         QLabel#subTitleLabel { color: #a6accd; font-size: 12px; margin-bottom: 10px; }
         QLabel#fieldLabel { color: #ffffff; font-size: 13px; font-weight: bold; }
 
-        /* استایل فیلدها با رفع باگ برش حروف */
+        /* ظاهر فیلدها */
         QLineEdit#valueInput {
             background-color: #2b2b40;
             color: #00ffcc;
             border: 2px solid #3a3a5a;
             border-radius: 6px;
-            padding: 2px 10px; /* پدینگ بهینه شد */
+            padding: 2px 10px; /* فاصله داخلی */
             font-size: 14px;
             font-family: 'Consolas', monospace;
         }

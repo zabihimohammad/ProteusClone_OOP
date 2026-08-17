@@ -4,9 +4,7 @@
 #include <QFont>
 #include <QDebug>
 
-// ============================================================================
 // پیاده‌سازی گیت AND
-// ============================================================================
 AndGate::AndGate() {
     inA = new Terminal(this); inA->setPos(-30, -10);
     inB = new Terminal(this); inB->setPos(-30, 10);
@@ -45,23 +43,23 @@ void AndGate::process()
         return;
     }
 
-    bool result = inA->getLogicState() && inB->getLogicState(); // 💡 برای گیت OR اینجا را || کن
+    bool result = inA->getLogicState() && inB->getLogicState();
 
-    // 🛠️ سیستم تأخیر انتشار (Propagation Delay Event Queue)
+    // تأخیر انتشار
     double delayNs = propagationDelay.replace("ns", "").toDouble();
-    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک شبیه‌ساز را ۱۰ نانوثانیه فرض می‌کنیم
+    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک ۱۰ نانوثانیه است.
 
     if (result != targetState) {
         targetState = result;
-        delayTicks = requiredTicks; // استارت تایمر تأخیر
+        delayTicks = requiredTicks; // شروع تأخیر
     }
 
     if (delayTicks > 0) {
-        delayTicks--; // شمارش معکوس تا اعمال تغییر
+        delayTicks--; // شمارش تأخیر
     }
 
     if (delayTicks == 0) {
-        // زمان تأخیر تمام شد، ولتاژ جدید اعمال می‌شود
+        // خروجی تازه را اعمال کن.
         outY->setVoltage(targetState ? highVoltage.replace("V", "").toDouble() : 0.0);
         delayTicks = -1;
     }
@@ -79,9 +77,7 @@ void AndGate::setProperties(const QMap<QString, QString>& props) {
     if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
 }
 
-// ============================================================================
 // پیاده‌سازی گیت OR
-// ============================================================================
 OrGate::OrGate() {
     inA = new Terminal(this); inA->setPos(-30, -10);
     inB = new Terminal(this); inB->setPos(-30, 10);
@@ -118,23 +114,23 @@ void OrGate::process() {
         return;
     }
 
-    bool result = inA->getLogicState() || inB->getLogicState(); // 💡 برای گیت OR اینجا را || کن
+    bool result = inA->getLogicState() || inB->getLogicState();
 
-    // 🛠️ سیستم تأخیر انتشار (Propagation Delay Event Queue)
+    // تأخیر انتشار
     double delayNs = propagationDelay.replace("ns", "").toDouble();
-    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک شبیه‌ساز را ۱۰ نانوثانیه فرض می‌کنیم
+    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک ۱۰ نانوثانیه است.
 
     if (result != targetState) {
         targetState = result;
-        delayTicks = requiredTicks; // استارت تایمر تأخیر
+        delayTicks = requiredTicks; // شروع تأخیر
     }
 
     if (delayTicks > 0) {
-        delayTicks--; // شمارش معکوس تا اعمال تغییر
+        delayTicks--; // شمارش تأخیر
     }
 
     if (delayTicks == 0) {
-        // زمان تأخیر تمام شد، ولتاژ جدید اعمال می‌شود
+        // خروجی تازه را اعمال کن.
         outY->setVoltage(targetState ? highVoltage.replace("V", "").toDouble() : 0.0);
         delayTicks = -1;
     }
@@ -151,9 +147,7 @@ void OrGate::setProperties(const QMap<QString, QString>& props) {
     if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
 }
 
-// ============================================================================
 // پیاده‌سازی گیت NOT
-// ============================================================================
 NotGate::NotGate() {
     inA = new Terminal(this); inA->setPos(-25, 0);
     outY = new Terminal(this); outY->setPos(25, 0);
@@ -191,21 +185,21 @@ void NotGate::process() {
 
     bool result = ! inA->getLogicState();
 
-    // 🛠️ سیستم تأخیر انتشار (Propagation Delay Event Queue)
+    // تأخیر انتشار
     double delayNs = propagationDelay.replace("ns", "").toDouble();
-    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک شبیه‌ساز را ۱۰ نانوثانیه فرض می‌کنیم
+    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک ۱۰ نانوثانیه است.
 
     if (result != targetState) {
         targetState = result;
-        delayTicks = requiredTicks; // استارت تایمر تأخیر
+        delayTicks = requiredTicks; // شروع تأخیر
     }
 
     if (delayTicks > 0) {
-        delayTicks--; // شمارش معکوس تا اعمال تغییر
+        delayTicks--; // شمارش تأخیر
     }
 
     if (delayTicks == 0) {
-        // زمان تأخیر تمام شد، ولتاژ جدید اعمال می‌شود
+        // خروجی تازه را اعمال کن.
         outY->setVoltage(targetState ? highVoltage.replace("V", "").toDouble() : 0.0);
         delayTicks = -1;
     }
@@ -223,9 +217,7 @@ void NotGate::setProperties(const QMap<QString, QString>& props) {
     if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
 }
 
-// ============================================================================
 // پیاده‌سازی گیت XOR
-// ============================================================================
 XorGate::XorGate() {
     inA = new Terminal(this); inA->setPos(-35, -10);
     inB = new Terminal(this); inB->setPos(-35, 10);
@@ -270,21 +262,21 @@ void XorGate::process() {
 
     bool result = inA->getLogicState() ^ inB->getLogicState();
 
-    // 🛠️ سیستم تأخیر انتشار (Propagation Delay Event Queue)
+    // تأخیر انتشار
     double delayNs = propagationDelay.replace("ns", "").toDouble();
-    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک شبیه‌ساز را ۱۰ نانوثانیه فرض می‌کنیم
+    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک ۱۰ نانوثانیه است.
 
     if (result != targetState) {
         targetState = result;
-        delayTicks = requiredTicks; // استارت تایمر تأخیر
+        delayTicks = requiredTicks; // شروع تأخیر
     }
 
     if (delayTicks > 0) {
-        delayTicks--; // شمارش معکوس تا اعمال تغییر
+        delayTicks--; // شمارش تأخیر
     }
 
     if (delayTicks == 0) {
-        // زمان تأخیر تمام شد، ولتاژ جدید اعمال می‌شود
+        // خروجی تازه را اعمال کن.
         outY->setVoltage(targetState ? highVoltage.replace("V", "").toDouble() : 0.0);
         delayTicks = -1;
     }
@@ -302,9 +294,7 @@ void XorGate::setProperties(const QMap<QString, QString>& props) {
     if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
 }
 
-// ============================================================================
 // پیاده‌سازی گیت NAND
-// ============================================================================
 NandGate::NandGate() {
     inA = new Terminal(this); inA->setPos(-35, -10);
     inB = new Terminal(this); inB->setPos(-35, 10);
@@ -345,21 +335,21 @@ void NandGate::process() {
 
     bool result = !(inA->getLogicState() && inB->getLogicState());
 
-    // 🛠️ سیستم تأخیر انتشار (Propagation Delay Event Queue)
+    // تأخیر انتشار
     double delayNs = propagationDelay.replace("ns", "").toDouble();
-    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک شبیه‌ساز را ۱۰ نانوثانیه فرض می‌کنیم
+    int requiredTicks = qMax(1, (int)(delayNs / 10.0)); // هر تیک ۱۰ نانوثانیه است.
 
     if (result != targetState) {
         targetState = result;
-        delayTicks = requiredTicks; // استارت تایمر تأخیر
+        delayTicks = requiredTicks; // شروع تأخیر
     }
 
     if (delayTicks > 0) {
-        delayTicks--; // شمارش معکوس تا اعمال تغییر
+        delayTicks--; // شمارش تأخیر
     }
 
     if (delayTicks == 0) {
-        // زمان تأخیر تمام شد، ولتاژ جدید اعمال می‌شود
+        // خروجی تازه را اعمال کن.
         outY->setVoltage(targetState ? highVoltage.replace("V", "").toDouble() : 0.0);
         delayTicks = -1;
     }
@@ -377,9 +367,7 @@ void NandGate::setProperties(const QMap<QString, QString>& props) {
     if (props.contains("Logic HIGH (V)")) highVoltage = props["Logic HIGH (V)"];
 }
 
-// ============================================================================
 // پیاده‌سازی فلیپ‌فلاپ D
-// ============================================================================
 DFlipFlop::DFlipFlop() {
     inD = new Terminal(this); inD->setPos(-40, -15);
     clk = new Terminal(this); clk->setPos(-40, 15);
