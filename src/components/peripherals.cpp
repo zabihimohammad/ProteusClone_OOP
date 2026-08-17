@@ -6,19 +6,26 @@
 #include "../core/wire.h"
 #include <qmath.h>
 
+// ==========================================
 // ۱. حافظه خارجی (RAM/EEPROM)
+// ==========================================
 MemoryChip::MemoryChip() {
-    // سمت چپ: ۸ پین آدرس (A0 تا A7) و ۱ پین کنترل (WE)
-    for (int i = 0; i < 9; i++) {
-        (new Terminal(this))->setPos(-50, -40 + (i * 10));
-    }
-    // سمت راست: ۸ پین دیتا (D0 تا D7)
+    // 🛠️ سمت چپ: ۸ پین آدرس (A0 تا A7)
     for (int i = 0; i < 8; i++) {
-        (new Terminal(this))->setPos(50, -35 + (i * 10));
+        (new Terminal(this))->setPos(-50, -60 + (i * 15));
+    }
+    // 🛠️ سمت چپ پایین: ۱ پین کنترل (WE)
+    (new Terminal(this))->setPos(-50, 65);
+
+    // 🛠️ سمت راست: ۸ پین دیتا (D0 تا D7)
+    for (int i = 0; i < 8; i++) {
+        (new Terminal(this))->setPos(50, -60 + (i * 15));
     }
 }
 
-QRectF MemoryChip::boundingRect() const { return QRectF(-60, -75, 120, 150); }
+QRectF MemoryChip::boundingRect() const {
+    return QRectF(-60, -90, 120, 190); // 🛠️ کادر بزرگتر شد تا تمام پین‌ها و لیبل‌ها به زیبایی جا شوند
+}
 
 void MemoryChip::process() {
     if (childItems().size() < 17) return;
@@ -51,21 +58,53 @@ void MemoryChip::process() {
 }
 
 void MemoryChip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
-    QPen pen(Qt::black, 2); if (isSelected()) pen.setColor(Qt::red);
+    QPen pen(QColor(20, 60, 140), 2); // 🛠️ رنگ حاشیه آبی تیره مثل عکس
+    if (isSelected()) pen.setColor(Qt::red);
     painter->setPen(pen);
-    painter->setBrush(QColor(50, 50, 50));
-    painter->drawRect(-40, -50, 80, 100);
 
-    painter->setPen(Qt::white);
-    drawReadableText(painter, QRectF(-40, -50, 80, 100), Qt::AlignCenter, "RAM");
+    // 🛠️ بدنه آی‌سی (آبی روشن مشابه عکس)
+    painter->setBrush(QColor(210, 230, 255));
+    painter->drawRect(-40, -75, 80, 155);
 
+    // رسم خطوط اتصال پایه‌ها
     painter->setPen(pen);
-    for (int i = 0; i < 9; i++) painter->drawLine(-50, -40 + (i * 10), -40, -40 + (i * 10));
-    for (int i = 0; i < 8; i++) painter->drawLine(40, -35 + (i * 10), 50, -35 + (i * 10));
+    // خطوط آدرس (A0-A7)
+    for (int i = 0; i < 8; i++) painter->drawLine(-50, -60 + (i * 15), -40, -60 + (i * 15));
+    // خط WE
+    painter->drawLine(-50, 65, -40, 65);
+    // خطوط دیتا (D0-D7)
+    for (int i = 0; i < 8; i++) painter->drawLine(40, -60 + (i * 15), 50, -60 + (i * 15));
 
+    // === 🛠️ چاپ نوشته‌ها و لیبل پورت‌ها داخل آی‌سی ===
     painter->setFont(QFont("Consolas", 8, QFont::Bold));
-    painter->setPen(Qt::darkBlue);
-    painter->drawText(QRectF(-60, -70, 120, 15), Qt::AlignCenter, memorySize);
+    painter->setPen(QColor(20, 60, 140)); // رنگ متن آبی تیره
+
+    // چاپ نام و ظرفیت حافظه در بالای تراشه
+    drawReadableText(painter, QRectF(-60, -95, 120, 15), Qt::AlignCenter, "RAM " + memorySize);
+
+    // لیبل پین‌های آدرس (A0 تا A7)
+    for (int i = 0; i < 8; i++) {
+        drawReadableText(painter, QRectF(-35, -67 + (i * 15), 20, 15), Qt::AlignLeft | Qt::AlignVCenter, "A" + QString::number(i));
+    }
+
+    // لیبل پین WE
+    drawReadableText(painter, QRectF(-35, 58, 20, 15), Qt::AlignLeft | Qt::AlignVCenter, "WE");
+    painter->drawLine(-35, 60, -22, 60); // خط تیره روی کلمه WE (به معنی Active Low)
+
+    // لیبل پین‌های دیتا (D0 تا D7)
+    for (int i = 0; i < 8; i++) {
+        drawReadableText(painter, QRectF(15, -67 + (i * 15), 20, 15), Qt::AlignRight | Qt::AlignVCenter, "D" + QString::number(i));
+    }
+
+    // وضعیت فایل هگز (در پایین تراشه)
+    painter->setFont(QFont("Consolas", 7, QFont::Bold));
+    if (initialHexPath == "Not Loaded" || initialHexPath.isEmpty()) {
+        painter->setPen(Qt::red);
+        drawReadableText(painter, QRectF(-60, 85, 120, 15), Qt::AlignCenter, "NO HEX");
+    } else {
+        painter->setPen(QColor(0, 150, 0));
+        drawReadableText(painter, QRectF(-60, 85, 120, 15), Qt::AlignCenter, "HEX OK");
+    }
 }
 
 QMap<QString, QString> MemoryChip::getProperties() const {
