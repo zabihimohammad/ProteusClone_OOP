@@ -7,32 +7,32 @@ HexUploadDialog::HexUploadDialog(QWidget *parent) : QDialog(parent) {
     setWindowTitle("Firmware Uploader (HEX)");
     resize(400, 120);
 
-    // ساخت اجزای گرافیکی پنجره
+    // رابط انتخاب فایل
     label = new QLabel("Select Intel HEX File for MCU:", this);
     pathLineEdit = new QLineEdit(this);
-    pathLineEdit->setReadOnly(true); // کاربر نتواند دستی مسیر را دستکاری کند
+    pathLineEdit->setReadOnly(true); // مسیر فقط خواندنی است.
 
     browseButton = new QPushButton("Browse...", this);
     okButton = new QPushButton("Load Firmware", this);
 
-    // چیدمان افقی برای کادر متنی و دکمه Browse
+    // ردیف انتخاب فایل
     QHBoxLayout *fileSelectionLayout = new QHBoxLayout();
     fileSelectionLayout->addWidget(pathLineEdit);
     fileSelectionLayout->addWidget(browseButton);
 
-    // چیدمان عمودی اصلی کل پنجره
+    // چیدمان اصلی
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->addWidget(label);
     mainLayout->addLayout(fileSelectionLayout);
     mainLayout->addWidget(okButton);
 
-    // متصل کردن سیگنال‌ها به اسلات‌ها (مکانیزم رویدادها در Qt)
+    // رویدادهای پنجره
     connect(browseButton, &QPushButton::clicked, this, &HexUploadDialog::onBrowseClicked);
-    connect(okButton, &QPushButton::clicked, this, &QDialog::accept); // بستن پنجره با موفقیت
+    connect(okButton, &QPushButton::clicked, this, &QDialog::accept); // تایید پنجره
 }
 
 void HexUploadDialog::onBrowseClicked() {
-    // باز کردن پنجره استاندارد ویندوز برای انتخاب فایل با فیلتر مخصوص .hex
+    // انتخاب فایل HEX
     QString filePath = QFileDialog::getOpenFileName(
             this,
             "Open Hex File",
@@ -40,7 +40,7 @@ void HexUploadDialog::onBrowseClicked() {
             "Intel Hex Files (*.hex);;All Files (*.*)"
     );
 
-    // اگر کاربر فایلی را انتخاب کرد (پنجره را کنسل نکرد)
+    // مسیر معتبر را نگه دار.
     if (!filePath.isEmpty()) {
         pathLineEdit->setText(filePath);
     }

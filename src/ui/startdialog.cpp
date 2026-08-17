@@ -25,11 +25,13 @@
 #include <QVBoxLayout>
 
 namespace {
+// تعداد پروژه‌های اخیر
 constexpr int kRecentProjectCount = 5;
 }
 
 StartDialog::StartDialog(QWidget *parent) : QDialog(parent)
 {
+    // صفحه شروع و ساخت پروژه
     setWindowFlags(Qt::Window | Qt::WindowMinimizeButtonHint |
                    Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
     setWindowTitle(tr("Welcome to Circuit Studio"));
@@ -246,8 +248,10 @@ StartDialog::StartDialog(QWidget *parent) : QDialog(parent)
             this, tr("About Circuit Studio"),
             tr("Circuit Studio v0.1\n\n"
                "A C++ and Qt implementation of the OOP Proteus Clone project.\n\n"
-               "Team: Shahab, Mohammad Javad, Yasin\n"
-               "UI/UX and subprojects 1–2: Shahab"));
+               "Team roles:\n"
+               "Shahab Javaheri — UX design and project integration\n"
+               "Yasin Taati — Backend and simulation engine\n"
+               "Mohammad Javad Zabihi — Frontend and wiring system"));
     });
 
     loadRecentProjects();

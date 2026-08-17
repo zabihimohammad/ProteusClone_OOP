@@ -25,7 +25,7 @@ static QPointF splitWireExactly(Wire* clickedWire, QPointF targetPos, JunctionNo
     Terminal *targetStart = clickedWire->getStartTerminal();
     Terminal *targetEnd = clickedWire->getEndTerminal();
 
-    // 🛠️ فیکس کرش: اگر سیم یتیم یا خراب بود، از نصف شدن آن جلوگیری می‌کنیم
+    // سیم ناقص را کامل حذف کن.
     if (!targetStart || !targetEnd) {
         scene->removeItem(clickedWire);
         delete clickedWire;
@@ -317,7 +317,7 @@ void CircuitScene::keyPressEvent(QKeyEvent *event) {
     }
 
     if (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace) {
-        // 🛠️ فیکس کرش: لغو سیم‌کشی قبل از پاک کردن قطعات
+        // پیش از حذف، سیم‌کشی را لغو کن.
         if (isWiring) setWiringMode(false);
 
         bool somethingDeleted = false;
@@ -427,7 +427,7 @@ void CircuitScene::keyPressEvent(QKeyEvent *event) {
         if (event->key() == Qt::Key_S) { FileManager::saveCircuit("my_circuit_test.json", this); return; }
         if (event->key() == Qt::Key_O) { FileManager::loadCircuit("my_circuit_test.json", this); return; }
         if (event->key() == Qt::Key_Z) {
-            if (isWiring) setWiringMode(false); // 🛠️ فیکس کرش
+            if (isWiring) setWiringMode(false);
             if (event->modifiers() & Qt::ShiftModifier) FileManager::redo(this);
             else FileManager::undo(this);
             return;
@@ -438,7 +438,6 @@ void CircuitScene::keyPressEvent(QKeyEvent *event) {
     QGraphicsScene::keyPressEvent(event);
 }
 
-// ... (سایر توابع مثل addComponent و drawForeground در این فایل که در کدهای خودت هم بود بدون تغییر باقی می‌مانند)
 QGraphicsItem *CircuitScene::addComponent(const QString &componentType, const QPointF &position) {
     QGraphicsItem *item = nullptr;
     if (componentType == "MCU") item = new MCUChip();

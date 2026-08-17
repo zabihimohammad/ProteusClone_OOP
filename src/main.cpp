@@ -13,6 +13,7 @@
 #include "ui/startdialog.h"
 
 namespace {
+// اطلاعات لازم برای باز کردن پروژه
 struct ProjectInfo {
     QSize canvasSize{1600, 1000};
     QString name;
@@ -71,6 +72,7 @@ int main(int argc, char *argv[])
 
     MainWindow *editor = nullptr;
 
+    // نمایش صفحه شروع در همان پنجره
     const auto showWelcome = [&] {
         start->setBackAvailable(editor != nullptr);
         start->refreshRecentProjects();
@@ -79,6 +81,7 @@ int main(int argc, char *argv[])
         window.setWindowTitle(QObject::tr("Welcome to Circuit Studio"));
     };
 
+    // ساخت و نمایش ویرایشگر مدار
     std::function<void(const QSize &, const QString &, const QString &)> showEditor;
     showEditor = [&](const QSize &canvasSize, const QString &path,
                      const QString &projectName) {

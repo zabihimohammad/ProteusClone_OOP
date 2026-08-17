@@ -14,5 +14,5 @@ public:
 private:
     CircuitScene *m_scene;
 
-    void propagateVoltages(); // این متد حالا تحلیل گره (Nodal Analysis) را انجام می‌دهد
+    void propagateVoltages(); // تحلیل گره
 };

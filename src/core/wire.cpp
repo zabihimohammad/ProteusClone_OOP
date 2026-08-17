@@ -1,7 +1,7 @@
 #include "wire.h"
 #include "terminal.h"
 #include <QPainter>
-#include "auto_router.h" // برای دسترسی به هوش مصنوعی
+#include "auto_router.h"
 #include <QToolTip>
 #include <QGraphicsSceneHoverEvent>
 #include "probe_item.h"
@@ -12,44 +12,44 @@ Wire::Wire(Terminal *startTerm, QPointF startPos) {
     startTerminal = startTerm;
     endTerminal = nullptr;
 
-    // نقطه شروع را دو بار به لیست اضافه می‌کنیم (دومی برای انتهای متحرک سیم است)
+    // نقطه دوم همراه موس حرکت می‌کند.
     points.append(startPos);
     points.append(startPos);
     setZValue(-1);
-    // اضافه کردن این خط: اجازه انتخاب شدن با موس
+    // سیم با موس قابل انتخاب است.
     setFlag(QGraphicsItem::ItemIsSelectable);
     setAcceptHoverEvents(true);
 }
 
 void Wire::setEndPoint(QPointF endPos) {
     if (!points.isEmpty()) {
-        points.last() = endPos; // همیشه آخرین نقطه به دنبال موس حرکت می‌کند
+        points.last() = endPos;
         prepareGeometryChange();
     }
 }
 
 void Wire::addWaypoint(QPointF point) {
     if (points.size() >= 2) {
-        // نقطه جدید را درست قبل از نقطه متحرک پایانی وارد می‌کنیم
+        // نقطه را پیش از انتهای متحرک بگذار.
         points.insert(points.size() - 1, point);
     }
 }
 
 void Wire::setFullRoute(const QVector<QPointF> &route) {
-    // 🛠️ باگ بزرگ اینجا بود! حالا مسیر هوش مصنوعی دقیقاً و بدون اضافات کپی می‌شود
+    // مسیر کامل را جایگزین کن.
     points = route;
     prepareGeometryChange();
 }
 
 void Wire::confirmConnection(Terminal *endTerm) {
     endTerminal = endTerm;
-    // وقتی سیم وصل شد، خودش را در حافظه پایه‌های مبدا و مقصد ثبت می‌کند
+    // اتصال را در هر دو پایه ثبت کن.
     if (startTerminal) startTerminal->addWire(this);
     if (endTerminal) endTerminal->addWire(this);
 }
 
 QRectF Wire::boundingRect() const {
-    // پیدا کردن کادری که تمام گره‌های سیم را در بر بگیرد
+    // کادر همه بخش‌های سیم
     if (points.isEmpty()) return QRectF();
 
     qreal minX = points[0].x(), maxX = points[0].x();
@@ -67,19 +67,19 @@ QRectF Wire::boundingRect() const {
 
 
 void Wire::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
-    // 🛠️ رنگ‌بندی داینامیک و زنده بر اساس سطح ولتاژ شبیه‌ساز (قرمز برای ۱ منطقی، آبی برای ۰ منطقی)
-    QColor wireColor = Qt::blue; // حالت پیش‌فرض مدار معمولی
+    // رنگ سیم از ولتاژ آن می‌آید.
+    QColor wireColor = Qt::blue;
 
     if (isSelected()) {
-        wireColor = Qt::red; // اگر کاربر سیم را کلیک کرد، قرمز (هایلایت) شود
+        wireColor = Qt::red;
     } else {
-        // تغییر رنگ داینامیک هنگام شبیه‌سازی زنده
+        // رنگ حالت منطقی
         if (voltageLevel == "5.0V") {
-            wireColor = QColor("#D64545"); // قرمز جذاب برای منطق HIGH
+            wireColor = QColor("#D64545"); // HIGH
         } else if (voltageLevel == "0.0V") {
-            wireColor = QColor("#1473E6"); // آبی روشن برای منطق LOW (زمین)
+            wireColor = QColor("#1473E6"); // LOW
         } else {
-            wireColor = QColor("#253143"); // سرمه‌ای/مشکی برای حالت قطع یا فلوتینگ
+            wireColor = QColor("#253143"); // شناور
         }
     }
 
@@ -88,9 +88,9 @@ void Wire::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWid
 
     if (points.size() < 2) return;
 
-    // 🛠️ اصلاح طلایی: به جای سایز آرایه، چک می‌کنیم که سیم به مقصد رسیده است یا خیر
+    // مسیر موقت هنگام سیم‌کشی
     if (!endTerminal) {
-        // سیم در دست کاربر است (رسم ارتوگونال موقت)
+        // مسیر موقت عمودی و افقی است.
         for (int i = 0; i < points.size() - 1; ++i) {
             QPointF pA = points[i];
             QPointF pB = points[i+1];
@@ -101,17 +101,17 @@ void Wire::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWid
             painter->drawLine(QPointF(midX, pB.y()), pB);
         }
     } else {
-        // سیم نهایی شده است (اتصال مستقیم نقاط هوش مصنوعی بدون کج شدن)
+        // مسیر نهایی را رسم کن.
         for (int i = 0; i < points.size() - 1; ++i) {
             painter->drawLine(points[i], points[i+1]);
         }
     }
 }
 void Wire::updateRoute() {
-    // اگر سیم هنوز کامل کشیده نشده (در دست کاربر است) نیازی به آپدیت ندارد
+    // فقط سیم کامل دوباره مسیریابی می‌شود.
     if (!startTerminal || !endTerminal || !scene()) return;
 
-    // فراخوانی مجدد هوش مصنوعی با مختصات جدید پایه‌ها
+    // مسیر را از جای جدید پایه‌ها بساز.
     QVector<QPointF> newRoute = AutoRouter::findPath(
             scene(),
             startTerminal->scenePos(),
@@ -121,7 +121,7 @@ void Wire::updateRoute() {
             this
     );
 
-    // رسم مجدد مسیر
+    // مسیر تازه را نمایش بده.
     setFullRoute(newRoute);
 }
 Wire::~Wire() {
@@ -129,18 +129,15 @@ Wire::~Wire() {
     if (endTerminal) endTerminal->removeWire(this);
 }
 void Wire::disconnectTerminal(Terminal *term) {
-    // اگر ترمینالی که دارد نابود می‌شود پایه شروع من است، آن را فراموش کن
+    // اشاره‌گر پایه حذف‌شده را پاک کن.
     if (startTerminal == term) {
         startTerminal = nullptr;
     }
-    // اگر پایه انتهایی من است، آن را فراموش کن
     if (endTerminal == term) {
         endTerminal = nullptr;
     }
 }
-// ==========================================================
-// محاسبه دقیق خطوط برخورد سیم با موس (جلوگیری از باگ کادر بزرگ)
-// ==========================================================
+// محدوده قابل کلیک سیم
 QPainterPath Wire::shape() const {
     QPainterPath path;
     if (points.size() < 2) return path;
@@ -167,9 +164,7 @@ QPainterPath Wire::shape() const {
     stroker.setWidth(10);
     return stroker.createStroke(path);
 }
-// ==========================================================
-// ۱. تشخیص دقیق خطی از سیم که کاربر روی آن کلیک کرده است
-// ==========================================================
+// انتخاب بخش سیم
 void Wire::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     if (event->button() == Qt::LeftButton && points.size() >= 2) {
         QPointF clickPos = event->scenePos();
@@ -177,7 +172,7 @@ void Wire::mousePressEvent(QGraphicsSceneMouseEvent *event) {
         m_isDraggingHorizontal = false;
         m_isDraggingVertical = false;
 
-        double minDistance = 10.0; // شعاع ۱۰ پیکسلی برای گرفتن سیم
+        double minDistance = 10.0; // شعاع انتخاب
 
         for (int i = 0; i < points.size() - 1; ++i) {
             QPointF a = points[i];
@@ -215,8 +210,7 @@ void Wire::mousePressEvent(QGraphicsSceneMouseEvent *event) {
                 points.insert(points.size() - 1, points.last());
             }
 
-            // 🛠️ فیکس طلایی: به جای ریترن زودهنگام، اجازه می‌دهیم رویداد کلیک
-            // به کلاس مادر برسد تا سیم به درستی متوجه وضعیت Selection (انتخاب) بشود.
+            // انتخاب را به کلاس پایه هم بده.
             QGraphicsItem::mousePressEvent(event);
             return;
         }
@@ -224,16 +218,14 @@ void Wire::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     QGraphicsItem::mousePressEvent(event);
 }
 
-// ==========================================================
-// ۲. جابجایی زنده خطوط سیم با حرکت موس
-// ==========================================================
+// جابه‌جایی بخش سیم
 void Wire::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
     if (m_draggedSegmentIndex != -1) {
         QPointF currentPos = event->scenePos();
         QPointF delta = currentPos - m_lastDragPos;
         m_lastDragPos = currentPos;
 
-        prepareGeometryChange(); // به Qt اطلاع می‌دهیم که ابعاد گرافیکی در حال تغییر است
+        prepareGeometryChange();
 
         if (m_isDraggingHorizontal) {
             points[m_draggedSegmentIndex].setY(points[m_draggedSegmentIndex].y() + delta.y());
@@ -249,12 +241,10 @@ void Wire::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
     QGraphicsItem::mouseMoveEvent(event);
 }
 
-// ==========================================================
-// ۳. رها کردن سیم و قفل شدن اتوماتیک روی گرید (Snap)
-// ==========================================================
+// تراز بخش سیم با شبکه
 void Wire::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     if (m_draggedSegmentIndex != -1) {
-        int snapSize = 20; // گام‌های ۲۰ پیکسلی برای صاف ماندن مدار
+        int snapSize = 20;
 
         prepareGeometryChange();
         if (m_isDraggingHorizontal) {

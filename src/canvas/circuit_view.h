@@ -28,6 +28,7 @@ protected:
     void resizeEvent(QResizeEvent *event) override;
 
 private:
+    // بزرگ‌نمایی و نقشه کوچک
     void setZoom(qreal zoom);
     QRectF navigatorRect() const;
     QRectF navigatorCanvasRect() const;

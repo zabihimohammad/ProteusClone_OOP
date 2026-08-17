@@ -13,6 +13,7 @@
 #include <QVBoxLayout>
 
 namespace {
+// تصویر ساده هر راهنما
 class GuidePicture final : public QWidget
 {
 public:
@@ -156,7 +157,12 @@ private:
         QPointF a(left.right(), left.center().y());
         QPointF b(right.left(), right.center().y());
         painter.setPen(QPen(QColor("#1473E6"), 4));
-        painter.drawPolyline(QPolygonF{a, QPointF(area.center().x(), a.y()), QPointF(area.center().x(), b.y()), b});
+        QPolygonF wirePath;
+        wirePath << a
+                 << QPointF(area.center().x(), a.y())
+                 << QPointF(area.center().x(), b.y())
+                 << b;
+        painter.drawPolyline(wirePath);
         painter.setBrush(QColor("#1473E6"));
         painter.drawEllipse(a, 6, 6);
         painter.drawEllipse(b, 6, 6);
@@ -280,6 +286,7 @@ QString shortcutsTable()
 
 HelpDialog::HelpDialog(Topic topic, QWidget *parent) : QDialog(parent)
 {
+    // فهرست و صفحه‌های راهنما
     setWindowTitle(tr("Circuit Studio Help"));
     setWindowFlag(Qt::Window, true);
     setAttribute(Qt::WA_DeleteOnClose);

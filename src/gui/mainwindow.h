@@ -26,6 +26,7 @@ signals:
     void homeRequested();
 
 private:
+    // رابط و فایل پروژه
     void buildInterface();
     void applyTheme();
     void configureSimulation();

@@ -7,6 +7,7 @@ class QLineEdit;
 class QListWidget;
 class QStackedWidget;
 
+// راهنمای داخلی برنامه
 class HelpDialog final : public QDialog
 {
     Q_OBJECT

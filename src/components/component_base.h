@@ -3,7 +3,7 @@
 #include "../core/terminal.h"
 #include "../core/wire.h"
 
-// تمام قطعات شما در آینده باید از این کلاس ارث ببرند
+// پایه مشترک قطعات مدار
 class ComponentBase : public QGraphicsItem {
 public:
     ComponentBase() {
@@ -13,7 +13,7 @@ public:
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override {
         if (change == ItemPositionHasChanged) {
-            // پیدا کردن تمام ترمینال‌های فرزند و آپدیت سیم‌های آن‌ها
+            // مسیر سیم‌های متصل را تازه کن.
             for (QGraphicsItem *child : childItems()) {
                 Terminal *term = dynamic_cast<Terminal*>(child);
                 if (term) {

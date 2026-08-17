@@ -176,15 +176,7 @@ void ComponentLibrary::updatePreview(QTreeWidgetItem *current, QTreeWidgetItem *
     m_name->setText(component.name);
     m_description->setText(component.description + "  •  " + component.category);
 }
-// ==========================================================
-// منطق آغاز Drag & Drop از منو به بوم طراحی
-// ==========================================================
-// ==========================================================
-// منطق آغاز Drag & Drop به همراه شبح گرافیکی قطعه (Ghosting)
-// ==========================================================
-// ==========================================================
-// منطق آغاز Drag & Drop با رندر شکل واقعی قطعه (Real Ghosting)
-// ==========================================================
+// کشیدن قطعه از کتابخانه
 bool ComponentLibrary::eventFilter(QObject *obj, QEvent *event) {
     if (obj == m_tree->viewport()) {
 
@@ -211,9 +203,7 @@ bool ComponentLibrary::eventFilter(QObject *obj, QEvent *event) {
                     mimeData->setText(componentId);
                     drag->setMimeData(mimeData);
 
-                    // ==========================================
-                    // ۱. ساخت موقت قطعه برای گرفتن عکس از آن
-                    // ==========================================
+                    // قطعه موقت برای تصویر کشیدن
                     QGraphicsItem *tempItem = nullptr;
                     if (componentId == "MCU") tempItem = new MCUChip();
                     else if (componentId == "RESISTOR") tempItem = new Resistor();
@@ -239,40 +229,39 @@ bool ComponentLibrary::eventFilter(QObject *obj, QEvent *event) {
                     else if (componentId == "DAC") tempItem = new DAC_Chip();
                     else if (componentId == "OSCILLOSCOPE") tempItem = new Oscilloscope();
                     if (tempItem) {
-                        // ۲. ایجاد یک بوم موقت و انداختن قطعه درون آن
+                        // بوم موقت قطعه
                         QGraphicsScene tempScene;
                         tempScene.addItem(tempItem);
 
-                        // پیدا کردن دقیق ابعاد قطعه به همراه تمام پایه‌های متصل به آن
+                        // ابعاد قطعه و پایه‌ها
                         QRectF rect = tempScene.itemsBoundingRect();
-                        rect.adjust(-2, -2, 2, 2); // کمی حاشیه برای جلوگیری از برش لبه‌ها
+                        rect.adjust(-2, -2, 2, 2); // حاشیه تصویر
 
-                        // ۳. ایجاد بوم عکاسی کاملاً شفاف
+                        // تصویر شفاف
                         QPixmap pixmap(rect.size().toSize());
                         pixmap.fill(Qt::transparent);
 
                         QPainter painter(&pixmap);
                         painter.setRenderHint(QPainter::Antialiasing);
 
-                        // رندر کردن گرافیک قطعه روی عکس
+                        // قطعه را روی تصویر رسم کن.
                         tempScene.render(&painter, QRectF(), rect);
                         painter.end();
 
-                        // ۴. کم‌رنگ کردن عکس برای افکت "شبح" (Ghosting)
+                        // تصویر نیمه‌شفاف هنگام کشیدن
                         QPixmap ghostPixmap(pixmap.size());
                         ghostPixmap.fill(Qt::transparent);
                         QPainter ghostPainter(&ghostPixmap);
-                        ghostPainter.setOpacity(0.6); // شفافیت ۶۰ درصدی
+                        ghostPainter.setOpacity(0.6);
                         ghostPainter.drawPixmap(0, 0, pixmap);
                         ghostPainter.end();
 
                         drag->setPixmap(ghostPixmap);
 
-                        // ۵. تنظیم نقطه اتصال موس دقیقاً به مرکز قطعه
+                        // نشانگر در مرکز قطعه
                         drag->setHotSpot(QPoint(-rect.left(), -rect.top()));
 
-                        // توجه: با اتمام این بلوک if، متغیر tempScene از بین می‌رود
-                        // و به طور خودکار tempItem را نیز از حافظه پاک می‌کند (جلوگیری از Memory Leak)
+                        // بوم موقت، قطعه را آزاد می‌کند.
                     }
 
                     drag->exec(Qt::CopyAction);

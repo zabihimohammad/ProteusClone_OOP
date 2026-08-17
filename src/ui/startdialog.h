@@ -9,6 +9,7 @@ class QComboBox;
 class QSpinBox;
 class QPushButton;
 
+// صفحه شروع و پروژه‌های اخیر
 class StartDialog final : public QDialog
 {
     Q_OBJECT

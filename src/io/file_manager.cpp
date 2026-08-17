@@ -13,14 +13,12 @@
 #include <QDebug>
 #include <QMap>
 
-// مقداردهی اولیه متغیرهای استاتیک (تاریخچه مدار)
+// تاریخچه مدار
 QStack<QByteArray> FileManager::undoStack;
 QStack<QByteArray> FileManager::redoStack;
 QByteArray FileManager::currentState;
 
-// =========================================
-// توابع کمکی پیدا کردن شماره (Index)
-// =========================================
+// پیدا کردن شماره قطعه و پایه
 static int getTerminalIndex(Element* el, Terminal* target) {
     int index = 0;
     for (QGraphicsItem* child : el->childItems()) {
@@ -43,13 +41,11 @@ static Terminal* getTerminalByIndex(Element* el, int index) {
     return nullptr;
 }
 
-// =========================================
-// تابع کارخانه (Factory Pattern) - نسخه کامل
-// =========================================
+// ساخت قطعه از نام ذخیره‌شده
 static Element* createComponent(const QString &type) {
     if (type == "Microcontroller (MCU)") return new MCUChip();
 
-    // -- قطعات پایه --
+    // قطعات پایه
     if (type == "Battery") return new Battery();
     if (type == "Resistor") return new Resistor();
     if (type == "Capacitor") return new Capacitor();
@@ -64,7 +60,7 @@ static Element* createComponent(const QString &type) {
     if (type == "Clock Generator") return new ClockGenerator();
     if (type == "Voltmeter") return new Voltmeter();
     if (type == "Ammeter") return new Ammeter();
-    // -- گیت‌های منطقی --
+    // گیت‌های منطقی
     if (type == "AND Gate") return new AndGate();
     if (type == "OR Gate") return new OrGate();
     if (type == "NOT Gate") return new NotGate();
@@ -72,7 +68,7 @@ static Element* createComponent(const QString &type) {
     if (type == "NAND Gate") return new NandGate();
     if (type == "D-Type Flip-Flop") return new DFlipFlop();
 
-    // -- پریفرال‌ها و آی‌سی‌ها --
+    // تجهیزات جانبی
     if (type == "External Memory Chip") return new MemoryChip();
     if (type == "LCD 16x2 Display") return new LCD16x2();
     if (type == "Matrix Keypad 4x4") return new Keypad();
@@ -80,17 +76,14 @@ static Element* createComponent(const QString &type) {
     if (type == "Digital to Analog Converter (DAC)") return new DAC_Chip();
     if (type == "Digital to Analog Converter (DAC)") return new DAC_Chip();
 
-    // اضافه کردن این خط برای شناسایی گره‌ها
+    // گره اتصال
     if (type == "Junction Node") return new JunctionNode();
     if (type == "Oscilloscope") return new Oscilloscope();
-    // اگر نام قطعه‌ای در لیست نبود...
-    // اگر نام قطعه‌ای در لیست نبود، ارور را در کنسول چاپ کن تا سریع پیدایش کنیم
+    // قطعه ناشناخته
     qWarning() << "[FileManager] ERROR: Unknown component type in Factory:" << type;
     return nullptr;
 }
-// ============================================================================
-// موتور اصلی سریالایز و دی‌سریالایز (استفاده مشترک برای فایل و Undo/Redo)
-// ============================================================================
+// تبدیل مشترک برای فایل و تاریخچه
 
 QByteArray FileManager::captureSceneState(QGraphicsScene *scene) {
     QList<Element*> elementsList;
@@ -139,7 +132,7 @@ void FileManager::restoreSceneState(const QByteArray &stateData, QGraphicsScene 
             }
             newElement->setProperties(props);
 
-            // 🛠️ بخش امتیازی: بازیابی وضعیت زمان اجرا
+            // بازیابی وضعیت اجرا
             if (elObj.contains("dynamic_state")) {
                 newElement->setDynamicState(elObj["dynamic_state"].toObject());
             }
@@ -180,16 +173,14 @@ void FileManager::restoreSceneState(const QByteArray &stateData, QGraphicsScene 
         }
     }
 }
-// =========================================
-// سیستم کنترل فایل (Save / Load)
-// =========================================
+// ذخیره و بارگذاری
 bool FileManager::saveCircuit(const QString &filePath, QGraphicsScene *scene) {
     if (!scene || filePath.isEmpty()) return false;
 
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) return false;
 
-    // تبدیل بوم به JSON ولی این بار با فرمت خوانا (Indented) برای ذخیره در هارد
+    // JSON خوانا برای فایل
     QJsonDocument doc = QJsonDocument::fromJson(captureSceneState(scene));
     QTextStream out(&file);
     out << doc.toJson(QJsonDocument::Indented);
@@ -208,7 +199,7 @@ bool FileManager::loadCircuit(const QString &filePath, QGraphicsScene *scene) {
 
     restoreSceneState(fileData, scene);
 
-    // پاک کردن تاریخچه به خاطر لود شدن مدار کاملاً جدید
+    // تاریخچه مدار قبلی را پاک کن.
     undoStack.clear();
     redoStack.clear();
     currentState = captureSceneState(scene);
@@ -216,15 +207,13 @@ bool FileManager::loadCircuit(const QString &filePath, QGraphicsScene *scene) {
     return true;
 }
 
-// =========================================
-// منطق اصلی Undo / Redo
-// =========================================
+// تاریخچه Undo و Redo
 void FileManager::recordState(QGraphicsScene *scene) {
     if (!currentState.isEmpty()) {
         undoStack.push(currentState);
     }
     currentState = captureSceneState(scene);
-    redoStack.clear(); // با انجام یک کار جدید، تاریخچه‌ی آینده پاک می‌شود
+    redoStack.clear(); // تاریخچه آینده پاک می‌شود.
     qDebug() << "[History] State recorded. Undo level:" << undoStack.size();
 }
 
@@ -250,9 +239,7 @@ void FileManager::redo(QGraphicsScene *scene) {
     qDebug() << "[History] Redo performed.";
 }
 
-// =========================================
 // استخراج قطعات و سیم‌ها
-// =========================================
 QJsonArray FileManager::serializeElements(const QList<Element*> &elementsList) {
     QJsonArray elementsArray;
     for (Element *element : elementsList) {
@@ -271,7 +258,7 @@ QJsonArray FileManager::serializeElements(const QList<Element*> &elementsList) {
         }
         elementObj["properties"] = propsObj;
 
-        // 🛠️ بخش امتیازی: ذخیره وضعیت زمان اجرا
+        // ذخیره وضعیت اجرا
         QJsonObject stateObj = element->getDynamicState();
         if (!stateObj.isEmpty()) {
             elementObj["dynamic_state"] = stateObj;

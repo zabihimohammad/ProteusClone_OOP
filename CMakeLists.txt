@@ -52,7 +52,7 @@ set(PROJECT_SOURCES
         src/core/auto_router.cpp
         src/core/auto_router.h
 
-        # --- کدهای شما (موتور شبیه‌ساز و پروب هوشمند) ---
+        # Simulation and probe
         src/core/probe_item.cpp
         src/core/probe_item.h
         src/core/simulation_engine.cpp

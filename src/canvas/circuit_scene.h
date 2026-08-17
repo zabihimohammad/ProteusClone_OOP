@@ -32,7 +32,7 @@ public:
     void pasteCopiedComponents(const QPointF &targetScenePos);
 
 public slots:
-    void setWiringMode(bool mode); // 🛠️ این متد اضافه شد
+    void setWiringMode(bool mode);
     void setGridSize(int size);
     void setGridVisible(bool visible);
     void setSnapEnabled(bool enabled);
@@ -52,12 +52,12 @@ protected:
     void dropEvent(QGraphicsSceneDragDropEvent *event) override;
 
 private:
-    // 🛠️ ساختار پیشرفته کلیپ‌بورد برای ذخیره همزمان قطعات و اتصالات بین آن‌ها
+    // داده‌های کپی قطعات و اتصال‌ها
     struct CopiedComponent {
         QString type;
         QMap<QString, QString> properties;
         QPointF relativePos;
-        Element* originalAddress; // برای ردیابی اتصالات در زمان کپی
+        Element* originalAddress; // قطعه اصلی
     };
 
     struct CopiedWire {

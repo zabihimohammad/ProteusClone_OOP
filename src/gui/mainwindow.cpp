@@ -96,7 +96,7 @@ void MainWindow::buildInterface()
     if (project->text().isEmpty()) project->setText(tr("Untitled circuit"));
     project->setObjectName("projectName");
 
-    auto *stepBtn = new QPushButton(tr("⏭ Step")); // 🛠️ دکمه گام به گام
+    auto *stepBtn = new QPushButton(tr("⏭ Step"));
     auto *restartBtn = new QPushButton(tr("↻ Restart"));
     auto *run = new QPushButton(tr("▶  Run"));
     run->setCheckable(true);
@@ -107,7 +107,7 @@ void MainWindow::buildInterface()
     topLayout->addWidget(project);
     topLayout->addStretch();
     topLayout->addWidget(restartBtn);
-    topLayout->addWidget(stepBtn); // 🛠️
+    topLayout->addWidget(stepBtn);
     topLayout->addWidget(run);
 
     auto *content = new QWidget;
@@ -361,20 +361,25 @@ void MainWindow::buildInterface()
     QAction *aboutAction = helpMenu->addAction(tr("About Circuit Studio"));
     connect(aboutAction, &QAction::triggered, this, [this] {
         QMessageBox::about(this, tr("About Circuit Studio"),
-                           tr("Circuit Studio\nOOP circuit design and simulation project."));
+                           tr("Circuit Studio\n"
+                              "OOP Circuit Design and Simulation Project\n\n"
+                              "Team roles:\n"
+                              "Shahab Javaheri — UX design and project integration\n"
+                              "Yasin Taati — Backend and simulation engine\n"
+                              "Mohammad Javad Zabihi — Frontend and wiring system"));
     });
 
     connect(wire, &QPushButton::clicked, this, [this]() { scene->setWiringMode(true); });
     connect(select, &QPushButton::clicked, this, [this]() { scene->setWiringMode(false); });
 
-    // 🛠️ منطق دکمه شبیه‌سازی گام‌به‌گام (Step-by-Step)
+    // اجرای یک گام شبیه‌سازی
     connect(stepBtn, &QPushButton::clicked, this, [this, run]() {
         if (run->isChecked()) {
-            run->setChecked(false); // خروج از حالت اجرای پیوسته (Pause خودکار)
+            run->setChecked(false);
             m_simulationTimer->stop();
             run->setText(tr("▶  Run"));
         }
-        m_engine->stepSimulation(); // اجرای دقیقاً یک گام
+        m_engine->stepSimulation();
         scene->update();
         m_simulationLog->append(tr(">> Step execution completed."));
     });
@@ -475,7 +480,6 @@ void MainWindow::saveProject()
 
 void MainWindow::applyTheme()
 {
-    // (این بخش دقیقاً مانند قبل باقی می‌ماند، برای کوتاهی پاسخ اینجا آورده نشده اما در پروژه خودت حفظش کن)
     setStyleSheet(R"(
         QMainWindow, QWidget { background: #EEF1F5; color: #1D2530; }
         QMenuBar {

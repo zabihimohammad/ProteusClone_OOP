@@ -6,9 +6,7 @@
 #include "../core/terminal.h"
 #include <QGraphicsScene>
 
-// ==========================================
 // ۱. پیاده‌سازی کلاس مقاومت (Resistor)
-// ==========================================
 Resistor::Resistor() {
     (new Terminal(this))->setPos(-30, 0);
     (new Terminal(this))->setPos(30, 0);
@@ -45,9 +43,7 @@ void Resistor::setProperties(const QMap<QString, QString>& props) {
 }
 
 
-// ==========================================
 // ۲. پیاده‌سازی کلاس خازن (Capacitor)
-// ==========================================
 Capacitor::Capacitor() {
     (new Terminal(this))->setPos(-30, 0);
     (new Terminal(this))->setPos(30, 0);
@@ -90,9 +86,7 @@ void Capacitor::resetSimulationState() {
 }
 
 
-// ==========================================
 // ۳. پیاده‌سازی سلف (Inductor)
-// ==========================================
 Inductor::Inductor() {
     (new Terminal(this))->setPos(-30, 0);
     (new Terminal(this))->setPos(30, 0);
@@ -136,9 +130,7 @@ void Inductor::resetSimulationState() {
 }
 
 
-// ==========================================
 // ۴. پیاده‌سازی پالس کلاک (Pulse Generator)
-// ==========================================
 PulseGenerator::PulseGenerator() {
     (new Terminal(this))->setPos(30, 0);
 }
@@ -170,13 +162,13 @@ void PulseGenerator::process() {
         }
     }
 
-    // 🛠️ فیکس طلایی: استخراج مقدار عددی ولتاژ (از QString کپی می‌گیریم تا متغیر اصلی خراب نشود)
+    // مقدار عددی ولتاژ
     double v = QString(currentMockVoltage).replace("V", "").toDouble();
 
     for (QGraphicsItem *child : childItems()) {
         Terminal *term = dynamic_cast<Terminal*>(child);
         if (term) {
-            // 🛠️ حالا موتور فیزیک می‌فهمد که این پایه یک منبع انرژی (Driven) است
+            // پایه منبع ولتاژ است.
             term->setVoltage(v);
         }
     }
@@ -206,9 +198,7 @@ void PulseGenerator::resetSimulationState() {
 }
 
 
-// ==========================================
 // ۵. کلید قطع و وصل (Switch)
-// ==========================================
 Switch::Switch() {
     (new Terminal(this))->setPos(-30, 0);
     (new Terminal(this))->setPos(30, 0);
@@ -236,11 +226,11 @@ void Switch::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
     drawReadableText(painter,QRectF(-35, -30, 70, 15), Qt::AlignCenter, initialState);
 }
 
-// 🛠️ منطق اضافه شده برای سوییچ
+// منطق کلید
 void Switch::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     if (event->button() == Qt::LeftButton) {
         initialState = (initialState == "Open") ? "Closed" : "Open";
-        update(); // بازرسم گرافیک
+        update();
     }
     Element::mousePressEvent(event);
 }
@@ -263,9 +253,7 @@ void Switch::setProperties(const QMap<QString, QString>& props) {
 }
 
 
-// ==========================================
 // ۶. دکمه فشاری (Push Button)
-// ==========================================
 PushButton::PushButton() {
     (new Terminal(this))->setPos(-30, 0);
     (new Terminal(this))->setPos(30, 0);
@@ -279,7 +267,7 @@ void PushButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
     painter->drawLine(-30, 0, -10, 0);
     painter->drawEllipse(-10, -2, 4, 4);
 
-    // اگر دکمه فشرده شده بود، پلات گرافیکی خط وسط را پایین‌تر می‌کشیم
+    // حالت فشرده را رسم کن.
     int offsetY = isPressed ? -2 : -15;
     painter->drawLine(-15, offsetY, 15, offsetY);
     painter->drawLine(0, offsetY, 0, offsetY - 10);
@@ -292,7 +280,7 @@ void PushButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
     drawReadableText(painter,QRectF(-35, -35, 70, 15), Qt::AlignCenter, type);
 }
 
-// 🛠️ منطق اضافه شده برای دکمه فشاری
+// منطق دکمه فشاری
 void PushButton::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     if (event->button() == Qt::LeftButton) {
         isPressed = true;
@@ -328,9 +316,7 @@ void PushButton::setProperties(const QMap<QString, QString>& props) {
 }
 
 
-// ==========================================
 // ۷. دیود نورانی (LED)
-// ==========================================
 LED::LED() {
     (new Terminal(this))->setPos(-30, 0);
     (new Terminal(this))->setPos(30, 0);
@@ -347,7 +333,7 @@ void LED::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidg
     QPolygonF triangle;
     triangle << QPointF(-10, -10) << QPointF(-10, 10) << QPointF(10, 0);
 
-    // 🛠️ تغییر رنگ بر اساس روشن یا خاموش بودن در شبیه‌سازی
+    // رنگ LED از وضعیت آن می‌آید.
     painter->setBrush(isOn ? QColor(color) : QColor(50, 50, 50));
     painter->drawPolygon(triangle);
     painter->drawLine(10, -10, 10, 10);
@@ -364,7 +350,7 @@ void LED::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidg
     drawReadableText(painter,QRectF(-35, -35, 70, 15), Qt::AlignCenter, color);
 }
 
-// 🛠️ منطق بررسی ولتاژ آند دیود
+// بررسی ولتاژ آند
 void LED::process() {
     Terminal* anode = dynamic_cast<Terminal*>(childItems()[0]);
     if (anode) {
@@ -382,11 +368,9 @@ void LED::setProperties(const QMap<QString, QString>& props) {
 }
 
 
-// ==========================================
 // پیاده‌سازی سون‌سگمنت
-// ==========================================
 SevenSegment::SevenSegment() {
-    // 🛠️ اضافه کردن ۷ پین مجزا برای وصل کردن سیم!
+    // هفت پایه ورودی
     for(int i = 0; i < 7; i++) {
         Terminal *t = new Terminal(this);
         t->setPos(-15 + i * 5, 30); // پین‌ها در لبه‌ی پایینی قرار می‌گیرند
@@ -400,7 +384,7 @@ void SevenSegment::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
     painter->setPen(pen);
     painter->drawRect(-20, -30, 40, 60);
 
-    // 🛠️ خواندن ولتاژ از ۷ پین
+    // خواندن ولتاژ از ۷ پین
     bool a = childItems().size() > 0 && dynamic_cast<Terminal*>(childItems()[0])->getLogicState();
     bool b = childItems().size() > 1 && dynamic_cast<Terminal*>(childItems()[1])->getLogicState();
     bool c = childItems().size() > 2 && dynamic_cast<Terminal*>(childItems()[2])->getLogicState();
@@ -422,9 +406,7 @@ void SevenSegment::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
 }
 QMap<QString, QString> SevenSegment::getProperties() const { QMap<QString, QString> props; props["Color"] = color; return props; }
 void SevenSegment::setProperties(const QMap<QString, QString>& props) { if (props.contains("Color")) color = props["Color"]; }
-// ============================================================================
 // ۹. پیاده‌سازی Ground (زمین)
-// ============================================================================
 Ground::Ground() {
     outGnd = new Terminal(this);
     outGnd->setPos(0, -20);
@@ -445,9 +427,7 @@ void Ground::process() {
 }
 
 
-// ============================================================================
-// ۱۰. پیاده‌سازی DC Voltage Source (هوشمند)
-// ============================================================================
+// ۱۰. پیاده‌سازی منبع ولتاژ مستقیم
 DCVoltageSource::DCVoltageSource() {
     outPos = new Terminal(this);
     outPos->setPos(0, -20);
@@ -480,9 +460,7 @@ void DCVoltageSource::setProperties(const QMap<QString, QString>& props) {
 }
 
 
-// ============================================================================
 // ۱۱. پیاده‌سازی Clock Generator
-// ============================================================================
 ClockGenerator::ClockGenerator() {
     outClk = new Terminal(this);
     outClk->setPos(25, 0);
@@ -535,20 +513,16 @@ void ClockGenerator::resetSimulationState() {
     Element::resetSimulationState();
     currentState = false;
 }
-// ==========================================
 // گره اتصال (Junction Node)
-// ==========================================
 JunctionNode::JunctionNode() { term = new Terminal(this); term->setPos(0, 0); }
-JunctionNode::~JunctionNode() { /* 🛠️ فیکس کرش: اینجا باید خالی باشد! */ }
+JunctionNode::~JunctionNode() = default;
 QRectF JunctionNode::boundingRect() const { return QRectF(-6, -6, 12, 12); }
 void JunctionNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) {
     painter->setBrush(isSelected() ? Qt::red : Qt::black); painter->setPen(Qt::NoPen); painter->drawEllipse(-4, -4, 8, 8);
 }
 void JunctionNode::process() {}
 
-// ==========================================
 // ولت‌متر دیجیتال
-// ==========================================
 Voltmeter::Voltmeter() { t1 = new Terminal(this); t1->setPos(-30, 0); t2 = new Terminal(this); t2->setPos(30, 0); }
 QRectF Voltmeter::boundingRect() const { return QRectF(-35, -25, 70, 50); }
 void Voltmeter::process() { update(); }
@@ -563,9 +537,7 @@ void Voltmeter::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
     drawReadableText(painter, QRectF(-35, 25, 70, 15), Qt::AlignCenter, QString::number(diff, 'f', 2) + " V");
 }
 
-// ==========================================
 // آمپرمتر دیجیتال
-// ==========================================
 Ammeter::Ammeter() { t1 = new Terminal(this); t1->setPos(-30, 0); t2 = new Terminal(this); t2->setPos(30, 0); }
 QRectF Ammeter::boundingRect() const { return QRectF(-35, -25, 70, 50); }
 void Ammeter::process() { update(); }
@@ -575,7 +547,7 @@ void Ammeter::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
     painter->setFont(QFont("Consolas", 12, QFont::Bold)); painter->setPen(Qt::darkBlue);
     drawReadableText(painter, QRectF(-20, -20, 40, 40), Qt::AlignCenter, "A");
 
-    // 🛠️ فیکس دقت صفر ماندن آمپرمتر
+    // جریان دو پایه را اندازه بگیر.
     double current = qAbs(t1->exactVoltage - t2->exactVoltage) / 0.001;
     QString currentStr;
     if (current < 1e-6) currentStr = "0.00 mA";
@@ -587,16 +559,14 @@ void Ammeter::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
     drawReadableText(painter, QRectF(-35, 25, 70, 15), Qt::AlignCenter, currentStr);
 }
 
-// ==========================================
 // اسیلوسکوپ گرافیکی
-// ==========================================
 Oscilloscope::Oscilloscope() {
     inChannel = new Terminal(this);
     inChannel->setPos(-80, 0);
     voltageHistory.fill(0.0, maxSamples);
 }
 QRectF Oscilloscope::boundingRect() const {
-    return QRectF(-90, -55, 165, 110); // 🛠️ فیکس کادر برای کلیک شدن روی پایه
+    return QRectF(-90, -55, 165, 110); // کادر قابل کلیک
 }
 void Oscilloscope::process() {
     double currentV = inChannel ? inChannel->exactVoltage : 0.0;
@@ -609,7 +579,7 @@ void Oscilloscope::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
 
     QPen pinPen(Qt::black, 2); if (isSelected()) pinPen.setColor(Qt::red);
     painter->setPen(pinPen);
-    painter->drawLine(-80, 0, -70, 0); // 🛠️ رسم پین گمشده
+    painter->drawLine(-80, 0, -70, 0); // پایه ورودی
 
     painter->setFont(QFont("Consolas", 7, QFont::Bold)); painter->setPen(Qt::darkBlue);
     drawReadableText(painter, QRectF(-85, -15, 20, 10), Qt::AlignLeft, "IN");
@@ -672,9 +642,7 @@ void Oscilloscope::resetSimulationState() {
     voltageHistory.fill(0.0, maxSamples);
     updateCounter = 0;
 }
-// ==========================================
 // پیاده‌سازی باتری واقعی (Battery)
-// ==========================================
 Battery::Battery() {
     outPos = new Terminal(this); outPos->setPos(0, -20);
     outNeg = new Terminal(this); outNeg->setPos(0, 20);

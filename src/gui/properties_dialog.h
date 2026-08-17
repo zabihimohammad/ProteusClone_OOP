@@ -11,14 +11,14 @@ class PropertiesDialog : public QDialog {
 Q_OBJECT
 
 public:
-    // سازنده حالا یک لیست از ویژگی‌ها (Key-Value) را دریافت می‌کند
+    // ساخت فرم از ویژگی‌ها
     explicit PropertiesDialog(const QString &title, const QMap<QString, QString> &properties, QWidget *parent = nullptr);
 
-    // برگرداندن مقادیر جدید به قطعه
+    // مقادیر ویرایش‌شده
     QMap<QString, QString> getUpdatedProperties() const;
 
 private:
-    // نقشه‌ای برای ذخیره و دسترسی به تمام فیلدهای متنیِ ساخته شده
+    // ورودی هر ویژگی
     QMap<QString, QLineEdit*> inputFields;
 
     QPushButton *btnSave;

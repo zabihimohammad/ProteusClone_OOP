@@ -70,7 +70,7 @@ void Terminal::setVoltage(double v) {
         return;
     }
     _voltage = v;
-    exactVoltage = v; // 🛠️ ذخیره مقدار دقیق
+    exactVoltage = v; // ذخیره مقدار دقیق
     voltageLevel = QString::number(v, 'f', 1) + "V";
     _isDriven = true;
     _isUndefined = false;
@@ -81,6 +81,6 @@ double Terminal::getVoltage() const { return exactVoltage; }
 bool Terminal::isFloating() const { return connectedWires.isEmpty() && !_isDriven; }
 bool Terminal::getLogicState() const {
     if (_isUndefined || isFloating()) return false;
-    return exactVoltage >= 2.5; // 🛠️ تشخیص صفر و یک بر اساس ولتاژ فیزیکی
+    return exactVoltage >= 2.5; // تشخیص صفر و یک بر اساس ولتاژ فیزیکی
 }
 bool Terminal::isUndefinedState() const { return _isUndefined; }

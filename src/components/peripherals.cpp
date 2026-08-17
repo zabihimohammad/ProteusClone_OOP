@@ -6,9 +6,7 @@
 #include "../core/wire.h"
 #include <qmath.h>
 
-// ==========================================
 // ۱. حافظه خارجی (RAM/EEPROM)
-// ==========================================
 MemoryChip::MemoryChip() {
     // سمت چپ: ۸ پین آدرس (A0 تا A7) و ۱ پین کنترل (WE)
     for (int i = 0; i < 9; i++) {
@@ -25,7 +23,7 @@ QRectF MemoryChip::boundingRect() const { return QRectF(-60, -75, 120, 150); }
 void MemoryChip::process() {
     if (childItems().size() < 17) return;
 
-    // 🛠️ استخراج آدرس (A0 تا A7)
+    // استخراج آدرس (A0 تا A7)
     int addr = 0;
     for (int i = 0; i < 8; i++) {
         if (dynamic_cast<Terminal*>(childItems()[i])->getLogicState()) addr |= (1 << i);
@@ -100,12 +98,10 @@ void MemoryChip::resetSimulationState() {
     memoryData.clear();
 }
 
-// ==========================================
 // ۲. نمایشگر کاراکتری (LCD 16x2)
-// ==========================================
 LCD16x2::LCD16x2() {
     int startX = -55;
-    // 🛠️ ایجاد ۱۱ پین: 0=RS, 1=RW, 2=E, 3تا10=D0-D7
+    // ایجاد ۱۱ پین: 0=RS, 1=RW, 2=E, 3تا10=D0-D7
     for(int i = 0; i < 11; i++) {
         (new Terminal(this))->setPos(startX + (i * 10), -35);
     }
@@ -142,7 +138,7 @@ void LCD16x2::process() {
                 cursorCol++;
             }
         }
-        update(); // 🛠️ رفرش گرافیکی برای رندر کاراکتر جدید
+        update(); // رفرش گرافیکی برای رندر کاراکتر جدید
     }
     lastE = currentE;
 }
@@ -160,7 +156,7 @@ void LCD16x2::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
     int startX = -55;
     for(int i=0; i<11; i++) painter->drawLine(startX + (i*10), -25, startX + (i*10), -35);
 
-    // 🛠️ رندر واقعی متن دریافتی از بک‌اند روی نمایشگر سبز!
+    // متن LCD را رسم کن.
     painter->setFont(QFont("Consolas", 10, QFont::Bold));
     painter->setPen(Qt::black);
     drawReadableText(painter, QRectF(-48, -13, 96, 14), Qt::AlignLeft | Qt::AlignVCenter, displayText[0]);
@@ -204,9 +200,7 @@ void LCD16x2::resetSimulationState() {
     update();
 }
 
-// ==========================================
 // ۳. صفحه کلید ماتریسی (Keypad 4x4)
-// ==========================================
 Keypad::Keypad() {
     // ۴ پین سطر (راست)
     for(int i = 0; i < 4; i++) (new Terminal(this))->setPos(45, -25 + (i * 15));
@@ -219,7 +213,7 @@ QRectF Keypad::boundingRect() const { return QRectF(-45, -50, 90, 120); }
 void Keypad::process() {
     if (childItems().size() < 8) return;
 
-    // 🛠️ منطق اسکن ماتریسی: اگر دکمه فشرده شد، سطر و ستون از لحاظ ولتاژ اتصال کوتاه می‌شوند
+    // سطر و ستون دکمه فشرده را وصل کن.
     if (pressedRow != -1 && pressedCol != -1) {
         Terminal* rowPin = dynamic_cast<Terminal*>(childItems()[pressedRow]);
         Terminal* colPin = dynamic_cast<Terminal*>(childItems()[4 + pressedCol]);
@@ -287,9 +281,7 @@ QMap<QString, QString> Keypad::getProperties() const {
 void Keypad::setProperties(const QMap<QString, QString>& props) {
     if (props.contains("Debounce Delay")) debounceTimeMs = props["Debounce Delay"];
 }
-// ==========================================
 // ۴. مبدل آنالوگ به دیجیتال (ADC)
-// ==========================================
 ADC_Chip::ADC_Chip() {
     (new Terminal(this))->setPos(-40, 0); // Vin
     for(int i = -20; i <= 20; i += 10) {
@@ -347,16 +339,14 @@ void ADC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
         painter->drawLine(30, i, 40, i);
     }
 
-    // === نمایش داینامیک رزولوشن و ولتاژ مرجع ===
+    // مشخصات ADC
     painter->setFont(QFont("Consolas", 7, QFont::Bold));
     painter->setPen(Qt::darkBlue);
     drawReadableText(painter, QRectF(-65, -50, 120, 15), Qt::AlignCenter, resolutionBits);
     drawReadableText(painter, QRectF(-65, 35, 120, 15), Qt::AlignCenter, "Vref: " + referenceVoltage);
 }
 
-// ==========================================
 // ۵. مبدل دیجیتال به آنالوگ (DAC)
-// ==========================================
 DAC_Chip::DAC_Chip() {
     (new Terminal(this))->setPos(40, 0); // Vout
     for(int i = -20; i <= 20; i += 10) {
@@ -413,7 +403,7 @@ void DAC_Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
         painter->drawLine(-40, i, -30, i);
     }
 
-    // === نمایش داینامیک رزولوشن و ولتاژ خروجی ===
+    // مشخصات DAC
     painter->setFont(QFont("Consolas", 7, QFont::Bold));
     painter->setPen(Qt::darkBlue);
     drawReadableText(painter, QRectF(-65, -50, 120, 15), Qt::AlignCenter, resolutionBits);
