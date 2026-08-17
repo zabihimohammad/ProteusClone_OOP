@@ -38,7 +38,9 @@ void MemoryChip::process() {
 
     // پین WE (Write Enable)
     Terminal* we = dynamic_cast<Terminal*>(childItems()[8]);
-    bool isWrite = we->getLogicState();
+
+    // 🛠️ فیکس منطق Active Low: وقتی پین صفر باشد، عملیات نوشتن انجام می‌شود
+    bool isWrite = !we->getLogicState();
 
     if (isWrite) {
         // خواندن باس ورودی داده و ذخیره در RAM
@@ -48,11 +50,33 @@ void MemoryChip::process() {
         }
         memoryData[addr] = data;
     } else {
-        // قرار دادن دیتای RAM روی باس خروجی
+        // قرار دادن دیتای RAM روی باس خروجی (عملیات خواندن)
         int data = memoryData.value(addr, 0);
         for (int i = 0; i < 8; i++) {
             Terminal* dPin = dynamic_cast<Terminal*>(childItems()[9 + i]);
             dPin->setVoltage((data & (1 << i)) ? 5.0 : 0.0);
+        }
+    }
+}
+
+// 🛠️ مفسر فایل HEX مخصوص RAM
+void MemoryChip::loadHexFile(const QString& path) {
+    memoryData.clear();
+    QFile file(path);
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream in(&file);
+        while (!in.atEnd()) {
+            QString line = in.readLine().trimmed();
+            if (line.startsWith(":")) {
+                int byteCount = line.mid(1, 2).toInt(nullptr, 16);
+                int addr = line.mid(3, 4).toInt(nullptr, 16);
+                int type = line.mid(7, 2).toInt(nullptr, 16);
+                if (type == 0) { // Data Record
+                    for (int i = 0; i < byteCount; i++) {
+                        memoryData[addr + i] = line.mid(9 + i * 2, 2).toInt(nullptr, 16);
+                    }
+                }
+            }
         }
     }
 }
@@ -112,7 +136,14 @@ QMap<QString, QString> MemoryChip::getProperties() const {
 }
 void MemoryChip::setProperties(const QMap<QString, QString>& props) {
     if (props.contains("Memory Size")) memorySize = props["Memory Size"];
-    if (props.contains("Storage Firmware (.hex)")) initialHexPath = props["Storage Firmware (.hex)"];
+    if (props.contains("Storage Firmware (.hex)")) {
+        QString newPath = props["Storage Firmware (.hex)"];
+        // 🛠️ فیکس طلایی: حالا با تغییر تنظیمات، فایل واقعاً پردازش می‌شود
+        if (newPath != initialHexPath && !newPath.isEmpty() && newPath != "Not Loaded") {
+            initialHexPath = newPath;
+            loadHexFile(initialHexPath);
+        }
+    }
 }
 QJsonObject MemoryChip::getDynamicState() const {
     QJsonObject state;

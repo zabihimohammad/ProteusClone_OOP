@@ -7,7 +7,7 @@ private:
     QString memorySize = "64 KB";
     QString initialHexPath = "Not Loaded";
     QMap<int, int> memoryData; // آرایه داخلی حافظه
-
+    void loadHexFile(const QString& path);
 public:
     MemoryChip();
     QRectF boundingRect() const override;
