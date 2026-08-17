@@ -5,6 +5,8 @@
 #include "../core/terminal.h"
 #include "../core/wire.h"
 #include <qmath.h>
+#include <QFile>
+#include <QTextStream>
 
 // ==========================================
 // ۱. حافظه خارجی (RAM/EEPROM)
